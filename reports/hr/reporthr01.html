@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../../assets/img/CSM_New_logo1.png" />
+  <title>ใบขอให้จัดรถยนต์</title>
+
+  <!-- Google Fonts: Sarabun -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #f1f5f9;
+      font-family: 'Sarabun', sans-serif;
+      font-size: 16px;
+      color: #000;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .a4-container {
+      width: 210mm;
+      min-height: 297mm;
+      background: white;
+      margin: 40px auto;
+      padding: 25mm 20mm;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+
+    @media print {
+      body {
+        background: white;
+      }
+
+      .a4-container {
+        margin: 0;
+        box-shadow: none;
+        width: 100%;
+        height: 100%;
+        padding: 20mm 15mm;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+    }
+
+    /* Text Colors */
+    .val {
+      color: #3b76b8;
+      /* Blue color for values */
+      font-weight: 400;
+    }
+
+    .lbl {
+      font-weight: 600;
+    }
+
+    /* Header */
+    .header-logo {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .header-logo img {
+      max-width: 140px;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .doc-title {
+      text-align: center;
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+
+    .doc-title .doc-id {
+      color: #3b76b8;
+      font-size: 15px;
+    }
+
+    .doc-title h2 {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    /* Top Info */
+    .top-info {
+      margin-top: 20px;
+      line-height: 1.6;
+    }
+
+    .top-info-row {
+      display: flex;
+    }
+
+    .top-info-row .lbl-box {
+      width: 80px;
+      font-weight: 600;
+    }
+
+    /* Paragraph 1 */
+    .para-group {
+      margin-top: 25px;
+      line-height: 1.8;
+    }
+
+    .para-line {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+
+    .para-line.indent {
+      padding-left: 50px;
+    }
+
+    .dotted-line {
+      border-top: 2px dotted #3b76b8;
+      margin: 25px 0;
+    }
+
+    /* Locations */
+    .locations {
+      margin-bottom: 25px;
+    }
+
+    .loc-row {
+      display: flex;
+      margin-bottom: 8px;
+    }
+
+    .loc-row .loc-num {
+      width: 90px;
+      font-weight: 600;
+    }
+
+    .loc-row .loc-val {
+      flex: 1;
+    }
+
+    .loc-row .loc-time {
+      width: 140px;
+    }
+
+    /* Headcount */
+    .headcount-sec {
+      margin-bottom: 30px;
+    }
+
+    .headcount-sec .lbl {
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .headcount-sec .val-box {
+      padding-left: 50px;
+    }
+
+    /* Signature */
+    .signature-row {
+      text-align: center;
+      margin-top: 40px;
+      margin-bottom: 20px;
+    }
+
+    .signature-row .sig-name {
+      display: inline-block;
+      min-width: 180px;
+      text-align: center;
+      margin: 0 10px;
+    }
+
+    /* Warning */
+    .warning-text {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 30px;
+    }
+
+    /* HR Section */
+    .hr-sec {
+      margin-bottom: 25px;
+      line-height: 1.8;
+    }
+
+    .hr-title {
+      font-weight: 600;
+      font-size: 17px;
+      margin-bottom: 10px;
+    }
+
+    .hr-row {
+      display: flex;
+      align-items: center;
+    }
+
+    .hr-row .hr-car-lbl {
+      width: 120px;
+      font-weight: 600;
+    }
+
+    .hr-row .hr-car-val {
+      min-width: 180px;
+    }
+
+    .hr-row .hr-drv-lbl {
+      width: 70px;
+      font-weight: 600;
+      margin-left: 10px;
+    }
+
+    .hr-row .hr-drv-val {
+      flex: 1;
+    }
+
+    /* Guard Section */
+    .guard-sec {
+      line-height: 2;
+    }
+
+    .guard-title {
+      font-weight: 600;
+      font-size: 17px;
+      margin-bottom: 10px;
+    }
+
+    .guard-row {
+      display: flex;
+      margin-bottom: 8px;
+    }
+
+    .guard-row>div {
+      flex: 1;
+      display: flex;
+    }
+
+    .guard-row>div>span:first-child {
+      white-space: nowrap;
+      margin-right: 10px;
+      font-weight: 600;
+    }
+
+    .dot-line {
+      flex: 1;
+      border-bottom: 1px dotted #111;
+      margin-right: 15px;
+      position: relative;
+      top: -6px;
+    }
+
+    .guard-sign {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 25px;
+      padding-right: 50px;
+    }
+
+    .guard-sign .dot-line {
+      min-width: 250px;
+      flex: none;
+      margin-left: 10px;
+      margin-right: 0;
+    }
+
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 15px;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .actions-bar {
+      width: 210mm;
+      margin: 20px auto 0;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .btn-print {
+      background-color: #3b82f6;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Loading -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>กำลังเตรียมเอกสาร...</p>
+  </div>
+
+  <div class="actions-bar no-print">
+    <button class="btn-print" onclick="window.print()"><i class="fa-solid fa-print"></i> พิมพ์ใบขอรถ</button>
+  </div>
+
+  <div class="a4-container">
+
+    <div class="header-logo">
+      <img src="../../assets/img/CSM_New_logo1.png" alt="Logo" />
+    </div>
+
+    <div class="doc-title">
+      <div class="doc-id" id="doc-id">B2-......................</div>
+      <h2>ใบขอให้จัดรถยนต์</h2>
+    </div>
+
+    <div class="top-info">
+      <div class="top-info-row">
+        <span class="lbl-box">วันที่เขียน</span>
+        <span class="val" id="doc-create-date">................................</span>
+      </div>
+      <div class="top-info-row">
+        <span class="lbl-box">เรื่อง</span>
+        <span class="lbl">ขอให้จัดรถยนต์</span>
+      </div>
+    </div>
+
+    <div class="para-group">
+      <div class="para-line indent">
+        <span class="lbl">ด้วยข้าพเจ้า นาย/นาง/นางสาว</span>
+        <span class="val" style="margin-left: 20px; min-width: 250px;"
+          id="doc-name">...................................................</span>
+      </div>
+      <div class="para-line">
+        <span class="lbl">แผนก</span>
+        <span class="val" style="margin-left: 10px; width: 170px; display: inline-block;"
+          id="doc-dep">................................</span>
+        <span class="lbl">มีความประสงค์ขอให้จัดรถยนต์เพื่อไปติดต่องานภายนอก</span>
+      </div>
+      <div class="para-line">
+        <span class="lbl">ในวันที่</span>
+        <span class="val" style="margin-left: 10px; width: 150px; display: inline-block;"
+          id="doc-booking-date">................................</span>
+        <span class="lbl">สถานที่และรายละเอียดอื่นๆ</span>
+      </div>
+    </div>
+
+    <div class="dotted-line"></div>
+
+    <div class="locations">
+      <div class="loc-row">
+        <div class="loc-num">1. สถานที่รับ</div>
+        <div class="loc-val val" id="doc-pickup-loc">
+          ....................................................................</div>
+        <div class="loc-time lbl">เวลา <span class="val" style="margin: 0 10px;"
+            id="doc-pickup-time">............</span> น.</div>
+      </div>
+      <div class="loc-row">
+        <div class="loc-num">2. สถานที่ส่ง</div>
+        <div class="loc-val val" id="doc-dropoff-loc">
+          ....................................................................</div>
+        <div class="loc-time lbl">เวลา <span class="val" style="margin: 0 10px;"
+            id="doc-dropoff-time">............</span> น.</div>
+      </div>
+    </div>
+
+    <div class="headcount-sec">
+      <span class="lbl">หน่วยงานที่ขอใช้รถจัดคนไปด้วย (ระบุรายชื่อ) หรือ สิ่งของนำออกจากบริษัท</span>
+      <div class="val-box val" id="doc-headcount">
+        ............................................................................................</div>
+    </div>
+
+    <div class="signature-row">
+      <span class="lbl">ลงชื่อ</span>
+      <span class="val sig-name" id="doc-signature">.................................................</span>
+      <span class="lbl">ผู้ขอ</span>
+    </div>
+
+    <div class="warning-text">
+      ** รถและคนขับรถอาจจะไม่เพียงพอ ขอให้ส่งเอกสารนี้ถึงแผนกบุคคล ล่วงหน้าอย่างน้อย ครึ่งชั่วโมง เพื่อวางแผนและจัดคิว
+      **
+    </div>
+
+    <div class="hr-sec">
+      <div class="hr-title">สำหรับหน่วยธุรการ แผนกบุคคล</div>
+      <div class="hr-row">
+        <span class="hr-car-lbl">รถหมายเลขทะเบียน</span>
+        <span class="val hr-car-val" id="doc-car">................................................</span>
+        <span class="hr-drv-lbl">โดยผู้ขับ</span>
+        <span class="val hr-drv-val" id="doc-driver">................................................</span>
+      </div>
+    </div>
+
+    <div class="guard-sec">
+      <div class="guard-title">สำหรับพนักงานรักษาความปลอดภัยบันทึก/และส่งคืนแผนกบุคคล</div>
+      <div class="guard-row">
+        <div><span>เวลาออก</span><span class="dot-line"></span><span>น.</span></div>
+        <div><span>เวลาเข้า</span><span class="dot-line" style="margin-right: 0;"></span><span>น.</span></div>
+      </div>
+      <div class="guard-row">
+        <div><span>เลขไมล์ขาออก</span><span class="dot-line"></span></div>
+        <div><span>เลขไมล์ขาเข้า</span><span class="dot-line" style="margin-right: 0;"></span></div>
+      </div>
+      <div class="guard-row">
+        <div><span>ปริมาณน้ำมันขาออก</span><span class="dot-line"></span></div>
+        <div><span>ปริมาณน้ำมันขาเข้า</span><span class="dot-line" style="margin-right: 0;"></span></div>
+      </div>
+      <div class="guard-sign">
+        <span class="lbl">ผู้บันทึก</span><span class="dot-line"></span>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import { hrDatabase, ref, get } from '../../assets/js/firebase-hr.js';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const idURL = urlParams.get('id');
+
+    if (!idURL) {
+      alert("ไม่พบรหัสใบงาน (Missing ID)");
+      document.getElementById('loading').style.display = 'none';
+    } else {
+      const idParts = idURL.split('-');
+      if (idParts.length < 2) {
+        alert("รูปแบบ ID ไม่ถูกต้อง");
+        document.getElementById('loading').style.display = 'none';
+      } else {
+        const prefix = idParts[0]; // B1 or B2
+        const year = idParts[1].substring(0, 4);
+        const dbPath = prefix === 'B1' ? `Booking/Booking1/${year}/${idURL}` : `Booking/Booking2/${year}/${idURL}`;
+
+        const dbRef = ref(hrDatabase, dbPath);
+
+        get(dbRef).then((snapshot) => {
+          if (snapshot.exists()) {
+            const raw = snapshot.val();
+
+            document.getElementById('doc-id').textContent = idURL;
+            document.getElementById('doc-create-date').textContent = raw.date || '........................................';
+
+            const reqName = (raw.name || '-').split(" | ")[1] || raw.name || '-';
+            document.getElementById('doc-name').textContent = reqName !== '-' ? reqName : '...................................................';
+            document.getElementById('doc-dep').textContent = raw.dep || raw.department || '................................';
+
+            document.getElementById('doc-booking-date').textContent = raw.bookingDate || '................................';
+
+            document.getElementById('doc-pickup-loc').textContent = raw.pickupLoc || raw.pickupLocation || '....................................................................';
+            document.getElementById('doc-pickup-time').textContent = raw.pickupTime || '............';
+
+            document.getElementById('doc-dropoff-loc').textContent = raw.deliveryLoc || raw.dropoffLocation || '....................................................................';
+            document.getElementById('doc-dropoff-time').textContent = raw.deliveryTime || raw.dropoffTime || '............';
+
+            // Headcount detail
+            let headcountText = "";
+            if (raw.amont && raw.amont !== '-') headcountText += `จำนวนพนักงาน ${raw.amont} คน`;
+            if (raw.detailPickup && raw.detailPickup !== '-') headcountText += ` | รายละเอียดรับ: ${raw.detailPickup}`;
+            if (raw.detailDelivery && raw.detailDelivery !== '-') headcountText += ` | รายละเอียดส่ง: ${raw.detailDelivery}`;
+            document.getElementById('doc-headcount').textContent = headcountText || '............................................................................................';
+
+            // Signature
+            let sigName = "-";
+            if (raw.approve && raw.approve !== "-") {
+              sigName = raw.approve.split(" | ")[1] || raw.approve;
+            } else if (raw.leaderApprove && raw.leaderApprove !== "-") {
+              sigName = raw.leaderApprove.split(" | ")[1] || raw.leaderApprove;
+            } else {
+              sigName = reqName;
+            }
+            document.getElementById('doc-signature').textContent = sigName !== '-' ? sigName : '.................................................';
+
+            // HR Section
+            if (raw.car && raw.car !== "-") {
+              document.getElementById('doc-car').textContent = raw.car;
+            }
+            if (raw.driverName && raw.driverName !== "-") {
+              const drivers = raw.driverName.split(',');
+              const dNames = drivers.map(d => d.split(" | ")[1] || d).filter(d => d !== '-' && d !== '').join(', ');
+              if (dNames) {
+                document.getElementById('doc-driver').textContent = dNames;
+              }
+            }
+
+            // ปิดหน้าโหลด
+            document.getElementById('loading').style.display = 'none';
+
+            // สั่งปริ้นอัตโนมัติ
+            setTimeout(() => {
+              window.print();
+            }, 800);
+
+          } else {
+            alert("ไม่พบข้อมูลใบงานนี้ในระบบ");
+            document.getElementById('loading').style.display = 'none';
+          }
+        }).catch((error) => {
+          console.error("Error:", error);
+          alert("เกิดข้อผิดพลาดในการโหลดข้อมูล: " + error.message);
+          document.getElementById('loading').style.display = 'none';
+        });
+      }
+    }
+
+  </script>
+</body>
+
+</html>

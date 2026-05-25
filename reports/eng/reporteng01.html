@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../../assets/img/CSM_New_logo1.png" />
+  <title>CSM SERVICE | ใบรายงานการดำเนินการซ่อมบำรุง</title>
+
+  <!-- Google Fonts: Sarabun & Noto Sans Thai -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Noto+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #f1f5f9;
+      font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+      font-size: 12px; /* ลดขนาดฟอนต์หลัก */
+      color: #111;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .a4-half-container {
+      width: 180mm; 
+      height: 130mm; /* ปรับลดความสูงรวมลงให้อยู่ในครึ่งกระดาษชัวร์ๆ */
+      background: white;
+      margin: 40px auto;
+      padding: 0;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      overflow: hidden; /* กันเนื้อหาล้น */
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 8mm 15mm; /* ลดขอบบนล่างลงนิดนึง */
+    }
+
+    @media print {
+      body { background: white; }
+      .a4-half-container {
+        margin: 0;
+        box-shadow: none;
+        width: 100%;
+        height: 130mm;
+      }
+      .no-print { display: none !important; }
+    }
+
+    .report-table {
+      width: 100%;
+      height: 100%;
+      border-collapse: collapse;
+      border: 2px solid #222;
+    }
+
+    .report-table td {
+      border: 1px solid #444;
+      padding: 4px 8px; /* ลด padding ลง */
+      font-weight: 400;
+      font-size: 12px; /* ลดขนาดฟอนต์ในตาราง */
+      vertical-align: middle;
+      line-height: 1.3; /* ลดระยะห่างบรรทัด */
+    }
+
+    .title-cell {
+      font-size: 14px; /* ลดขนาดฟอนต์หัวข้อ */
+      font-weight: 700;
+      text-align: center;
+      height: 40px; /* ลดความสูงช่องหัวข้อ */
+      letter-spacing: 0.5px;
+    }
+
+    .logo-cell {
+      text-align: center;
+      width: 25%;
+    }
+    .logo-cell img {
+      max-width: 110px; /* ลดขนาดโลโก้ลง */
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+
+    strong {
+      font-weight: 700;
+      color: #000;
+    }
+
+    #loading {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 15px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    .actions-bar {
+      width: 210mm;
+      margin: 20px auto 0;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .btn-print {
+      background-color: #3b82f6;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background-color 0.2s;
+    }
+    .btn-print:hover { background-color: #2563eb; }
+
+  </style>
+</head>
+<body>
+
+  <!-- Loading -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>กำลังเตรียมเอกสาร...</p>
+  </div>
+
+  <div class="actions-bar no-print">
+    <button class="btn-print" onclick="window.print()"><i class="fa-solid fa-print"></i> พิมพ์ใบงาน</button>
+  </div>
+
+  <div class="a4-half-container">
+    <table class="report-table">
+      <!-- ส่วนหัว Header -->
+      <tr>
+        <td class="logo-cell" rowspan="3">
+          <img src="../../assets/img/CSM_New_logo1.png" alt="Logo" />
+        </td>
+        <td colspan="2" class="title-cell">
+          ใบรายงานการดำเนินการซ่อมบำรุงเครื่องจักร/อุปกรณ์ งานฝ่ายวิศวกรรม
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2" style="text-align: right;" id="doc-id">
+          <strong>เลขที่ใบแจ้งซ่อม</strong> -
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2" style="text-align: right;" id="doc-type">
+          <strong>ประเภทงาน</strong> ........................................
+        </td>
+      </tr>
+
+      <!-- ข้อมูลผู้แจ้งและรายละเอียด (Rowspan) -->
+      <tr>
+        <td style="width: 35%;" id="doc-date"><strong>วันที่</strong> -</td>
+        <td colspan="2" rowspan="3" style="vertical-align: top;">
+          <strong>รายละเอียดการแจ้งซ่อม:</strong><br>
+          <div style="margin-top: 4px;" id="doc-detail">-</div>
+        </td>
+      </tr>
+      <tr>
+        <td id="doc-time"><strong>เวลา</strong> -</td>
+      </tr>
+      <tr>
+        <td id="doc-name"><strong>ผู้แจ้ง</strong> -</td>
+      </tr>
+
+      <!-- ข้อมูลเครื่องจักรและการแก้ไข (Rowspan) -->
+      <tr>
+        <td id="doc-plant"><strong>สถานที่</strong> -</td>
+        <td colspan="2" rowspan="3" style="vertical-align: top;">
+          <strong>การดำเนินการแก้ไข:</strong><br>
+          <div style="margin-top: 4px;" id="doc-fix">-</div>
+        </td>
+      </tr>
+      <tr>
+        <td id="doc-macName"><strong>เครื่องจักร/อุปกรณ์</strong> -</td>
+      </tr>
+      <tr>
+        <td id="doc-macId"><strong>รหัสเครื่องจักร</strong> -</td>
+      </tr>
+
+      <!-- หมายเหตุ -->
+      <tr>
+        <td colspan="3" style="min-height: 45px; height: 45px; vertical-align: top;">
+          <strong>หมายเหตุ:</strong> <span id="doc-remark" style="margin-left: 10px;">-</span>
+        </td>
+      </tr>
+
+      <!-- ส่วนลายเซ็น 1 -->
+      <tr>
+        <td style="height: 25px;" id="doc-end"><strong>กำหนดเสร็จ</strong> -</td>
+        <td style="width: 32.5%; text-align: center;" id="doc-start-real"><strong>เริ่มทำ</strong> ......./......../.........</td>
+        <td style="width: 32.5%; text-align: center;" id="doc-end-real"><strong>แล้วเสร็จ</strong> ......./......../.........</td>
+      </tr>
+
+      <!-- ส่วนลายเซ็น 2 -->
+      <tr>
+        <td style="height: 25px; vertical-align: bottom;" id="doc-tech"><strong>ผู้ปฏิบัติงาน</strong> ..................................</td>
+        <td style="text-align: center; vertical-align: bottom;" id="doc-admin"><strong>ผู้รับงาน</strong> .................................</td>
+        <td style="text-align: center; vertical-align: bottom;" id="doc-leader"><strong>ผู้ตรวจสอบ</strong> ...............................</td>
+      </tr>
+
+      <!-- ส่วนลายเซ็น 3 -->
+      <tr>
+        <td style="height: 25px; vertical-align: bottom;" id="doc-date-tech"><strong>วันที่</strong> ......./......../.........</td>
+        <td style="text-align: center; vertical-align: bottom;" id="doc-date-admin"><strong>วันที่</strong> ......./......../.........</td>
+        <td style="text-align: center; vertical-align: bottom;" id="doc-date-leader"><strong>วันที่</strong> ......./......../.........</td>
+      </tr>
+
+      <!-- ส่วนอ้างอิงท้ายตาราง -->
+      <tr>
+        <td style="height: 20px; border-top: none;">(มีเรื่องร้องเรียนติดต่อโทร. 147)</td>
+        <td style="text-align: center; border-top: none;">(หัวหน้าแผนกของฝ่ายวิศวกรรม)</td>
+        <td style="text-align: center; border-top: none;">(เจ้าของพื้นที่/ผู้แจ้งงาน)</td>
+      </tr>
+    </table>
+  </div>
+
+  <script type="module">
+    import { database, ref, get } from '../../assets/js/firebase.js';
+    import { escapeHTML } from '../../assets/js/utils.js';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const idURL = urlParams.get('id');
+
+    if (!idURL) {
+      alert("ไม่พบรหัสใบงาน (Missing ID)");
+      document.getElementById('loading').style.display = 'none';
+    } else {
+      const year = idURL.substring(0, 4);
+      const dbRef = ref(database, `DEN/FIX/${year}/${idURL}`);
+      
+      get(dbRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          const raw = snapshot.val();
+          // TODO(next-security): หน้า print นี้ใช้ innerHTML กับข้อมูลจาก DB หลายจุด
+          // รอบถัดไปควรเปลี่ยน field ทั่วไปเป็น textContent/escaping helper แล้วค่อยประกอบ markup เฉพาะที่จำเป็น
+
+          document.getElementById('doc-id').innerHTML = `<strong>เลขที่ใบแจ้งซ่อม</strong> ${escapeHTML(idURL)}`;
+          
+          const [d, t] = (raw.date || '-').split(' ');
+          document.getElementById('doc-date').innerHTML = `<strong>วันที่</strong> ${escapeHTML(d || '-')}`;
+          document.getElementById('doc-time').innerHTML = `<strong>เวลา</strong> ${escapeHTML(t || '-')}`;
+          
+          const userName = (raw.name || '-').split(' | ')[1] || raw.name;
+          document.getElementById('doc-name').innerHTML = `<strong>ผู้แจ้ง</strong> ${escapeHTML(userName || '-')}`;
+          
+          document.getElementById('doc-plant').innerHTML = `<strong>สถานที่</strong> ${escapeHTML(raw.plant || '-')}`;
+          document.getElementById('doc-type').innerHTML = `<strong>ประเภทงาน</strong> ${escapeHTML(raw.type || '........................................')}`;
+          
+          const mac = (raw.mac || '').split(' | ');
+          document.getElementById('doc-macId').innerHTML = `<strong>รหัสเครื่องจักร</strong> ${escapeHTML(mac[0] || '-')}`;
+          document.getElementById('doc-macName').innerHTML = `<strong>เครื่องจักร/อุปกรณ์</strong> ${escapeHTML(mac[1] || '-')}`;
+          
+          document.getElementById('doc-detail').innerHTML = escapeHTML(raw.detail || '-');
+
+          // การแก้ไข & อะไหล่
+          let fixText = "";
+          if (raw.den_fix && raw.den_fix !== "-") fixText += escapeHTML(raw.den_fix);
+          if (raw.den_parts && raw.den_parts !== "-") fixText += `<br><br><strong>อะไหล่ที่ใช้:</strong> ${escapeHTML(raw.den_parts)}`;
+          document.getElementById('doc-fix').innerHTML = fixText || '-';
+
+          // หมายเหตุ
+          let remarkText = "";
+          if (raw.den_remack && raw.den_remack !== "-") remarkText += `<strong>ช่าง:</strong> ${escapeHTML(raw.den_remack)} &nbsp;&nbsp;`;
+          if (raw.remack && raw.remack !== "-") remarkText += `<strong>ผู้แจ้ง:</strong> ${escapeHTML(raw.remack)}`;
+          document.getElementById('doc-remark').innerHTML = remarkText || '-';
+
+          // กำหนดเสร็จ
+          document.getElementById('doc-end').innerHTML = `<strong>กำหนดเสร็จ</strong> ${escapeHTML(raw.den_end || '-')}`;
+
+          // ผู้ปฏิบัติงาน และ เวลาเริ่มทำ
+          if (raw.den_name && raw.den_name !== "-") {
+            const cleanDenName = raw.den_name.replace(new RegExp(",-", "g"), "").replace(/,$/, "");
+            document.getElementById("doc-tech").innerHTML = `<strong>ผู้ปฏิบัติงาน</strong> ${escapeHTML(cleanDenName)}`;
+          }
+          if (raw.den_start_real && raw.den_start_real !== "-") {
+            document.getElementById("doc-start-real").innerHTML = `<strong>เริ่มทำ</strong> ${escapeHTML(raw.den_start_real)}`;
+            document.getElementById("doc-date-tech").innerHTML = `<strong>วันที่</strong> ${escapeHTML(raw.den_start_real)}`;
+          }
+
+          // ผู้รับงาน (adminApprove)
+          if (raw.adminApprove && raw.adminApprove !== "-") {
+            const adminName = raw.adminApprove.split(" | ")[1] || raw.adminApprove;
+            document.getElementById("doc-admin").innerHTML = `<strong>ผู้รับงาน</strong> ${escapeHTML(adminName || '-')}`;
+            // ใส่วันที่เริ่มทำให้ผู้รับงานด้วย
+            if (raw.den_start_real && raw.den_start_real !== "-") {
+              document.getElementById("doc-date-admin").innerHTML = `<strong>วันที่</strong> ${escapeHTML(raw.den_start_real)}`;
+            }
+          }
+
+          // แล้วเสร็จ และ ผู้ตรวจสอบ (แสดงเมื่อ step == 4)
+          if (raw.step == 4) {
+            if (raw.den_end_real && raw.den_end_real !== "-") {
+              document.getElementById("doc-end-real").innerHTML = `<strong>แล้วเสร็จ</strong> ${escapeHTML(raw.den_end_real)}`;
+              document.getElementById("doc-date-leader").innerHTML = `<strong>วันที่</strong> ${escapeHTML(raw.den_end_real)}`;
+            }
+            if (raw.leaderApprove && raw.leaderApprove !== "-") {
+              const leaderName = raw.leaderApprove.split(" | ")[1] || raw.leaderApprove;
+              document.getElementById("doc-leader").innerHTML = `<strong>ผู้ตรวจสอบ</strong> ${escapeHTML(leaderName || '-')}`;
+            }
+          } else {
+            // ถ้ายกเลิก/ยังไม่เสร็จ คงที่ว่างไว้ตาม HTML เริ่มต้น
+          }
+
+          // ปิดหน้าโหลด
+          document.getElementById('loading').style.display = 'none';
+
+          // สั่งปริ้นอัตโนมัติ
+          setTimeout(() => {
+            window.print();
+          }, 800);
+
+        } else {
+          alert("ไม่พบข้อมูลใบงานนี้ในระบบ");
+          document.getElementById('loading').style.display = 'none';
+        }
+      }).catch((error) => {
+        console.error("Error:", error);
+        alert("เกิดข้อผิดพลาดในการโหลดข้อมูล");
+        document.getElementById('loading').style.display = 'none';
+      });
+    }
+
+  </script>
+</body>
+</html>

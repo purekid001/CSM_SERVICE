@@ -1,0 +1,17 @@
+# Runtime / dependency folders
+node_modules/
+dist/
+
+# Local environment
+.env
+
+# IDE / local app state
+.vs/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Note:
+# ไฟล์ที่ถูก track ไปแล้วจะยังอยู่ใน git history/worktree
+# ถ้าต้องการหยุด track ให้ใช้ git rm --cached กับ path เหล่านั้นในรอบ cleanup แยก

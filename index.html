@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="assets/img/CSM_New_logo1.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CSM SERVICE | ระบบจัดการข้อมูล</title>
+
+  <!-- Preconnect for faster font loading -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Modern Font Stack: Inter + Noto Sans Thai -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Date Picker (Flatpickr) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+  <!-- SweetAlert -->
+  <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- SheetJS (for Excel Export) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+  <div id="login-screen">
+    <div class="login-wrapper">
+      <section class="login-brand-panel" aria-hidden="true">
+        <p class="login-eyebrow">CSM SERVICE WORKSPACE</p>
+        <p class="login-brand-copy">
+          รวมงานซ่อม เอกสารบุคคล การจองรถ และข้อมูลพนักงานไว้ใน workflow เดียว
+          เพื่อให้ทีมทำงานต่อเนื่องได้เร็วขึ้น
+        </p>
+        <div class="login-quick-links login-quick-links-panel">
+          <div class="login-quick-links-head">
+            <span class="login-quick-links-eyebrow">Quick Access</span>
+            <p>เปิดเว็บภายนอกที่ใช้บ่อยได้เลยโดยไม่ต้องเข้าสู่ระบบ</p>
+          </div>
+          <div class="login-quick-links-grid">
+            <a class="login-quick-link" href="https://www.google.com" target="_blank" rel="noreferrer">
+              <span class="login-quick-link-icon"><i class="fa-brands fa-google"></i></span>
+              <span class="login-quick-link-copy">
+                <strong>Google</strong>
+                <small>ค้นหาข้อมูลทั่วไป</small>
+              </span>
+            </a>
+            <a class="login-quick-link" href="https://chocksamut.co.th/" target="_blank" rel="noreferrer">
+              <span class="login-quick-link-icon"><i class="fa-solid fa-globe"></i></span>
+              <span class="login-quick-link-copy">
+                <strong>Chocksamut</strong>
+                <small>เปิดเว็บไซต์บริษัท</small>
+              </span>
+            </a>
+            <a class="login-quick-link" href="http://csmth.fortiddns.com:8081/ESS-CSM/default1m.aspx/" target="_blank" rel="noreferrer">
+              <span class="login-quick-link-icon"><i class="fa-solid fa-calendar-check"></i></span>
+              <span class="login-quick-link-copy">
+                <strong>ลาออนไลน์</strong>
+                <small>ส่งคำขอลาได้ทันที</small>
+              </span>
+            </a>
+            <a class="login-quick-link" href="http://192.168.2.218/apps/home/" target="_blank" rel="noreferrer">
+              <span class="login-quick-link-icon"><i class="fa-solid fa-laptop-medical"></i></span>
+              <span class="login-quick-link-copy">
+                <strong>แจ้งซ่อม IT</strong>
+                <small>เปิดระบบซ่อมภายใน</small>
+              </span>
+            </a>
+          </div>
+        </div>
+        <div class="login-feature-list">
+          <div class="login-feature-pill">
+            <i class="fa-solid fa-screwdriver-wrench"></i>
+            <span>ติดตามงานซ่อมและคำขออนุมัติ</span>
+          </div>
+          <div class="login-feature-pill">
+            <i class="fa-solid fa-people-group"></i>
+            <span>จัดการคำขอ HR, ลาออนไลน์, แจ้งซ่อม IT และการเดินทางภายใน</span>
+          </div>
+          <div class="login-feature-pill">
+            <i class="fa-solid fa-database"></i>
+            <span>เข้าถึงข้อมูลกลางอย่างเป็นระบบ</span>
+          </div>
+        </div>
+      </section>
+      <div class="login-card">
+        <div class="login-header">
+          <div class="login-logo">
+            <img src="assets/img/CSM_New_logo1.png" alt="CSM SERVICE Logo">
+          </div>
+          <h2>เข้าสู่ระบบ</h2>
+          <p>CSM SERVICE DATABASE SYSTEM</p>
+        </div>
+
+        <form id="login-form">
+          <div class="input-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" required placeholder="รหัสพนักงาน" autocomplete="username">
+          </div>
+          <div class="input-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" required placeholder="••••••••" autocomplete="current-password">
+          </div>
+          <div class="auth-options">
+            <label class="checkbox-container">
+              <input type="checkbox" id="remember">
+              <span class="checkmark"></span> จดจำการเข้าสู่ระบบในเครื่องนี้
+            </label>
+          </div>
+          <div id="error-message" class="error-msg"></div>
+          <button type="submit" class="btn-submit">เข้าสู่ระบบ</button>
+        </form>
+        <div class="login-footer">
+          <p>© 2026 CSM SERVICE | All Rights Reserved</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="dashboard-layout" style="display: none;">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-brand">
+          <img src="assets/img/CSM_New_logo1.png" class="sidebar-logo" alt="Logo">
+          <div class="sidebar-brand-copy">
+            <span class="sidebar-brand-eyebrow">CSM SERVICE</span>
+            <h2>Operations Workspace</h2>
+          </div>
+        </div>
+      </div>
+      <nav class="sidebar-menu">
+        <span class="sidebar-section-label">General</span>
+        <button class="menu-item active" onclick="showPage('home')" title="หน้าหลัก" aria-label="หน้าหลัก">
+          <i class="fa-solid fa-house menu-icon"></i><span class="menu-text">หน้าหลัก</span>
+        </button>
+        <button class="menu-item" onclick="showPage('employee')" title="ข้อมูลพนักงาน" aria-label="ข้อมูลพนักงาน">
+          <i class="fa-solid fa-user menu-icon"></i><span class="menu-text">ข้อมูลพนักงาน</span>
+        </button>
+        <button class="menu-item" onclick="window.open('https://chocksamut.co.th/', '_blank')" title="Web Chocksamut"
+          aria-label="Web Chocksamut">
+          <i class="fa-solid fa-globe menu-icon"></i><span class="menu-text">Web Chocksamut</span>
+        </button>
+
+        <span class="sidebar-section-label">Departments</span>
+        <div class="dropdown-group">
+          <button class="menu-item dropdown-btn" onclick="toggleDropdown(this)" title="Engineer" aria-label="Engineer">
+            <i class="fa-solid fa-screwdriver-wrench menu-icon"></i><span class="menu-text">Engineer</span>
+            <i class="fa-solid fa-chevron-down arrow-icon"></i>
+          </button>
+          <div class="dropdown-container">
+            <button class="menu-item sub-item" onclick="showPage('eng-request')"><span class="menu-text">Request For
+                Repair</span></button>
+            <button class="menu-item sub-item" onclick="showPage('eng-list')"><span class="menu-text">Repair Request
+                List</span></button>
+            <button class="menu-item sub-item" onclick="showPage('eng-doc')" data-perm="en-doc"><span
+                class="menu-text">Document</span></button>
+            <button class="menu-item sub-item" onclick="showPage('eng-report')"><span
+                class="menu-text">Report</span></button>
+          </div>
+        </div>
+
+        <div class="dropdown-group">
+          <button class="menu-item dropdown-btn" onclick="toggleDropdown(this)" title="Human Resources"
+            aria-label="Human Resources">
+            <i class="fa-solid fa-people-group menu-icon"></i><span class="menu-text">Human Resources</span>
+            <i class="fa-solid fa-chevron-down arrow-icon"></i>
+          </button>
+          <div class="dropdown-container">
+            <button class="menu-item sub-item"
+              onclick="window.open('http://csmth.fortiddns.com:8081/ESS-CSM/default1m.aspx/', '_blank')"><span
+                class="menu-text">Leave Request</span></button>
+            <button class="menu-item sub-item" onclick="showPage('hr-car')"><span class="menu-text">Car
+                Booking</span></button>
+            <button class="menu-item sub-item" onclick="showPage('hr-shuttle')"><span class="menu-text">Shuttle Service
+                (รับ-ส่ง)</span></button>
+            <button class="menu-item sub-item" onclick="showPage('hr-list')"><span class="menu-text">Booking
+                List</span></button>
+            <button class="menu-item sub-item" onclick="showPage('hr-doc')" data-perm="hr-doc"><span
+                class="menu-text">Document</span></button>
+            <button class="menu-item sub-item" onclick="showPage('hr-report')"><span
+                class="menu-text">Report</span></button>
+          </div>
+        </div>
+
+        <div class="dropdown-group">
+          <button class="menu-item dropdown-btn" onclick="toggleDropdown(this)" title="Information Technology"
+            aria-label="Information Technology">
+            <i class="fa-solid fa-laptop-code menu-icon"></i><span class="menu-text">Information Technology</span>
+            <i class="fa-solid fa-chevron-down arrow-icon"></i>
+          </button>
+          <div class="dropdown-container">
+            <button class="menu-item sub-item" onclick="window.open('http://192.168.2.218/apps/home/', '_blank')"><span
+                class="menu-text">Request Repair ( IT )</span></button>
+          </div>
+        </div>
+
+        <div class="dropdown-group">
+          <button class="menu-item dropdown-btn" onclick="toggleDropdown(this)" title="Warehouse"
+            aria-label="Warehouse">
+            <i class="fa-solid fa-warehouse menu-icon"></i><span class="menu-text">Warehouse</span>
+            <i class="fa-solid fa-chevron-down arrow-icon"></i>
+          </button>
+          <div class="dropdown-container">
+            <button class="menu-item sub-item"
+              onclick="window.open('https://ccms-csm.dits.co.th/#/app/dashboard', '_blank')"><span
+                class="menu-text">CCMS</span></button>
+          </div>
+        </div>
+
+        <div class="dropdown-group" id="admin-menu-group" style="display: none;">
+          <button class="menu-item dropdown-btn" onclick="toggleDropdown(this)" title="Administrator"
+            aria-label="Administrator">
+            <i class="fa-solid fa-shield-halved menu-icon"></i><span class="menu-text">Administrator</span>
+            <i class="fa-solid fa-chevron-down arrow-icon"></i>
+          </button>
+          <div class="dropdown-container">
+            <button class="menu-item sub-item" onclick="showPage('eng-auto-close')"><span
+                class="menu-text">Auto Close Repair</span></button>
+            <button class="menu-item sub-item" onclick="showPage('admin-backup')"><span class="menu-text">Backup /
+                Delete DB</span></button>
+          </div>
+        </div>
+
+        <button class="menu-item logout-btn" onclick="logout()" title="ออกจากระบบ" aria-label="ออกจากระบบ">
+          <i class="fa-solid fa-right-from-bracket menu-icon"></i><span class="menu-text">ออกจากระบบ</span>
+        </button>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-nav">
+        <div class="top-nav-context">
+          <span class="top-nav-eyebrow">Internal Service Platform</span>
+          <div class="user-display">
+            <span>ผู้ใช้งาน</span>
+            <span id="display-name">...</span>
+          </div>
+        </div>
+        <div class="top-nav-actions">
+          <button id="toggle-waves-btn" class="top-nav-icon-btn" onclick="window.toggleWaves()"
+            title="เปิด/ปิด คลื่นพื้นหลัง">
+            <i class="fa-solid fa-water"></i>
+            <span class="top-nav-btn-text">พื้นหลัง</span>
+          </button>
+          <div class="status-indicator">
+            <span class="status-dot"></span>
+            <span>ระบบพร้อมใช้งาน</span>
+          </div>
+        </div>
+      </header>
+      <div id="app-container" class="content-body"></div>
+    </main>
+  </div>
+
+  <div class="waves-container">
+    <svg class="waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+      viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto">
+      <defs>
+        <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
+      </defs>
+      <g class="parallax">
+        <use xlink:href="#gentle-wave" x="48" y="0" fill="rgba(99,102,241,0.12)" />
+        <use xlink:href="#gentle-wave" x="48" y="3" fill="rgba(139,92,246,0.10)" />
+        <use xlink:href="#gentle-wave" x="48" y="5" fill="rgba(56,189,248,0.08)" />
+        <use xlink:href="#gentle-wave" x="48" y="7" fill="rgba(255,255,255,0.06)" />
+      </g>
+    </svg>
+  </div>
+
+  <script type="module" src="assets/js/main.js"></script>
+</body>
+
+</html>
