@@ -41,6 +41,12 @@ function getSheetConfig(key) {
       sourceUrl: import.meta.env.VITE_HR_EVALUATION_RESULT_SHEET_SOURCE_URL,
       label: 'ผลการประเมิน',
     },
+    userDirectory: {
+      id: import.meta.env.VITE_USER_DIRECTORY_SHEET_ID || '1hDBj97YDY3RVEO6U0V6nCeLaFpkZXyHnpzIqxra4kcw',
+      gid: import.meta.env.VITE_USER_DIRECTORY_SHEET_GID || '0',
+      sourceUrl: import.meta.env.VITE_USER_DIRECTORY_SHEET_SOURCE_URL || 'https://docs.google.com/spreadsheets/d/1hDBj97YDY3RVEO6U0V6nCeLaFpkZXyHnpzIqxra4kcw/edit?gid=0#gid=0',
+      label: 'ข้อมูลผู้ใช้งาน',
+    },
   };
 
   const config = maps[key];
@@ -928,6 +934,11 @@ function serializeForSheet(value) {
   return value ?? '';
 }
 
+function encodeSheetPassword(value) {
+  const text = String(value ?? '');
+  return btoa(String.fromCharCode(...new TextEncoder().encode(text)));
+}
+
 function buildRowValues(headers, record) {
   return headers.map(header => serializeForSheet(record[header] ?? ''));
 }
@@ -953,6 +964,77 @@ async function updateSheetHeaders(config, sheetTitle, accessToken, headers) {
     const detail = await response.text();
     throw new Error(`อัปเดต header ของชีตผลประเมินไม่สำเร็จ (${response.status}) ${detail}`);
   }
+}
+
+async function fetchSheetValues(config, sheetTitle, accessToken, range = 'A:ZZ') {
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(config.spreadsheetId)}/values/${encodeURIComponent(`${sheetTitle}!${range}`)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`โหลดข้อมูลจากชีต ${config.label} ไม่สำเร็จ (${response.status}) ${detail}`);
+  }
+
+  return response.json();
+}
+
+function normalizeCompactKey(value) {
+  return normalizeKey(value).replace(/[\s_-]+/g, '');
+}
+
+function mapRowsToObjects(headers = [], rows = []) {
+  return rows.map(cells => {
+    const item = {};
+    headers.forEach((header, index) => {
+      item[header] = cells[index] ?? '';
+    });
+    return item;
+  });
+}
+
+function getUserDirectoryRecordValue(record, key) {
+  switch (key) {
+    case 'employeeid':
+      return record.employeeId ?? record['employee ID'] ?? record.employeeid ?? '';
+    case 'firstname':
+      return record.firstname ?? '';
+    case 'lastname':
+      return record.lastname ?? '';
+    case 'department':
+      return record.department ?? '';
+    case 'level':
+      return record.level ?? '';
+    case 'levelhr':
+      return record.levelHr ?? record.level_Hr ?? '';
+    case 'levelit':
+      return record.levelIt ?? record.level_It ?? '';
+    case 'username':
+      return record.username ?? '';
+    case 'password':
+      return encodeSheetPassword(record.password ?? '');
+    case 'email':
+      return record.email ?? '';
+    case 'remark':
+      return record.remark ?? '';
+    case 'active':
+      return typeof record.active === 'boolean'
+        ? record.active
+        : normalizeBoolean(record.active);
+    case 'code':
+      return record.code ?? '';
+    default:
+      return record[key] ?? '';
+  }
+}
+
+function buildUserDirectoryRowValues(headers = [], record = {}) {
+  return headers.map(header => serializeForSheet(getUserDirectoryRecordValue(record, normalizeCompactKey(header))));
 }
 
 function getColumnLetter(index) {
@@ -1015,6 +1097,139 @@ export async function upsertEvaluationResult(record, { existingRowIndex = null, 
   }
 
   return response.json();
+}
+
+export async function updateUserDirectoryPassword(employeeId, nextPassword, { alreadyEncoded = false } = {}) {
+  const config = getSheetConfig('userDirectory');
+  const sheetTitle = await getSheetTitle('userDirectory');
+  const accessToken = await getGoogleAccessToken();
+  const payload = await fetchSheetValues(config, sheetTitle, accessToken);
+  const values = Array.isArray(payload.values) ? payload.values : [];
+
+  if (values.length === 0) {
+    throw new Error('ไม่พบข้อมูลในชีตผู้ใช้งาน');
+  }
+
+  const headerRow = Array.isArray(values[0]) ? values[0] : [];
+  const employeeIdColumnIndex = headerRow.findIndex(header => {
+    const normalized = normalizeKey(header).replace(/\s+/g, '');
+    return normalized === 'employeeid' || normalized === 'employee_id';
+  });
+  const passwordColumnIndex = headerRow.findIndex(header => normalizeKey(header) === 'password');
+
+  if (employeeIdColumnIndex === -1 || passwordColumnIndex === -1) {
+    throw new Error('ไม่พบคอลัมน์ employee ID หรือ password ในชีตผู้ใช้งาน');
+  }
+
+  const normalizedEmployeeId = normalizeText(employeeId);
+  const matchedRowIndex = values.findIndex((row, index) => {
+    if (index === 0) return false;
+    return normalizeText(row?.[employeeIdColumnIndex]) === normalizedEmployeeId;
+  });
+
+  if (matchedRowIndex === -1) {
+    throw new Error(`ไม่พบ employee ID ${normalizedEmployeeId} ในชีตผู้ใช้งาน`);
+  }
+
+  const rowNumber = matchedRowIndex + 1;
+  const previousPassword = values[matchedRowIndex]?.[passwordColumnIndex] ?? '';
+  const encodedPassword = alreadyEncoded ? String(nextPassword ?? '') : encodeSheetPassword(nextPassword);
+  const passwordCell = `${sheetTitle}!${getColumnLetter(passwordColumnIndex + 1)}${rowNumber}`;
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(config.spreadsheetId)}/values/${encodeURIComponent(passwordCell)}?valueInputOption=RAW`,
+    {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        majorDimension: 'ROWS',
+        values: [[encodedPassword]],
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`อัปเดตรหัสผ่านใน Google Sheet ไม่สำเร็จ (${response.status}) ${detail}`);
+  }
+
+  return {
+    rowNumber,
+    previousPassword,
+    encodedPassword,
+    sourceUrl: config.sourceUrl,
+  };
+}
+
+export async function getUserDirectoryRecords() {
+  const fetchedSheet = await fetchGvizSheet('userDirectory');
+  const normalizedSheet = normalizeHeaderSet(fetchedSheet.columns, fetchedSheet.rows);
+  const headers = normalizedSheet.headers;
+  const records = mapRowsToObjects(headers, normalizedSheet.dataRows);
+
+  return {
+    headers,
+    records,
+    sourceUrl: fetchedSheet.sourceUrl,
+  };
+}
+
+export async function getUserDirectoryDepartments() {
+  const { records, sourceUrl } = await getUserDirectoryRecords();
+  const departments = [...new Set(
+    records
+      .map(record => normalizeText(record.department))
+      .filter(value => value && value !== '-')
+  )].sort((left, right) => left.localeCompare(right, 'th'));
+
+  return {
+    departments,
+    sourceUrl,
+  };
+}
+
+export async function appendUserDirectoryRecord(record) {
+  const config = getSheetConfig('userDirectory');
+  const sheetTitle = await getSheetTitle('userDirectory');
+  const accessToken = await getGoogleAccessToken();
+  const payload = await fetchSheetValues(config, sheetTitle, accessToken);
+  const values = Array.isArray(payload.values) ? payload.values : [];
+
+  if (values.length === 0) {
+    throw new Error('ไม่พบ header ในชีตผู้ใช้งาน');
+  }
+
+  const headerRow = Array.isArray(values[0]) ? values[0].map(header => normalizeText(header)) : [];
+  if (headerRow.length === 0) {
+    throw new Error('ไม่พบ header ในชีตผู้ใช้งาน');
+  }
+
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(config.spreadsheetId)}/values/${encodeURIComponent(`${sheetTitle}!A1`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        majorDimension: 'ROWS',
+        values: [buildUserDirectoryRowValues(headerRow, record)],
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`เพิ่มข้อมูลผู้ใช้ลง Google Sheet ไม่สำเร็จ (${response.status}) ${detail}`);
+  }
+
+  return {
+    ...(await response.json()),
+    sourceUrl: config.sourceUrl,
+  };
 }
 
 function isSyncedEvaluationResult(item, expectedRecord) {

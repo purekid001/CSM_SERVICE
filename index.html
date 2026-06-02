@@ -39,95 +39,182 @@
 <body>
 
   <div id="login-screen">
+    <div class="login-weather-atmosphere" aria-hidden="true">
+      <span class="weather-orb"></span>
+      <span class="weather-cloud weather-cloud-1"></span>
+      <span class="weather-cloud weather-cloud-2"></span>
+      <span class="weather-cloud weather-cloud-3"></span>
+      <div class="weather-rain-layer">
+        <span class="rain-drop rain-drop-1"></span>
+        <span class="rain-drop rain-drop-2"></span>
+        <span class="rain-drop rain-drop-3"></span>
+        <span class="rain-drop rain-drop-4"></span>
+        <span class="rain-drop rain-drop-5"></span>
+        <span class="rain-drop rain-drop-6"></span>
+        <span class="rain-drop rain-drop-7"></span>
+        <span class="rain-drop rain-drop-8"></span>
+      </div>
+    </div>
+    <div class="login-sea-scene" aria-hidden="true">
+      <div class="cartoon-boat">
+        <span class="boat-shadow"></span>
+        <span class="boat-wake boat-wake-1"></span>
+        <span class="boat-wake boat-wake-2"></span>
+        <span class="boat-foam boat-foam-1"></span>
+        <span class="boat-foam boat-foam-2"></span>
+        <span class="boat-foam boat-foam-3"></span>
+        <span class="boat-hull"></span>
+        <span class="boat-hull-top"></span>
+        <span class="boat-stripe"></span>
+        <span class="boat-cabin"></span>
+        <span class="boat-window boat-window-left"></span>
+        <span class="boat-window boat-window-right"></span>
+        <span class="boat-door"></span>
+        <span class="boat-roof"></span>
+        <span class="boat-mast"></span>
+        <span class="boat-arm"></span>
+        <span class="boat-net"></span>
+        <span class="boat-flag"></span>
+      </div>
+      <div class="cartoon-boat cartoon-boat-secondary">
+        <span class="boat-shadow"></span>
+        <span class="boat-wake boat-wake-1"></span>
+        <span class="boat-wake boat-wake-2"></span>
+        <span class="boat-foam boat-foam-1"></span>
+        <span class="boat-foam boat-foam-2"></span>
+        <span class="boat-foam boat-foam-3"></span>
+        <span class="boat-hull"></span>
+        <span class="boat-hull-top"></span>
+        <span class="boat-stripe"></span>
+        <span class="boat-cabin"></span>
+        <span class="boat-window boat-window-left"></span>
+        <span class="boat-window boat-window-right"></span>
+        <span class="boat-door"></span>
+        <span class="boat-roof"></span>
+        <span class="boat-mast"></span>
+        <span class="boat-arm"></span>
+        <span class="boat-net"></span>
+        <span class="boat-flag"></span>
+      </div>
+      <div class="sea-fish sea-fish-a">
+        <span class="sea-fish-swimmer">
+          <span class="sea-fish-body"></span>
+          <span class="sea-fish-tail"></span>
+          <span class="sea-fish-fin"></span>
+          <span class="sea-fish-eye"></span>
+        </span>
+        <span class="sea-splash sea-splash-left"></span>
+        <span class="sea-splash sea-splash-mid"></span>
+        <span class="sea-splash sea-splash-right"></span>
+      </div>
+      <div class="sea-fish sea-fish-b">
+        <span class="sea-fish-swimmer">
+          <span class="sea-fish-body"></span>
+          <span class="sea-fish-tail"></span>
+          <span class="sea-fish-fin"></span>
+          <span class="sea-fish-eye"></span>
+        </span>
+        <span class="sea-splash sea-splash-left"></span>
+        <span class="sea-splash sea-splash-mid"></span>
+        <span class="sea-splash sea-splash-right"></span>
+      </div>
+      <div class="sea-fish sea-fish-c">
+        <span class="sea-fish-swimmer">
+          <span class="sea-fish-body"></span>
+          <span class="sea-fish-tail"></span>
+          <span class="sea-fish-fin"></span>
+          <span class="sea-fish-eye"></span>
+        </span>
+        <span class="sea-splash sea-splash-left"></span>
+        <span class="sea-splash sea-splash-mid"></span>
+        <span class="sea-splash sea-splash-right"></span>
+      </div>
+    </div>
     <div class="login-wrapper">
-      <section class="login-brand-panel" aria-hidden="true">
-        <p class="login-eyebrow">CSM SERVICE WORKSPACE</p>
-        <p class="login-brand-copy">
-          รวมงานซ่อม เอกสารบุคคล การจองรถ และข้อมูลพนักงานไว้ใน workflow เดียว
-          เพื่อให้ทีมทำงานต่อเนื่องได้เร็วขึ้น
-        </p>
-        <div class="login-quick-links login-quick-links-panel">
-          <div class="login-quick-links-head">
-            <span class="login-quick-links-eyebrow">Quick Access</span>
-            <p>เปิดเว็บภายนอกที่ใช้บ่อยได้เลยโดยไม่ต้องเข้าสู่ระบบ</p>
-          </div>
-          <div class="login-quick-links-grid">
-            <a class="login-quick-link" href="https://www.google.com" target="_blank" rel="noreferrer">
-              <span class="login-quick-link-icon"><i class="fa-brands fa-google"></i></span>
-              <span class="login-quick-link-copy">
-                <strong>Google</strong>
-                <small>ค้นหาข้อมูลทั่วไป</small>
-              </span>
-            </a>
-            <a class="login-quick-link" href="https://chocksamut.co.th/" target="_blank" rel="noreferrer">
-              <span class="login-quick-link-icon"><i class="fa-solid fa-globe"></i></span>
-              <span class="login-quick-link-copy">
-                <strong>Chocksamut</strong>
-                <small>เปิดเว็บไซต์บริษัท</small>
-              </span>
-            </a>
-            <a class="login-quick-link" href="http://csmth.fortiddns.com:8081/ESS-CSM/default1m.aspx/" target="_blank" rel="noreferrer">
-              <span class="login-quick-link-icon"><i class="fa-solid fa-calendar-check"></i></span>
-              <span class="login-quick-link-copy">
-                <strong>ลาออนไลน์</strong>
-                <small>ส่งคำขอลาได้ทันที</small>
-              </span>
-            </a>
-            <a class="login-quick-link" href="http://192.168.2.218/apps/home/" target="_blank" rel="noreferrer">
-              <span class="login-quick-link-icon"><i class="fa-solid fa-laptop-medical"></i></span>
-              <span class="login-quick-link-copy">
-                <strong>แจ้งซ่อม IT</strong>
-                <small>เปิดระบบซ่อมภายใน</small>
-              </span>
-            </a>
-          </div>
-        </div>
-        <div class="login-feature-list">
-          <div class="login-feature-pill">
-            <i class="fa-solid fa-screwdriver-wrench"></i>
-            <span>ติดตามงานซ่อมและคำขออนุมัติ</span>
-          </div>
-          <div class="login-feature-pill">
-            <i class="fa-solid fa-people-group"></i>
-            <span>จัดการคำขอ HR, ลาออนไลน์, แจ้งซ่อม IT และการเดินทางภายใน</span>
-          </div>
-          <div class="login-feature-pill">
-            <i class="fa-solid fa-database"></i>
-            <span>เข้าถึงข้อมูลกลางอย่างเป็นระบบ</span>
-          </div>
-        </div>
-      </section>
-      <div class="login-card">
-        <div class="login-header">
-          <div class="login-logo">
-            <div class="login-logo-frame">
-              <img src="assets/img/CSM_New_logo1.png" alt="CSM SERVICE Logo">
+      <div class="login-stage">
+        <div class="login-card">
+          <div class="login-header">
+            <div class="login-logo">
+              <div class="login-logo-frame">
+                <img src="assets/img/CSM_New_logo1.png" alt="CSM SERVICE Logo">
+              </div>
             </div>
+            <div class="auth-mode-switch" role="tablist" aria-label="Authentication mode">
+              <button type="button" class="auth-mode-btn is-active" data-auth-mode="login" aria-pressed="true">เข้าสู่ระบบ</button>
+              <button type="button" class="auth-mode-btn" data-auth-mode="register" aria-pressed="false">สมัครสมาชิก</button>
+            </div>
+            <h2 id="auth-title">เข้าสู่ระบบ</h2>
+            <p id="auth-subtitle">CSM SERVICE DATABASE SYSTEM</p>
           </div>
-          <h2>เข้าสู่ระบบ</h2>
-          <p>CSM SERVICE DATABASE SYSTEM</p>
-        </div>
 
-        <form id="login-form">
-          <div class="input-group">
-            <label for="username">Username</label>
-            <input type="text" id="username" required placeholder="รหัสพนักงาน" autocomplete="username">
+          <form id="login-form">
+            <div class="input-group">
+              <label for="username">Username</label>
+              <input type="text" id="username" required placeholder="รหัสพนักงาน" autocomplete="username">
+            </div>
+            <div class="input-group">
+              <label for="password">Password</label>
+              <input type="password" id="password" required placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <div class="auth-options">
+              <label class="checkbox-container">
+                <input type="checkbox" id="remember">
+                <span class="checkmark"></span> จดจำการเข้าสู่ระบบในเครื่องนี้
+              </label>
+            </div>
+            <div id="error-message" class="error-msg"></div>
+            <button type="submit" class="btn-submit">เข้าสู่ระบบ</button>
+          </form>
+          <form id="register-form" class="auth-form-hidden" hidden novalidate>
+            <div class="register-grid">
+              <div class="input-group">
+                <label for="register-employee-id">User / รหัสพนักงาน</label>
+                <input type="text" id="register-employee-id" required placeholder="ตัวเลข 8 หลัก" inputmode="numeric"
+                  autocomplete="username" maxlength="8" pattern="[0-9]{8}">
+                <small>กรอกเฉพาะตัวเลข 8 หลัก</small>
+              </div>
+              <div class="input-group">
+                <label for="register-password">Password</label>
+                <input type="password" id="register-password" required placeholder="อย่างน้อย 6 ตัวอักษร"
+                  autocomplete="new-password">
+              </div>
+              <div class="input-group">
+                <label for="register-confirm-password">Check Password</label>
+                <input type="password" id="register-confirm-password" required placeholder="กรอกรหัสผ่านอีกครั้ง"
+                  autocomplete="new-password">
+              </div>
+              <div class="input-group">
+                <label for="register-firstname">ชื่อ</label>
+                <input type="text" id="register-firstname" required placeholder="กรอกชื่อ">
+              </div>
+              <div class="input-group">
+                <label for="register-lastname">นามสกุล</label>
+                <input type="text" id="register-lastname" required placeholder="กรอกนามสกุล">
+              </div>
+              <div class="input-group">
+                <label for="register-department">แผนก</label>
+                <select id="register-department" required disabled>
+                  <option value="">กำลังโหลดข้อมูลแผนก...</option>
+                </select>
+              </div>
+              <div class="input-group register-grid-full">
+                <label for="register-email">Email</label>
+                <input type="email" id="register-email" required placeholder="name@company.com" autocomplete="email">
+              </div>
+            </div>
+            <div class="register-note">
+              ระบบจะสร้างบัญชีผู้ใช้ใหม่ด้วยสิทธิ์เริ่มต้น และบันทึกข้อมูลไปยังฐานผู้ใช้งานของระบบ
+            </div>
+            <div id="register-error-message" class="error-msg"></div>
+            <button type="submit" class="btn-submit" id="register-submit-btn">สมัครสมาชิก</button>
+          </form>
+          <div class="login-footer">
+            <p class="auth-inline-switch" id="auth-inline-switch">
+              ยังไม่มีบัญชีผู้ใช้?
+              <button type="button" class="auth-inline-btn" data-auth-mode-link="register">สมัครสมาชิก</button>
+            </p>
+            <p>© 2026 CSM SERVICE | All Rights Reserved</p>
           </div>
-          <div class="input-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" required placeholder="••••••••" autocomplete="current-password">
-          </div>
-          <div class="auth-options">
-            <label class="checkbox-container">
-              <input type="checkbox" id="remember">
-              <span class="checkmark"></span> จดจำการเข้าสู่ระบบในเครื่องนี้
-            </label>
-          </div>
-          <div id="error-message" class="error-msg"></div>
-          <button type="submit" class="btn-submit">เข้าสู่ระบบ</button>
-        </form>
-        <div class="login-footer">
-          <p>© 2026 CSM SERVICE | All Rights Reserved</p>
         </div>
       </div>
     </div>
