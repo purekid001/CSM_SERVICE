@@ -2,7 +2,7 @@
  * Engineer — Request For Repair (แบบฟอร์มแจ้งซ่อมอุปกรณ์)
  */
 import { database, ref, get, set, storage, storageRef, uploadBytes, getDownloadURL } from '../firebase.js';
-import { escapeHTML, escapeAttr } from '../utils.js';
+import { escapeHTML, escapeAttr, getApproversByDepartment } from '../utils.js';
 
 /** แปลง Date → "dd/MM/yyyy HH:mm:ss" */
 function dateToString(date) {
@@ -303,13 +303,7 @@ export function init() {
 
       if (snapshot.exists()) {
         const allUsers = snapshot.val();
-
-        // กรอง: department เดียวกับ User, active = Yes, level = 1
-        const approvers = Object.entries(allUsers).filter(([id, user]) => {
-          return user.department === userDepartment
-            && user.active === 'Yes'
-            && (user.level === '1' || user.level === 1 || user.level === 'admin');
-        });
+        const approvers = getApproversByDepartment(allUsers, userDepartment, 'engineering');
 
         approverSelect.innerHTML = '<option value="" disabled selected>-- เลือกผู้อนุมัติ --</option>';
 
@@ -323,7 +317,7 @@ export function init() {
           console.log(`✅ โหลดผู้อนุมัติสำเร็จ: ${approvers.length} คน (แผนก: ${userDepartment})`);
         } else {
           approverSelect.innerHTML = '<option value="" disabled selected>ไม่พบผู้อนุมัติในแผนกนี้</option>';
-          console.warn(`⚠️ ไม่พบผู้อนุมัติ (dept: ${userDepartment}, active: Yes, level: 1)`);
+          console.warn(`⚠️ ไม่พบผู้อนุมัติ (dept: ${userDepartment})`);
         }
       } else {
         approverSelect.innerHTML = '<option value="" disabled selected>ไม่พบข้อมูลผู้ใช้</option>';

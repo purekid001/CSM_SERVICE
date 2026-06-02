@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -10,7 +11,9 @@
   <!-- Google Fonts: Sarabun & Noto Sans Thai -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Noto+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Noto+Sans+Thai:wght@400;500;700&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <style>
@@ -23,36 +26,46 @@
     body {
       background: #f1f5f9;
       font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
-      font-size: 12px; /* ลดขนาดฟอนต์หลัก */
+      font-size: 12px;
+      /* ลดขนาดฟอนต์หลัก */
       color: #111;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
 
     .a4-half-container {
-      width: 180mm; 
-      height: 130mm; /* ปรับลดความสูงรวมลงให้อยู่ในครึ่งกระดาษชัวร์ๆ */
+      width: 180mm;
+      height: 130mm;
+      /* ปรับลดความสูงรวมลงให้อยู่ในครึ่งกระดาษชัวร์ๆ */
       background: white;
       margin: 40px auto;
       padding: 0;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      overflow: hidden; /* กันเนื้อหาล้น */
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      /* กันเนื้อหาล้น */
     }
 
     @page {
       size: A4 portrait;
-      margin: 8mm 15mm; /* ลดขอบบนล่างลงนิดนึง */
+      margin: 8mm 15mm;
+      /* ลดขอบบนล่างลงนิดนึง */
     }
 
     @media print {
-      body { background: white; }
+      body {
+        background: white;
+      }
+
       .a4-half-container {
         margin: 0;
         box-shadow: none;
         width: 100%;
         height: 130mm;
       }
-      .no-print { display: none !important; }
+
+      .no-print {
+        display: none !important;
+      }
     }
 
     .report-table {
@@ -64,18 +77,23 @@
 
     .report-table td {
       border: 1px solid #444;
-      padding: 4px 8px; /* ลด padding ลง */
+      padding: 4px 8px;
+      /* ลด padding ลง */
       font-weight: 400;
-      font-size: 12px; /* ลดขนาดฟอนต์ในตาราง */
+      font-size: 12px;
+      /* ลดขนาดฟอนต์ในตาราง */
       vertical-align: middle;
-      line-height: 1.3; /* ลดระยะห่างบรรทัด */
+      line-height: 1.3;
+      /* ลดระยะห่างบรรทัด */
     }
 
     .title-cell {
-      font-size: 14px; /* ลดขนาดฟอนต์หัวข้อ */
+      font-size: 14px;
+      /* ลดขนาดฟอนต์หัวข้อ */
       font-weight: 700;
       text-align: center;
-      height: 40px; /* ลดความสูงช่องหัวข้อ */
+      height: 40px;
+      /* ลดความสูงช่องหัวข้อ */
       letter-spacing: 0.5px;
     }
 
@@ -83,8 +101,10 @@
       text-align: center;
       width: 25%;
     }
+
     .logo-cell img {
-      max-width: 110px; /* ลดขนาดโลโก้ลง */
+      max-width: 110px;
+      /* ลดขนาดโลโก้ลง */
       height: auto;
       display: block;
       margin: 0 auto;
@@ -97,7 +117,10 @@
 
     #loading {
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       background: white;
       display: flex;
       flex-direction: column;
@@ -105,6 +128,7 @@
       align-items: center;
       z-index: 9999;
     }
+
     .spinner {
       border: 4px solid #f3f3f3;
       border-top: 4px solid #3b82f6;
@@ -114,7 +138,16 @@
       animation: spin 1s linear infinite;
       margin-bottom: 15px;
     }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
 
     .actions-bar {
       width: 210mm;
@@ -122,6 +155,7 @@
       display: flex;
       justify-content: flex-end;
     }
+
     .btn-print {
       background-color: #3b82f6;
       color: white;
@@ -137,10 +171,13 @@
       gap: 8px;
       transition: background-color 0.2s;
     }
-    .btn-print:hover { background-color: #2563eb; }
 
+    .btn-print:hover {
+      background-color: #2563eb;
+    }
   </style>
 </head>
+
 <body>
 
   <!-- Loading -->
@@ -215,22 +252,30 @@
       <!-- ส่วนลายเซ็น 1 -->
       <tr>
         <td style="height: 25px;" id="doc-end"><strong>กำหนดเสร็จ</strong> -</td>
-        <td style="width: 32.5%; text-align: center;" id="doc-start-real"><strong>เริ่มทำ</strong> ......./......../.........</td>
-        <td style="width: 32.5%; text-align: center;" id="doc-end-real"><strong>แล้วเสร็จ</strong> ......./......../.........</td>
+        <td style="width: 32.5%; text-align: center;" id="doc-start-real"><strong>เริ่มทำ</strong>
+          ......./......../.........</td>
+        <td style="width: 32.5%; text-align: center;" id="doc-end-real"><strong>แล้วเสร็จ</strong>
+          ......./......../.........</td>
       </tr>
 
       <!-- ส่วนลายเซ็น 2 -->
       <tr>
-        <td style="height: 25px; vertical-align: bottom;" id="doc-tech"><strong>ผู้ปฏิบัติงาน</strong> ..................................</td>
-        <td style="text-align: center; vertical-align: bottom;" id="doc-admin"><strong>ผู้รับงาน</strong> .................................</td>
-        <td style="text-align: center; vertical-align: bottom;" id="doc-leader"><strong>ผู้ตรวจสอบ</strong> ...............................</td>
+        <td style="height: 25px; vertical-align: bottom;" id="doc-tech"><strong>ผู้ปฏิบัติงาน</strong>
+          ..................................</td>
+        <td style="text-align: center; vertical-align: bottom;" id="doc-admin"><strong>ผู้รับงาน</strong>
+          .................................</td>
+        <td style="text-align: center; vertical-align: bottom;" id="doc-leader"><strong>ผู้ตรวจสอบ</strong>
+          ...............................</td>
       </tr>
 
       <!-- ส่วนลายเซ็น 3 -->
       <tr>
-        <td style="height: 25px; vertical-align: bottom;" id="doc-date-tech"><strong>วันที่</strong> ......./......../.........</td>
-        <td style="text-align: center; vertical-align: bottom;" id="doc-date-admin"><strong>วันที่</strong> ......./......../.........</td>
-        <td style="text-align: center; vertical-align: bottom;" id="doc-date-leader"><strong>วันที่</strong> ......./......../.........</td>
+        <td style="height: 25px; vertical-align: bottom;" id="doc-date-tech"><strong>วันที่</strong>
+          ......./......../.........</td>
+        <td style="text-align: center; vertical-align: bottom;" id="doc-date-admin"><strong>วันที่</strong>
+          ......./......../.........</td>
+        <td style="text-align: center; vertical-align: bottom;" id="doc-date-leader"><strong>วันที่</strong>
+          ......./......../.........</td>
       </tr>
 
       <!-- ส่วนอ้างอิงท้ายตาราง -->
@@ -255,7 +300,7 @@
     } else {
       const year = idURL.substring(0, 4);
       const dbRef = ref(database, `DEN/FIX/${year}/${idURL}`);
-      
+
       get(dbRef).then((snapshot) => {
         if (snapshot.exists()) {
           const raw = snapshot.val();
@@ -263,21 +308,21 @@
           // รอบถัดไปควรเปลี่ยน field ทั่วไปเป็น textContent/escaping helper แล้วค่อยประกอบ markup เฉพาะที่จำเป็น
 
           document.getElementById('doc-id').innerHTML = `<strong>เลขที่ใบแจ้งซ่อม</strong> ${escapeHTML(idURL)}`;
-          
+
           const [d, t] = (raw.date || '-').split(' ');
           document.getElementById('doc-date').innerHTML = `<strong>วันที่</strong> ${escapeHTML(d || '-')}`;
           document.getElementById('doc-time').innerHTML = `<strong>เวลา</strong> ${escapeHTML(t || '-')}`;
-          
+
           const userName = (raw.name || '-').split(' | ')[1] || raw.name;
           document.getElementById('doc-name').innerHTML = `<strong>ผู้แจ้ง</strong> ${escapeHTML(userName || '-')}`;
-          
+
           document.getElementById('doc-plant').innerHTML = `<strong>สถานที่</strong> ${escapeHTML(raw.plant || '-')}`;
           document.getElementById('doc-type').innerHTML = `<strong>ประเภทงาน</strong> ${escapeHTML(raw.type || '........................................')}`;
-          
+
           const mac = (raw.mac || '').split(' | ');
           document.getElementById('doc-macId').innerHTML = `<strong>รหัสเครื่องจักร</strong> ${escapeHTML(mac[0] || '-')}`;
           document.getElementById('doc-macName').innerHTML = `<strong>เครื่องจักร/อุปกรณ์</strong> ${escapeHTML(mac[1] || '-')}`;
-          
+
           document.getElementById('doc-detail').innerHTML = escapeHTML(raw.detail || '-');
 
           // การแก้ไข & อะไหล่
@@ -295,36 +340,32 @@
           // กำหนดเสร็จ
           document.getElementById('doc-end').innerHTML = `<strong>กำหนดเสร็จ</strong> ${escapeHTML(raw.den_end || '-')}`;
 
-          // ผู้ปฏิบัติงาน และ เวลาเริ่มทำ
+          // ผู้ปฏิบัติงาน: ใช้เฉพาะสมาชิกตัวแรกของ den_name
           if (raw.den_name && raw.den_name !== "-") {
-            const cleanDenName = raw.den_name.replace(new RegExp(",-", "g"), "").replace(/,$/, "");
-            document.getElementById("doc-tech").innerHTML = `<strong>ผู้ปฏิบัติงาน</strong> ${escapeHTML(cleanDenName)}`;
+            const techNames = String(raw.den_name)
+              .split(",")
+              .map(name => name.trim())
+              .filter(name => name && name !== "-");
+            document.getElementById("doc-tech").innerHTML = `<strong>ผู้ปฏิบัติงาน</strong> ${escapeHTML(techNames[0] || '-')}`;
           }
+
+          // เวลาเริ่มทำของผู้ปฏิบัติงาน
           if (raw.den_start_real && raw.den_start_real !== "-") {
             document.getElementById("doc-start-real").innerHTML = `<strong>เริ่มทำ</strong> ${escapeHTML(raw.den_start_real)}`;
             document.getElementById("doc-date-tech").innerHTML = `<strong>วันที่</strong> ${escapeHTML(raw.den_start_real)}`;
           }
 
-          // ผู้รับงาน (adminApprove)
-          if (raw.adminApprove && raw.adminApprove !== "-") {
-            const adminName = raw.adminApprove.split(" | ")[1] || raw.adminApprove;
-            document.getElementById("doc-admin").innerHTML = `<strong>ผู้รับงาน</strong> ${escapeHTML(adminName || '-')}`;
-            // ใส่วันที่เริ่มทำให้ผู้รับงานด้วย
-            if (raw.den_start_real && raw.den_start_real !== "-") {
-              document.getElementById("doc-date-admin").innerHTML = `<strong>วันที่</strong> ${escapeHTML(raw.den_start_real)}`;
-            }
-          }
+          // ผู้รับงาน (adminApprove) และเวลารับงาน: ใช้ค่าเริ่มต้นของฟอร์ม
+          document.getElementById("doc-admin").innerHTML = `<strong>ผู้รับงาน</strong> .................................`;
+          document.getElementById("doc-date-admin").innerHTML = `<strong>วันที่</strong> ......./......../.........`;
 
           // แล้วเสร็จ และ ผู้ตรวจสอบ (แสดงเมื่อ step == 4)
           if (raw.step == 4) {
             if (raw.den_end_real && raw.den_end_real !== "-") {
               document.getElementById("doc-end-real").innerHTML = `<strong>แล้วเสร็จ</strong> ${escapeHTML(raw.den_end_real)}`;
-              document.getElementById("doc-date-leader").innerHTML = `<strong>วันที่</strong> ${escapeHTML(raw.den_end_real)}`;
             }
-            if (raw.leaderApprove && raw.leaderApprove !== "-") {
-              const leaderName = raw.leaderApprove.split(" | ")[1] || raw.leaderApprove;
-              document.getElementById("doc-leader").innerHTML = `<strong>ผู้ตรวจสอบ</strong> ${escapeHTML(leaderName || '-')}`;
-            }
+            document.getElementById("doc-leader").innerHTML = `<strong>ผู้ตรวจสอบ</strong> ...............................`;
+            document.getElementById("doc-date-leader").innerHTML = `<strong>วันที่</strong> ......./......../.........`;
           } else {
             // ถ้ายกเลิก/ยังไม่เสร็จ คงที่ว่างไว้ตาม HTML เริ่มต้น
           }
@@ -350,4 +391,5 @@
 
   </script>
 </body>
+
 </html>

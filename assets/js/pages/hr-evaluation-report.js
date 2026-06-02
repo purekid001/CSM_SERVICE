@@ -142,7 +142,7 @@ export function render() {
 
       <section class="report-section">
         <div class="report-chart-grid evaluation-report-chart-grid">
-          <div class="form-card report-panel report-chart-card report-chart-wide">
+          <div class="form-card report-panel report-chart-card">
             <div class="report-card-header compact">
               <div>
                 <h3><i class="fa-solid fa-chart-area"></i> คะแนนต่อรอบ / ปี</h3>
@@ -151,7 +151,7 @@ export function render() {
             </div>
             <div class="report-chart-box report-chart-box-large"><canvas id="eval-rep-focus-chart"></canvas></div>
           </div>
-          <div class="form-card report-panel report-chart-card report-chart-wide">
+          <div class="form-card report-panel report-chart-card">
             <div class="report-card-header compact">
               <div>
                 <h3><i class="fa-solid fa-chart-line"></i> เปรียบเทียบคะแนนพนักงานทุกปี</h3>
@@ -174,6 +174,28 @@ export function render() {
           <table class="data-table table-width-lock" id="eval-rep-table" style="--report-table-min-width: 1260px; --table-lock-width: 1260px; --table-cell-min: 120px;">
             <thead id="eval-rep-head"></thead>
             <tbody id="eval-rep-body">
+              <tr>
+                <td colspan="7" class="table-loading">
+                  <i class="fa-solid fa-spinner fa-spin"></i>
+                  กำลังโหลดข้อมูล...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="form-card report-panel fade-in">
+        <div class="report-card-header compact">
+          <div>
+            <h3><i class="fa-solid fa-clock-rotate-left"></i> ตารางประวัติการประเมิน</h3>
+            <p id="eval-rep-history-summary">แสดงรายการประเมินตามขอบเขตที่เลือก</p>
+          </div>
+        </div>
+        <div class="table-wrapper report-table-wrapper">
+          <table class="data-table table-width-lock" id="eval-rep-history-table" style="--report-table-min-width: 1480px; --table-lock-width: 1480px; --table-cell-min: 120px; --table-detail-min: 300px;">
+            <thead id="eval-rep-history-head"></thead>
+            <tbody id="eval-rep-history-body">
               <tr>
                 <td colspan="7" class="table-loading">
                   <i class="fa-solid fa-spinner fa-spin"></i>
@@ -239,6 +261,7 @@ async function loadReportData() {
     showToast(`โหลดรายงานผลประเมินไม่สำเร็จ: ${error.message}`, 'error');
     destroyCharts();
     renderEmptyTable('ไม่สามารถโหลดข้อมูลรายงานได้');
+    renderEmptyHistoryTable('ไม่สามารถโหลดประวัติการประเมินได้');
   }
 }
 
@@ -264,6 +287,7 @@ function applyFilters() {
   renderMetrics();
   renderCharts();
   renderComparisonTable();
+  renderHistoryTable();
 }
 
 function populateDepartmentOptions() {
@@ -512,13 +536,71 @@ function renderComparisonTable() {
 }
 
 function renderEmptyTable(message) {
-  const thead = document.getElementById('eval-rep-head');
-  const tbody = document.getElementById('eval-rep-body');
+  renderEmptyTableState({
+    theadId: 'eval-rep-head',
+    tbodyId: 'eval-rep-body',
+    colspan: 7,
+    message,
+  });
+}
+
+function renderHistoryTable() {
+  const historyRows = buildHistoryRows(state.focusResults);
+  if (historyRows.length === 0) {
+    renderEmptyHistoryTable('ยังไม่พบประวัติการประเมินที่ตรงกับขอบเขตที่เลือก');
+    return;
+  }
+
+  const thead = document.getElementById('eval-rep-history-head');
+  const tbody = document.getElementById('eval-rep-history-body');
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr>
+      <th>รอบ / ปี</th>
+      <th>วันที่ประเมิน</th>
+      <th>รหัสพนักงาน</th>
+      <th>ชื่อพนักงาน</th>
+      <th>หน่วยงาน</th>
+      <th class="cell-center">คะแนนรวม</th>
+      <th>ความคิดเห็นผู้ประเมิน</th>
+    </tr>
+  `;
+
+  tbody.innerHTML = historyRows.map(row => {
+    const isSelected = row.employeeId === state.selectedEmployeeId && state.selectedEmployeeId !== ALL_EMPLOYEES_VALUE;
+
+    return `
+      <tr class="${isSelected ? 'eval-report-row-highlight' : ''}">
+        <td>${escapeHTML(row.year)}</td>
+        <td>${escapeHTML(formatDateTimeDisplay(row.submittedAt))}</td>
+        <td>${escapeHTML(row.employeeId)}</td>
+        <td>${escapeHTML(row.employeeName)}</td>
+        <td>${escapeHTML(row.employeeDepartment || '-')}</td>
+        <td class="cell-center">${formatTableScore(row.overallScore)}</td>
+        <td class="cell-detail eval-report-comment-cell">${escapeHTML(row.comment || '-')}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderEmptyHistoryTable(message) {
+  renderEmptyTableState({
+    theadId: 'eval-rep-history-head',
+    tbodyId: 'eval-rep-history-body',
+    colspan: 7,
+    message,
+  });
+}
+
+function renderEmptyTableState({ theadId, tbodyId, colspan, message }) {
+  const thead = document.getElementById(theadId);
+  const tbody = document.getElementById(tbodyId);
   if (thead) thead.innerHTML = '';
   if (tbody) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" class="table-loading">
+        <td colspan="${colspan}" class="table-loading">
           <i class="fa-solid fa-inbox"></i>
           ${escapeHTML(message)}
         </td>
@@ -571,6 +653,12 @@ function syncScopeUi() {
   setText(
     'eval-rep-table-summary',
     `ตารางนี้รวม ${state.comparisonRows.length} พนักงาน และ ${years.length} รอบ / ปี${selectedEmployee ? ` โดยไฮไลต์ ${selectedEmployee.label}` : ''}`
+  );
+  setText(
+    'eval-rep-history-summary',
+    selectedEmployee
+      ? `ประวัติการประเมินของ ${selectedEmployee.label} ตามตัวกรองปัจจุบัน จำนวน ${state.focusResults.length} รายการ`
+      : `ประวัติการประเมินทั้งหมดใน ${departmentLabel} จำนวน ${state.focusResults.length} รายการ`
   );
 }
 
@@ -677,6 +765,19 @@ function buildEmployeeOptions(results) {
   });
 
   return [...grouped.values()].sort((left, right) => left.employeeName.localeCompare(right.employeeName, 'th'));
+}
+
+function buildHistoryRows(results) {
+  return [...results].sort((left, right) => {
+    const rightTime = parseDateTimeForSort(right.submittedAt);
+    const leftTime = parseDateTimeForSort(left.submittedAt);
+    if (rightTime !== leftTime) return rightTime - leftTime;
+
+    const cycleCompare = compareEvaluationCycle(right.year, left.year);
+    if (cycleCompare !== 0) return cycleCompare;
+
+    return String(left.employeeName || '').localeCompare(String(right.employeeName || ''), 'th');
+  });
 }
 
 function resolveCurrentEvaluatorName() {
@@ -864,6 +965,62 @@ function roundTo(value, digits = 2) {
 
 function uniqueSorted(values) {
   return [...new Set(values.filter(Boolean))].sort((left, right) => left.localeCompare(right, 'th'));
+}
+
+function compareEvaluationCycle(left, right) {
+  const leftParts = parseCycleParts(left);
+  const rightParts = parseCycleParts(right);
+
+  if (leftParts.year !== rightParts.year) return leftParts.year - rightParts.year;
+  if (leftParts.round !== rightParts.round) return leftParts.round - rightParts.round;
+  return String(left || '').localeCompare(String(right || ''), 'th');
+}
+
+function parseCycleParts(value) {
+  const normalized = String(value || '').trim();
+  const match = normalized.match(/(\d{4}).*?(\d+)/);
+  if (!match) {
+    return {
+      year: 0,
+      round: 0,
+    };
+  }
+
+  return {
+    year: Number(match[1]) || 0,
+    round: Number(match[2]) || 0,
+  };
+}
+
+function parseDateTimeForSort(value) {
+  const normalized = String(value || '').trim();
+  if (!normalized) return 0;
+
+  const thaiMatch = normalized.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (thaiMatch) {
+    const [, day, month, year, hour = '00', minute = '00', second = '00'] = thaiMatch;
+    return new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour),
+      Number(minute),
+      Number(second)
+    ).getTime();
+  }
+
+  const parsed = new Date(normalized).getTime();
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatDateTimeDisplay(value) {
+  const timestamp = parseDateTimeForSort(value);
+  if (!timestamp) return '-';
+
+  const date = new Date(timestamp);
+  const pad = number => String(number).padStart(2, '0');
+
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 function setText(id, value) {

@@ -132,7 +132,7 @@ export function render() {
       </div>
 
       <div class="ops-table-caption">
-        <span><i class="fa-solid fa-arrow-down-wide-short"></i> เรียงจากวันที่จองล่าสุดไปเก่าสุด</span>
+        <span><i class="fa-solid fa-arrow-up-wide-short"></i> เรียงวันที่ขอจากน้อยไปมาก</span>
         <span><i class="fa-solid fa-table-list"></i> รองรับการเลื่อนแนวนอนในหน้าจอเล็ก</span>
       </div>
 
@@ -216,7 +216,7 @@ export function render() {
       </div>
 
       <div class="ops-table-caption">
-        <span><i class="fa-solid fa-clock-rotate-left"></i> ใช้สำหรับค้นย้อนหลังทั้งฝั่ง Car และ Shuttle</span>
+        <span><i class="fa-solid fa-clock-rotate-left"></i> ใช้สำหรับค้นย้อนหลังทั้งฝั่ง Car และ Shuttle โดยเรียงวันที่ขอจากน้อยไปมาก</span>
         <span><i class="fa-solid fa-expand"></i> เปิด modal เพื่อตรวจข้อมูลและอัปเดตสถานะต่อได้ทันที</span>
       </div>
 
@@ -334,6 +334,15 @@ const rowsPerPage = 20;
 
 // Helpers moved to utils.js
 
+function getBookingDateValue(str) {
+  if (!str || str === '-') return 0;
+  const parts = str.split('/');
+  if (parts.length === 3) {
+    return new Date(parts[2], parts[1] - 1, parts[0]).getTime();
+  }
+  return 0;
+}
+
 async function loadBookings() {
   try {
     document.getElementById('bl-tbody').innerHTML = '<tr><td colspan="10" class="table-loading"><i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลดข้อมูล...</td></tr>';
@@ -418,17 +427,8 @@ async function loadBookings() {
       }
     }
 
-    // Sort by bookingDate descending (newest first)
-    // bookingDate format: dd/mm/yyyy
-    function parseDate(str) {
-      if (!str) return 0;
-      const parts = str.split('/');
-      if (parts.length === 3) {
-        return new Date(parts[2], parts[1] - 1, parts[0]).getTime();
-      }
-      return 0;
-    }
-    allBookings.sort((a, b) => parseDate(b.bookingDate) - parseDate(a.bookingDate));
+    // Sort by bookingDate ascending (oldest first)
+    allBookings.sort((a, b) => getBookingDateValue(a.bookingDate) - getBookingDateValue(b.bookingDate));
 
     updateOverviewStats();
     renderTable1();

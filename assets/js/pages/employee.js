@@ -3,7 +3,8 @@
  */
 export function render() {
   // ตรวจสอบสถานะเพื่อทำสีป้าย (Badge)
-  const isActive = sessionStorage.getItem('empActive') === 'Yes';
+  const isActive = sessionStorage.getItem('empActive') === 'true';
+  console.log(isActive);
   const statusColor = isActive ? '#40c057' : '#fa5252';
   const statusText = isActive ? 'กำลังใช้งาน (Active)' : 'ระงับการใช้งาน (Inactive)';
   const fullName = `${sessionStorage.getItem('empName') || '-'} ${sessionStorage.getItem('empLastname') || ''}`.trim();

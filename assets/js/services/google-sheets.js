@@ -368,7 +368,7 @@ function normalizeHeaderSet(columns = [], rows = []) {
 }
 
 function getCurrentEvaluationCycle(date = new Date()) {
-  const round = date.getMonth() + 1 < 6 ? 1 : 2;
+  const round = date.getMonth() + 1 < 11 ? 1 : 2;
   return `${date.getFullYear()}/${round}`;
 }
 
@@ -460,6 +460,8 @@ function normalizeEmployeeRows(rows) {
       const titlePrefix = normalizeText(raw['คำนำหน้าชื่อ']);
       const firstName = normalizeText(raw['ชื่อ']);
       const lastName = normalizeText(raw['สกุล']);
+      const startDateRaw = normalizeText(raw['วันที่เริ่มงาน']) || '-';
+      const startDate = normalizeEmployeeStartDate(startDateRaw);
 
       return {
         employeeId: normalizeText(raw['รหัสพนักงาน']),
@@ -473,12 +475,98 @@ function normalizeEmployeeRows(rows) {
         unit: normalizeText(raw['หน่วย']) || '-',
         level: normalizeText(raw['ระดับ']) || '-',
         position: normalizeText(raw['ตำแหน่ง']) || '-',
-        startDate: normalizeText(raw['วันที่เริ่มงาน']) || '-',
-        serviceAge: normalizeText(raw['อายุงาน']) || '-',
+        startDate: startDate ? formatDateForDisplay(startDate) : startDateRaw,
+        serviceAge: calculateServiceAge(startDate),
         evaluatorTitle: normalizeText(raw['ตำแหน่งผู้ประเมิน']) || '-',
       };
     })
     .filter(item => item.employeeId && item.fullName);
+}
+
+function normalizeEmployeeStartDate(value) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return atStartOfDay(value);
+  }
+
+  const text = normalizeText(value);
+  if (!text || text === '-') return null;
+
+  const dateMatch = text.match(/^Date\((\d{4}),(\d{1,2}),(\d{1,2})\)$/);
+  if (dateMatch) {
+    return atStartOfDay(new Date(
+      Number(dateMatch[1]),
+      Number(dateMatch[2]),
+      Number(dateMatch[3])
+    ));
+  }
+
+  const dmyMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmyMatch) {
+    return atStartOfDay(new Date(
+      Number(dmyMatch[3]),
+      Number(dmyMatch[2]) - 1,
+      Number(dmyMatch[1])
+    ));
+  }
+
+  const isoMatch = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (isoMatch) {
+    return atStartOfDay(new Date(
+      Number(isoMatch[1]),
+      Number(isoMatch[2]) - 1,
+      Number(isoMatch[3])
+    ));
+  }
+
+  const parsed = new Date(text);
+  return Number.isNaN(parsed.getTime()) ? null : atStartOfDay(parsed);
+}
+
+function atStartOfDay(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function formatDateForDisplay(date) {
+  const pad = value => String(value).padStart(2, '0');
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
+}
+
+function formatDateTimeForStorage(date = new Date()) {
+  const pad = value => String(value).padStart(2, '0');
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function calculateServiceAge(startDate, today = new Date()) {
+  if (!(startDate instanceof Date) || Number.isNaN(startDate.getTime())) {
+    return '-';
+  }
+
+  const currentDate = atStartOfDay(today);
+  if (startDate.getTime() > currentDate.getTime()) {
+    return '0 วัน';
+  }
+
+  let years = currentDate.getFullYear() - startDate.getFullYear();
+  let months = currentDate.getMonth() - startDate.getMonth();
+  let days = currentDate.getDate() - startDate.getDate();
+
+  if (days < 0) {
+    const previousMonthLastDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0).getDate();
+    days += previousMonthLastDay;
+    months -= 1;
+  }
+
+  if (months < 0) {
+    months += 12;
+    years -= 1;
+  }
+
+  const parts = [];
+  if (years > 0) parts.push(`${years} ปี`);
+  if (months > 0) parts.push(`${months} เดือน`);
+  if (days > 0 || parts.length === 0) parts.push(`${days} วัน`);
+
+  return parts.join(' ');
 }
 
 function normalizeTopicRows(topicRows, weightRows) {
@@ -562,6 +650,14 @@ function normalizeResultRows(columns, rows) {
       }),
     };
   }).filter(item => item.employeeId && item.evaluatorName && item.year);
+}
+
+function findResultRowIndexByRecordId(results, recordId) {
+  const normalizedRecordId = normalizeText(recordId);
+  if (!normalizedRecordId) return null;
+
+  const matched = results.find(item => normalizeText(item.id) === normalizedRecordId);
+  return Number.isInteger(matched?.rowIndex) ? matched.rowIndex : null;
 }
 
 function normalizeSettingsRows(columns, rows) {
@@ -714,7 +810,7 @@ function buildSectionScores(entries) {
     };
 
     current.items += 1;
-    if (Number.isFinite(entry.score)) {
+    if (entry.isAnswered) {
       current.answered += 1;
     }
     current.weightedTotal += entry.weightedScore;
@@ -757,7 +853,9 @@ export function buildEvaluationRecordId(cycleLabel, employeeId, evaluatorEmploye
 
 export function createEvaluationResultRecord({ cycleLabel, employee, evaluator, comment = '', scoresByKey = {}, topics = [], aiAnalysis = {} }) {
   const entries = topics.map(topic => {
-    const score = normalizeNumber(scoresByKey[topic.key], 0);
+    const rawScore = scoresByKey[topic.key];
+    const isAnswered = normalizeText(rawScore) !== '';
+    const score = isAnswered ? normalizeNumber(rawScore, 0) : 0;
     const weightedScore = roundTo((score * topic.weight) / 100, 4);
 
     return {
@@ -767,6 +865,7 @@ export function createEvaluationResultRecord({ cycleLabel, employee, evaluator, 
       weight: roundTo(topic.weight, 2),
       section: topic.section,
       score,
+      isAnswered,
       weightedScore,
       dividedWeightScore: weightedScore,
     };
@@ -795,7 +894,7 @@ export function createEvaluationResultRecord({ cycleLabel, employee, evaluator, 
     analysisModel: normalizeText(aiAnalysis.analysisModel),
     analysisGeneratedAt: normalizeText(aiAnalysis.analysisGeneratedAt),
     analysisError: normalizeText(aiAnalysis.analysisError),
-    submittedAt: new Date().toISOString(),
+    submittedAt: formatDateTimeForStorage(),
     comment: normalizeText(comment),
     entries,
     source: 'web-client',
@@ -805,6 +904,7 @@ export function createEvaluationResultRecord({ cycleLabel, employee, evaluator, 
     'คะแนนหาร Weight': dividedWeightEntries,
     rawTotalScore,
     dividedWeightEntries,
+    weightedTotal,
     'คะแนนหาร Weight รวม': weightedTotal,
   };
 
@@ -873,20 +973,24 @@ export async function upsertEvaluationResult(record, { existingRowIndex = null, 
   const sheetTitle = await getSheetTitle('results');
   const fetchedResultSheet = await fetchGvizSheet('results');
   const normalizedResultSheet = normalizeHeaderSet(fetchedResultSheet.columns, fetchedResultSheet.rows);
+  const normalizedResults = normalizeResultRows(normalizedResultSheet.headers, normalizedResultSheet.dataRows);
   const baseHeaders = headers.length > 0 ? headers : normalizedResultSheet.headers;
   const missingHeaders = Object.keys(record).filter(key => !baseHeaders.includes(key));
   const resultHeaders = missingHeaders.length > 0 ? [...baseHeaders, ...missingHeaders] : baseHeaders;
   const accessToken = await getGoogleAccessToken();
+  const matchedRowIndex = findResultRowIndexByRecordId(normalizedResults, record.id);
+  const safeExistingRowIndex = matchedRowIndex
+    ?? (Number.isInteger(existingRowIndex) && existingRowIndex >= 2 ? existingRowIndex : null);
 
   if (missingHeaders.length > 0) {
     await updateSheetHeaders(config, sheetTitle, accessToken, resultHeaders);
   }
 
   const rowValues = buildRowValues(resultHeaders, record);
-  const isUpdate = Number.isInteger(existingRowIndex) && existingRowIndex >= 2;
+  const isUpdate = Number.isInteger(safeExistingRowIndex) && safeExistingRowIndex >= 2;
 
   const range = isUpdate
-    ? `${sheetTitle}!A${existingRowIndex}:${getColumnLetter(resultHeaders.length)}${existingRowIndex}`
+    ? `${sheetTitle}!A${safeExistingRowIndex}:${getColumnLetter(resultHeaders.length)}${safeExistingRowIndex}`
     : `${sheetTitle}!A1`;
 
   const endpoint = isUpdate
@@ -913,14 +1017,32 @@ export async function upsertEvaluationResult(record, { existingRowIndex = null, 
   return response.json();
 }
 
-export async function waitForEvaluationResultSync(recordId, { timeoutMs = 12000, intervalMs = 1200 } = {}) {
+function isSyncedEvaluationResult(item, expectedRecord) {
+  if (!item || !expectedRecord) return false;
+
+  return normalizeText(item.id) === normalizeText(expectedRecord.id)
+    && normalizeText(item.submittedAt) === normalizeText(expectedRecord.submittedAt)
+    && normalizeText(item.comment) === normalizeText(expectedRecord.comment)
+    && normalizeText(item.analysis) === normalizeText(expectedRecord.analysis)
+    && normalizeText(item.analysisStatus) === normalizeText(expectedRecord.analysisStatus)
+    && roundTo(item.overallScore, 2) === roundTo(expectedRecord.overallScore, 2)
+    && roundTo(item.weightedTotal, 4) === roundTo(expectedRecord.weightedTotal, 4);
+}
+
+export async function waitForEvaluationResultSync(recordOrId, { timeoutMs = 12000, intervalMs = 1200 } = {}) {
   const startedAt = Date.now();
+  const expectedRecord = typeof recordOrId === 'string' ? null : recordOrId;
+  const expectedRecordId = typeof recordOrId === 'string'
+    ? recordOrId
+    : recordOrId?.id;
 
   while (Date.now() - startedAt <= timeoutMs) {
     const fetchedResultSheet = await fetchGvizSheet('results');
     const normalizedResultSheet = normalizeHeaderSet(fetchedResultSheet.columns, fetchedResultSheet.rows);
     const results = normalizeResultRows(normalizedResultSheet.headers, normalizedResultSheet.dataRows);
-    const hasRecord = results.some(item => normalizeText(item.id) === normalizeText(recordId));
+    const hasRecord = expectedRecord
+      ? results.some(item => isSyncedEvaluationResult(item, expectedRecord))
+      : results.some(item => normalizeText(item.id) === normalizeText(expectedRecordId));
 
     if (hasRecord) {
       return true;

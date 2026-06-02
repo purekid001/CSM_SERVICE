@@ -71,6 +71,40 @@ export function showConfirmModal(title, message, icon = 'fa-paper-plane', confir
   });
 }
 
+export function showRichConfirmModal(title, html, icon = 'fa-paper-plane', confirmText = 'ยืนยัน', cancelText = 'ยกเลิก') {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    const safeIcon = sanitizeIcon(icon, 'fa-paper-plane');
+
+    overlay.innerHTML = `
+      <div class="modal-card modal-card-rich">
+        <div class="modal-icon" style="background: linear-gradient(135deg, var(--ocean-start), var(--ocean-end)); color: white; border: none;">
+          <i class="fa-solid ${safeIcon}"></i>
+        </div>
+        <h3 class="modal-title">${escapeHTML(title)}</h3>
+        <div class="modal-rich-content">${html}</div>
+        <div class="modal-actions">
+          <button class="modal-btn modal-btn-cancel" id="global-rich-modal-cancel">${escapeHTML(cancelText)}</button>
+          <button class="modal-btn modal-btn-primary" id="global-rich-modal-confirm">${escapeHTML(confirmText)}</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('show'));
+
+    const closeOverlay = (result) => {
+      overlay.classList.remove('show');
+      overlay.addEventListener('transitionend', () => overlay.remove());
+      resolve(result);
+    };
+
+    overlay.querySelector('#global-rich-modal-confirm').addEventListener('click', () => closeOverlay(true));
+    overlay.querySelector('#global-rich-modal-cancel').addEventListener('click', () => closeOverlay(false));
+    overlay.addEventListener('click', (ev) => { if (ev.target === overlay) closeOverlay(false); });
+  });
+}
+
 /**
  * Global Alert Modal (Standardized Ocean Design)
  */
@@ -137,6 +171,7 @@ export function showToast(message, type = 'success') {
 
 // Attach to window for global access (Compatibility for older code)
 window.showConfirmModal = showConfirmModal;
+window.showRichConfirmModal = showRichConfirmModal;
 window.showAlert = showAlert;
 window.showToast = showToast;
 

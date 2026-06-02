@@ -18,6 +18,8 @@ import * as hrBookingList from './pages/hr-booking-list.js';
 import * as hrShuttleGroup from './pages/hr-shuttle-group.js';
 import * as hrReport from './pages/hr-report.js';
 import * as hrDoc from './pages/hr-doc.js';
+import * as hrEvaluation from './pages/hr-evaluation.js';
+import * as hrEvaluationReport from './pages/hr-evaluation-report.js';
 import * as backup from './pages/backup.js';
 
 // แมปชื่อหน้ากับ module
@@ -37,6 +39,8 @@ const pages = {
   'hr-doc':          hrDoc,
   'hr-report':       hrReport,
   'hr-shuttle-group': hrShuttleGroup,
+  'hr-evaluation':   hrEvaluation,
+  'hr-evaluation-report': hrEvaluationReport,
 
   // Admin Routes
   'admin-backup':    backup,

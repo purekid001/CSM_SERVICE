@@ -127,6 +127,46 @@ export function sanitizeUrl(value, fallback = '#') {
   return fallback;
 }
 
+function normalizeText(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
+function normalizeDepartment(value) {
+  return normalizeText(value).replace(/\s+/g, '');
+}
+
+export function isActiveUserRecord(value) {
+  const normalized = normalizeText(value);
+  return normalized === 'true';
+}
+
+export function getApproversByDepartment(allUsers, department, scope = 'engineering') {
+  const normalizedDepartment = normalizeDepartment(department);
+  if (!allUsers || typeof allUsers !== 'object' || !normalizedDepartment) return [];
+
+  const scopeKey = scope === 'hr' ? 'level_Hr' : 'level';
+  const allowedLevels = scope === 'hr'
+    ? new Set(['1', 'admin', 'admin_hr'])
+    : new Set(['1', 'admin', 'admin_en']);
+
+  return Object.entries(allUsers)
+    .filter(([id, user]) => {
+      if (!user || typeof user !== 'object') return false;
+
+      const userDepartment = normalizeDepartment(user.department);
+      const userLevel = normalizeText(user[scopeKey]);
+
+      return userDepartment === normalizedDepartment
+        && isActiveUserRecord(user.active)
+        && allowedLevels.has(userLevel);
+    })
+    .sort(([, userA], [, userB]) => {
+      const nameA = `${userA?.firstname || ''} ${userA?.lastname || ''}`.trim();
+      const nameB = `${userB?.firstname || ''} ${userB?.lastname || ''}`.trim();
+      return nameA.localeCompare(nameB, 'th');
+    });
+}
+
 export function getUserAccessProfile() {
   const levelEn = String(sessionStorage.getItem('empLevel_en') || '').trim().toLowerCase();
   const levelHr = String(sessionStorage.getItem('empLevel_hr') || sessionStorage.getItem('level_Hr') || '').trim().toLowerCase();
@@ -154,6 +194,8 @@ export function canAccessPage(page) {
       return access.isEngineeringDocAdmin;
     case 'hr-doc':
       return access.isHrDocAdmin;
+    case 'hr-evaluation-report':
+      return true;
     case 'hr-shuttle-group':
       return access.isHrDispatchAdmin;
     case 'admin-backup':

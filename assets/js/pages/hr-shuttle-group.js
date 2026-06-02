@@ -106,7 +106,7 @@ export function render() {
         </div>
 
         <div class="ops-table-caption">
-          <span><i class="fa-solid fa-arrow-down-wide-short"></i> ตารางนี้เหมาะกับการคัดงานเพื่อรวมกลุ่ม</span>
+          <span><i class="fa-solid fa-arrow-up-wide-short"></i> เรียงวันที่ขอจากน้อยไปมากเพื่อคัดงานรวมกลุ่ม</span>
           <span><i class="fa-solid fa-users-viewfinder"></i> ยอดเลือกและจำนวนคนจะอัปเดตทันทีด้านล่าง</span>
         </div>
 
@@ -195,7 +195,7 @@ export function render() {
           </div>
         </div>
         <div class="ops-table-caption">
-          <span><i class="fa-solid fa-timeline"></i> ประวัติกลุ่มเรียงจากใหม่ไปเก่า</span>
+          <span><i class="fa-solid fa-timeline"></i> ประวัติกลุ่มเรียงตามวันที่ขอจากน้อยไปมาก</span>
           <span><i class="fa-solid fa-circle-nodes"></i> ใช้ดูรายการที่เคยรวมเส้นทางไว้แล้ว</span>
         </div>
         <div class="table-wrapper ops-table-wrapper">
@@ -289,6 +289,15 @@ let selectedIds = new Set();
 const PAGE_SIZE = 20;
 let currentPage = 1;
 let currentGroupPage = 1;
+
+function getBookingDateValue(str) {
+  if (!str || str === '-') return 0;
+  const parts = str.split('/');
+  if (parts.length === 3) {
+    return new Date(parts[2], parts[1] - 1, parts[0]).getTime();
+  }
+  return 0;
+}
 
 export function init() {
   // ตรวจสอบสิทธิ์ Admin
@@ -461,6 +470,7 @@ async function loadBookings() {
         shuttleMap.set(String(item.id), item);
       });
     });
+    allShuttles.sort((a, b) => getBookingDateValue(a.bookingDate) - getBookingDateValue(b.bookingDate));
     renderTable();
   } catch (e) { console.error('Load bookings error:', e); }
 }
@@ -686,9 +696,9 @@ async function loadGroups() {
       });
     });
 
-    // แปลง object → array เรียงจากใหม่ไปเก่า
+    // แปลง object → array เรียงตามวันที่ขอจากน้อยไปมาก
     groupData = Object.values(objectValue);
-    groupData.sort((a, b) => (b.group || '').localeCompare(a.group || ''));
+    groupData.sort((a, b) => getBookingDateValue(a.bookingDate) - getBookingDateValue(b.bookingDate));
     renderGroupTable();
   } catch (e) { console.error('Load groups error:', e); }
 }

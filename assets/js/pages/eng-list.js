@@ -135,7 +135,7 @@ export function render() {
         </div>
 
         <div class="ops-table-caption">
-          <span><i class="fa-solid fa-arrow-down-wide-short"></i> เรียงจากรายการล่าสุดไปเก่าสุด</span>
+          <span><i class="fa-solid fa-arrow-up-wide-short"></i> เรียงวันที่แจ้งจากน้อยไปมาก</span>
           <span><i class="fa-solid fa-table-list"></i> ตารางเลื่อนแนวนอนได้ในหน้าจอเล็ก</span>
         </div>
 
@@ -214,7 +214,7 @@ export function render() {
         </div>
 
         <div class="ops-table-caption">
-          <span><i class="fa-solid fa-clock-rotate-left"></i> ใช้สำหรับค้นย้อนหลังและตรวจสถานะข้ามปี</span>
+          <span><i class="fa-solid fa-clock-rotate-left"></i> ใช้สำหรับค้นย้อนหลังและเรียงวันที่แจ้งจากน้อยไปมาก</span>
           <span><i class="fa-solid fa-expand"></i> คลิกแถวเพื่อเปิดรายละเอียดและจัดการต่อ</span>
         </div>
 
@@ -328,6 +328,15 @@ export function render() {
 
 export function init() {
   const SEARCH_DEFAULT_LOOKBACK_DAYS = 15;
+
+  function getRecordDateValue(dateStr) {
+    if (!dateStr || dateStr === '-') return 0;
+    const withTime = parseDateTime(dateStr);
+    if (withTime) return withTime;
+
+    const dateOnly = parseDMY(dateStr);
+    return dateOnly ? dateOnly.getTime() : 0;
+  }
 
   // Helpers moved to utils.js
 
@@ -469,11 +478,11 @@ export function init() {
         }
       });
 
-      // เรียงลำดับ: ล่าสุดก่อน
-      const sortDesc = (arr) => arr.sort((a, b) => parseDateTime(b.date) - parseDateTime(a.date));
-      sortDesc(masterRecords);
+      // เรียงลำดับตามวันที่แจ้ง: จากน้อยไปมาก
+      const sortAsc = (arr) => arr.sort((a, b) => getRecordDateValue(a.date) - getRecordDateValue(b.date));
+      sortAsc(masterRecords);
       syncPrimaryQueue();
-      sortDesc(t1.all);
+      sortAsc(t1.all);
 
       // สร้าง dropdown ปี
       const sortedYears = [...years].sort((a, b) => b - a);
@@ -561,7 +570,18 @@ export function init() {
   const closeBtn = document.getElementById('dm-close');
   let engineerOptions = ''; // cache dropdown options
 
-  // Load engineers from DHR/User (active=Yes, dept=EN)
+  function validateScheduleRange(startVal, endVal) {
+    if (!startVal || startVal === '-' || !endVal || endVal === '-') return true;
+
+    if (parseDateTime(endVal) < parseDateTime(startVal)) {
+      showAlert("Warning", "กำหนดวันสิ้นสุดต้องไม่น้อยกว่ากำหนดวันเริ่ม", "fa-triangle-exclamation");
+      return false;
+    }
+
+    return true;
+  }
+
+  // Load engineers from DHR/User (active=true, dept=EN)
   async function loadEngineers() {
     if (engineerOptions) return; // already loaded
     try {
@@ -570,7 +590,7 @@ export function init() {
       const users = snap.val();
       let opts = '<option value="">-- เลือก --</option>';
       Object.entries(users).forEach(([id, u]) => {
-        if (u.active === 'Yes' && u.department === 'วิศวกรรม ( EN )') {
+        if (u.active === 'true' && u.department === 'วิศวกรรม ( EN )') {
           const name = `${u.firstname || ''} ${u.lastname || ''}`.trim();
           opts += `<option value="${escapeAttr(name)}">${escapeHTML(name)}</option>`;
         }
@@ -630,8 +650,34 @@ export function init() {
     document.getElementById('dm-leader').value = leaderVal !== '-' ? leaderVal : '';
 
     // Flatpickr
-    flatpickr('#dm-start', { dateFormat: 'd/m/Y H:i', enableTime: true, time_24hr: true, disableMobile: true, defaultDate: raw.den_start !== '-' ? raw.den_start : null });
-    flatpickr('#dm-end', { dateFormat: 'd/m/Y H:i', enableTime: true, time_24hr: true, disableMobile: true, defaultDate: raw.den_end !== '-' ? raw.den_end : null });
+    const startInput = document.getElementById('dm-start');
+    const endInput = document.getElementById('dm-end');
+    if (startInput._flatpickr) startInput._flatpickr.destroy();
+    if (endInput._flatpickr) endInput._flatpickr.destroy();
+
+    const initialStart = raw.den_start !== '-' ? raw.den_start : null;
+    const endPicker = flatpickr(endInput, {
+      dateFormat: 'd/m/Y H:i',
+      enableTime: true,
+      time_24hr: true,
+      disableMobile: true,
+      defaultDate: raw.den_end !== '-' ? raw.den_end : null,
+      minDate: initialStart
+    });
+    flatpickr(startInput, {
+      dateFormat: 'd/m/Y H:i',
+      enableTime: true,
+      time_24hr: true,
+      disableMobile: true,
+      defaultDate: initialStart,
+      onChange: selectedDates => {
+        const selectedStart = selectedDates[0] || null;
+        endPicker.set('minDate', selectedStart);
+        if (selectedStart && endPicker.selectedDates[0] && endPicker.selectedDates[0] < selectedStart) {
+          endPicker.clear();
+        }
+      }
+    });
 
     // ส่วนที่ 3: ช่าง index 1-5
     for (let i = 1; i <= 5; i++) {
@@ -831,6 +877,8 @@ export function init() {
     const endVal = document.getElementById('dm-end').value || "-";
     const userRemark = document.getElementById('dm-user-remark').value.trim() || "-";
 
+    if ([1, 2, 3].includes(intStep) && !validateScheduleRange(startVal, endVal)) return;
+
     let strCheck = "-";
     const checkedRadio = document.querySelector('input[name="dm-accept"]:checked');
     if (checkedRadio) strCheck = checkedRadio.value;
@@ -989,6 +1037,10 @@ export function init() {
     if (!recordId) return;
 
     if (empLevelEn === "admin_en" || empLevelEn === "admin") {
+      const startVal = document.getElementById('dm-start').value || "-";
+      const endVal = document.getElementById('dm-end').value || "-";
+      if (!validateScheduleRange(startVal, endVal)) return;
+
       const willEdit = await showConfirmModal("ยืนยันการบันทึก?", "คุณต้องการบันทึกการแก้ไขข้อมูลใช่หรือไม่?", "fa-circle-info", "บันทึก", "ยกเลิก");
       if (willEdit) {
         try {
@@ -1013,9 +1065,6 @@ export function init() {
           const fixText = document.getElementById('dm-fix').value.trim() || "-";
           const partsText = document.getElementById('dm-parts').value.trim() || "-";
           const remarkText = document.getElementById('dm-remark').value.trim() || "-";
-
-          const startVal = document.getElementById('dm-start').value || "-";
-          const endVal = document.getElementById('dm-end').value || "-";
 
           const year = recordId.substring(0, 4);
           const firebaseRef = ref(database, `DEN/FIX/${year}/${recordId}`);

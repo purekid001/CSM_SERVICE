@@ -1,7 +1,7 @@
 // --- ระบบ Authentication (Login / Auto-login / Logout) ---
 import { database, ref, get } from './firebase.js';
 import { getPageFromHash } from './router.js';
-import { getUserAccessProfile } from './utils.js';
+import { getUserAccessProfile, isActiveUserRecord } from './utils.js';
 import { syncEngAutoCloseForSession } from './services/eng-auto-close.js';
 
 // --- อ้างอิง UI Elements ---
@@ -23,7 +23,7 @@ function setUserSession(userId, userData) {
   sessionStorage.setItem('empName', userData.firstname || 'User');
   sessionStorage.setItem('empLastname', userData.lastname || ' ');
   sessionStorage.setItem('empDepartment', userData.department || ' ');
-  sessionStorage.setItem('empActive', userData.active || ' ');
+  sessionStorage.setItem('empActive', isActiveUserRecord(userData.active) ? 'true' : 'false');
   sessionStorage.setItem('empEmail', userData.email || ' ');
   sessionStorage.setItem('empLevel_en', userData.level || ' ');
   sessionStorage.setItem('empLevel_hr', userData.level_Hr || ' ');
@@ -39,10 +39,10 @@ function getDisplayName(userData, fallback) {
 
 /**
  * --- ตรวจสอบสถานะบัญชี ---
- * อนุญาตให้เข้าสู่ระบบเฉพาะ user ที่ active เป็น "Yes" เท่านั้น
+ * อนุญาตให้เข้าสู่ระบบเฉพาะ user ที่ active เป็น true เท่านั้น
  */
 function isUserActive(userData) {
-  return String(userData.active || '').trim().toLowerCase() === 'yes';
+  return isActiveUserRecord(userData.active);
 }
 
 /**
@@ -59,6 +59,7 @@ function applyMenuPermissions() {
   const enDoc = document.querySelector('[data-perm="en-doc"]');
   // HR menus
   const hrDoc = document.querySelector('[data-perm="hr-doc"]');
+  const hrEvalReport = document.querySelector('[data-perm="hr-eval-report"]');
   // Admin menus
   const adminGroup = document.getElementById('admin-menu-group');
 
@@ -77,8 +78,14 @@ function applyMenuPermissions() {
     // level 1, 0, หรืออื่นๆ
     if (hrDoc) hrDoc.style.display = 'none';
   }
-  
-  
+
+  if (access.isHrDispatchAdmin || access.isHrDocAdmin || access.isSystemAdmin) {
+    // เห็นรายงานผลประเมิน
+  } else {
+    if (hrEvalReport) hrEvalReport.style.display = 'none';
+  }
+
+
   // System Admin rules
   if (access.isSystemAdmin) {
     if (adminGroup) adminGroup.style.display = 'block';
@@ -147,7 +154,7 @@ window.logout = async () => {
     'คุณต้องการออกจากระบบใช่หรือไม่?',
     'fa-right-from-bracket'
   );
-  
+
   if (confirmed) {
     localStorage.removeItem('rememberedUser');
     localStorage.removeItem('autoLogin');

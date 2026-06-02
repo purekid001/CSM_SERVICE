@@ -4,14 +4,17 @@ import { parseDateTime, canAccessPage } from '../utils.js';
 
 export function render() {
   const actionButtons = [
-    renderActionButton('eng-request', 'fa-wrench', 'แจ้งซ่อม', 'สร้างใบแจ้งซ่อม', '#d97706', '#fef3c7'),
-    renderActionButton('eng-list', 'fa-list-check', 'ติดตามงานซ่อม', 'ตรวจสถานะ EN', '#059669', '#d1fae5'),
-    renderActionButton('eng-doc', 'fa-folder-open', 'เอกสาร EN', 'มาตรฐานวิศวกรรม', '#2563eb', '#dbeafe'),
-    renderActionButton('hr-car', 'fa-car', 'จองรถ', 'สร้างคำขอใช้รถ', '#1d4ed8', '#dbeafe'),
-    renderActionButton('hr-shuttle', 'fa-bus', 'รถรับ-ส่ง', 'สร้างคำขอ shuttle', '#7c3aed', '#ede9fe'),
-    renderActionButton('hr-list', 'fa-clipboard-check', 'ติดตามงานรถ', 'อนุมัติและปิดงาน', '#0f766e', '#ccfbf1'),
-    renderActionButton('hr-doc', 'fa-file-signature', 'เอกสาร HR', 'แบบฟอร์มและระเบียบ', '#be123c', '#ffe4e6'),
-  ].filter(Boolean);
+    { page: 'eng-request', icon: 'fa-wrench', label: 'แจ้งซ่อม', caption: 'สร้างใบแจ้งซ่อม', color: '#d97706', bg: '#fef3c7', group: 'Engineering' },
+    { page: 'eng-list', icon: 'fa-list-check', label: 'ติดตามงานซ่อม', caption: 'ตรวจสถานะ EN', color: '#059669', bg: '#d1fae5', group: 'Engineering' },
+    { page: 'eng-doc', icon: 'fa-folder-open', label: 'เอกสาร EN', caption: 'มาตรฐานวิศวกรรม', color: '#2563eb', bg: '#dbeafe', group: 'Engineering' },
+    { page: 'hr-car', icon: 'fa-car', label: 'จองรถ', caption: 'สร้างคำขอใช้รถ', color: '#1d4ed8', bg: '#dbeafe', group: 'Mobility' },
+    { page: 'hr-shuttle', icon: 'fa-bus', label: 'รถรับ-ส่ง', caption: 'สร้างคำขอ shuttle', color: '#7c3aed', bg: '#ede9fe', group: 'Mobility' },
+    { page: 'hr-list', icon: 'fa-clipboard-check', label: 'ติดตามงานรถ', caption: 'อนุมัติและปิดงาน', color: '#0f766e', bg: '#ccfbf1', group: 'Mobility' },
+    { page: 'hr-evaluation', icon: 'fa-key', label: 'Evaluation', caption: 'ตรวจรหัสเข้าประเมิน', color: '#b45309', bg: '#fef3c7', group: 'HR' },
+    { page: 'hr-doc', icon: 'fa-file-signature', label: 'เอกสาร HR', caption: 'แบบฟอร์มและระเบียบ', color: '#be123c', bg: '#ffe4e6', group: 'Document' },
+  ]
+    .filter(({ page }) => canAccessPage(page))
+    .map((config, index) => renderActionButton({ ...config, featured: index === 0 }));
 
   return `
     <div class="home-wrap fade-in">
@@ -53,9 +56,14 @@ export function render() {
           <div class="home-panel-header">
             <div>
               <h3><i class="fa-solid fa-bolt"></i> เมนูลัด</h3>
-              <p>งานที่ใช้บ่อยในระบบ</p>
+              <p>เริ่มงานที่ใช้บ่อยได้จากพื้นที่เดียว</p>
+            </div>
+            <div class="home-action-summary">
+              <strong>${actionButtons.length}</strong>
+              <span>เมนูพร้อมใช้</span>
             </div>
           </div>
+          <p class="home-action-note">รายการสำคัญถูกจัดให้เห็นเร็วขึ้น พร้อมลัดเข้าสู่หน้าหลักของแต่ละ workflow</p>
           <div class="home-action-grid">
             ${actionButtons.join('')}
           </div>
@@ -200,10 +208,10 @@ function canSeeBooking(rec, { empId, empDept, isAdminHr }) {
 }
 
 function updateDashboard(dashboard) {
-  setText('kpi-fix', dashboard.fixPending);
-  setText('kpi-car', dashboard.carPending);
-  setText('kpi-shuttle', dashboard.shuttlePending);
-  setText('kpi-done', dashboard.doneThisMonth);
+  animateCounter('kpi-fix', dashboard.fixPending);
+  animateCounter('kpi-car', dashboard.carPending);
+  animateCounter('kpi-shuttle', dashboard.shuttlePending);
+  animateCounter('kpi-done', dashboard.doneThisMonth);
 
   setText('home-eng-total', dashboard.engTotal);
   setText('home-car-total', dashboard.carTotal);
@@ -227,22 +235,26 @@ function renderKpiCard(id, icon, label, caption, cssClass) {
       <div>
         <p class="kpi-caption">${escapeHTML(caption)}</p>
         <p class="kpi-label">${escapeHTML(label)}</p>
-        <h2 class="kpi-value" id="${id}"><i class="fa-solid fa-spinner fa-spin"></i></h2>
+        <h2 class="kpi-value" id="${id}"><span class="skeleton-value"></span></h2>
       </div>
     </div>`;
 }
 
-function renderActionButton(page, icon, label, caption, color, bg) {
+function renderActionButton({ page, icon, label, caption, color, bg, group, featured = false }) {
   if (!canAccessPage(page)) return '';
 
   return `
-    <button class="quick-action-btn" onclick="showPage('${page}')" style="--qa-color:${color}; --qa-bg:${bg};">
+    <button class="quick-action-btn${featured ? ' is-featured' : ''}" onclick="showPage('${page}')" style="--qa-color:${color}; --qa-bg:${bg};">
       <span class="qa-icon"><i class="fa-solid ${icon}"></i></span>
       <span class="qa-copy">
+        <span class="qa-kicker">${escapeHTML(group || 'Workflow')}</span>
         <strong>${escapeHTML(label)}</strong>
         <small>${escapeHTML(caption)}</small>
       </span>
-      <i class="fa-solid fa-arrow-right qa-arrow"></i>
+      <span class="qa-trail">
+        <span class="qa-hint">${featured ? 'Primary' : 'Open'}</span>
+        <i class="fa-solid fa-arrow-right qa-arrow"></i>
+      </span>
     </button>`;
 }
 
@@ -267,6 +279,23 @@ function setMeter(id, value, max) {
 function setText(id, value) {
   const el = document.getElementById(id);
   if (el) el.textContent = value;
+}
+
+function animateCounter(id, target) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const num = parseInt(target, 10);
+  if (isNaN(num)) { el.textContent = target; return; }
+  const duration = 700;
+  const start = performance.now();
+  const tick = (now) => {
+    const t = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - t, 4);
+    el.textContent = Math.round(num * eased);
+    if (t < 1) requestAnimationFrame(tick);
+    else { el.textContent = num; el.classList.add('counter-pop'); }
+  };
+  requestAnimationFrame(tick);
 }
 
 function formatToday() {

@@ -1173,6 +1173,14 @@ body::before {
   font-size: 16px;
 }
 
+.evaluation-ai-modal-item small {
+  display: block;
+  margin-top: 6px;
+  color: var(--neutral-500);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
 .evaluation-ai-modal-block div {
   color: var(--neutral-800);
   font-size: 14px;
@@ -4836,7 +4844,7 @@ textarea.form-control {
 }
 
 .evaluation-report-chart-grid {
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .report-chart-box {
@@ -4905,6 +4913,14 @@ textarea.form-control {
 .evaluation-report-page .data-table tbody tr.eval-report-row-highlight:hover {
   background:
     linear-gradient(90deg, rgba(20, 184, 166, 0.12) 0%, rgba(37, 99, 235, 0.12) 100%);
+}
+
+.evaluation-report-page .eval-report-comment-cell {
+  min-width: 300px;
+  max-width: 420px;
+  color: #475569;
+  line-height: 1.6;
+  white-space: normal;
 }
 
 .score-positive {
@@ -5637,12 +5653,37 @@ textarea.form-control {
   font-weight: 800;
 }
 
+.evaluation-score-main strong {
+  color: #0f172a;
+}
+
 .evaluation-summary-card small,
 .evaluation-score-preview small {
   display: block;
   margin-top: 6px;
   color: #64748b;
   line-height: 1.5;
+}
+
+.evaluation-score-subtotal {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.evaluation-score-subtotal span {
+  display: block;
+  margin-bottom: 4px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.evaluation-score-subtotal strong {
+  display: block;
+  color: #2563eb;
+  font-size: 24px;
+  font-weight: 800;
 }
 
 .evaluation-employee-panel,
@@ -5810,6 +5851,13 @@ textarea.form-control {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.85),
     0 10px 24px -22px rgba(15, 23, 42, 0.22);
+}
+
+.evaluation-topic-weight-preview {
+  margin-top: 10px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .evaluation-score-btn {
