@@ -77,18 +77,27 @@ export function render() {
             </div>
           </div>
           <div class="home-workload">
-            <div class="home-workload-item">
-              <span>Engineering</span>
+            <div class="home-workload-item home-workload-eng">
+              <span class="home-workload-name">
+                <i class="fa-solid fa-screwdriver-wrench"></i>
+                Engineering
+              </span>
               <strong id="home-eng-total">0</strong>
               <div class="home-meter"><i id="home-eng-meter" style="width:0%;"></i></div>
             </div>
-            <div class="home-workload-item">
-              <span>Car booking</span>
+            <div class="home-workload-item home-workload-car">
+              <span class="home-workload-name">
+                <i class="fa-solid fa-car-side"></i>
+                Car booking
+              </span>
               <strong id="home-car-total">0</strong>
               <div class="home-meter"><i id="home-car-meter" style="width:0%;"></i></div>
             </div>
-            <div class="home-workload-item">
-              <span>Shuttle</span>
+            <div class="home-workload-item home-workload-shuttle">
+              <span class="home-workload-name">
+                <i class="fa-solid fa-van-shuttle"></i>
+                Shuttle
+              </span>
               <strong id="home-shuttle-total">0</strong>
               <div class="home-meter"><i id="home-shuttle-meter" style="width:0%;"></i></div>
             </div>

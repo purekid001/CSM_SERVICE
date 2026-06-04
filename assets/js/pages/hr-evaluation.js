@@ -679,7 +679,13 @@ function renderAiAnalysisContent(analysis) {
     `;
   }
 
-  if (status === 'skipped_limit' || status === 'skipped_error' || status === 'skipped_empty') {
+  if (
+    status === 'skipped_limit'
+    || status === 'skipped_error'
+    || status === 'skipped_empty'
+    || status === 'skipped_no_key'
+    || status === 'skipped_disabled'
+  ) {
     return `
       <div class="evaluation-ai-head">
         <div>
