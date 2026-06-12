@@ -116,7 +116,7 @@ export function render() {
   const intervalHours = getEngAutoCloseIntervalHours();
 
   return `
-    <div class="app-page">
+    <div class="app-page app-page-tight eng-auto-close-page">
       <section class="page-hero page-hero-admin fade-in">
         <div class="page-hero-copy">
           <p class="page-hero-eyebrow">Administrator Only</p>

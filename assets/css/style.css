@@ -6543,6 +6543,63 @@ textarea.form-control {
   justify-content: flex-end;
 }
 
+.eng-auto-close-page .ops-kpi-card {
+  min-height: 102px;
+  padding: 16px 18px;
+  gap: 12px;
+}
+
+.eng-auto-close-page .ops-kpi-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  font-size: 18px;
+}
+
+.eng-auto-close-page .ops-kpi-copy span {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+
+.eng-auto-close-page .ops-kpi-copy strong {
+  margin-top: 2px;
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.eng-auto-close-page .ops-kpi-copy small {
+  margin-top: 5px;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.eng-auto-close-page .admin-card {
+  padding: 22px;
+}
+
+.eng-auto-close-page .admin-card-head {
+  margin-bottom: 16px;
+}
+
+.eng-auto-close-page .admin-card-head h3 {
+  font-size: 16px;
+}
+
+.eng-auto-close-page .admin-card-head p,
+.eng-auto-close-page .danger-note,
+.eng-auto-close-page .form-group label {
+  font-size: 12px;
+}
+
+.eng-auto-close-page .form-control[readonly],
+.eng-auto-close-page .btn {
+  font-size: 13px;
+}
+
+.eng-auto-close-page .btn {
+  padding: 11px 24px;
+}
+
 @media (max-width: 760px) {
   .admin-grid,
   .admin-inline-grid,
