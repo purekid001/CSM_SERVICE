@@ -15,12 +15,15 @@ import * as engReport from './pages/eng-report.js';
 import * as hrCar from './pages/hr-car.js';
 import * as hrShuttle from './pages/hr-shuttle.js';
 import * as hrBookingList from './pages/hr-booking-list.js';
+import * as hrShiftSwap from './pages/hr-shift-swap.js';
+import * as hrShiftChange from './pages/hr-shift-change.js';
 import * as hrShuttleGroup from './pages/hr-shuttle-group.js';
 import * as hrReport from './pages/hr-report.js';
 import * as hrDoc from './pages/hr-doc.js';
 import * as hrEvaluation from './pages/hr-evaluation.js';
 import * as hrEvaluationReport from './pages/hr-evaluation-report.js';
 import * as backup from './pages/backup.js';
+import * as adminAccess from './pages/admin-access.js';
 
 // แมปชื่อหน้ากับ module
 const pages = {
@@ -36,6 +39,8 @@ const pages = {
   'hr-car':          hrCar,
   'hr-shuttle':      hrShuttle,
   'hr-list':         hrBookingList,
+  'hr-shift-swap':   hrShiftSwap,
+  'hr-shift-change': hrShiftChange,
   'hr-doc':          hrDoc,
   'hr-report':       hrReport,
   'hr-shuttle-group': hrShuttleGroup,
@@ -43,6 +48,7 @@ const pages = {
   'hr-evaluation-report': hrEvaluationReport,
 
   // Admin Routes
+  'admin-access':    adminAccess,
   'admin-backup':    backup,
 };
 

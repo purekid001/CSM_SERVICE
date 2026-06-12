@@ -170,15 +170,18 @@ export function getApproversByDepartment(allUsers, department, scope = 'engineer
 export function getUserAccessProfile() {
   const levelEn = String(sessionStorage.getItem('empLevel_en') || '').trim().toLowerCase();
   const levelHr = String(sessionStorage.getItem('empLevel_hr') || sessionStorage.getItem('level_Hr') || '').trim().toLowerCase();
+  const levelIt = String(sessionStorage.getItem('empLevel_it') || sessionStorage.getItem('level_It') || '').trim().toLowerCase();
 
   return {
     isLoggedIn: sessionStorage.getItem('isLoggedIn') === 'true',
     levelEn,
     levelHr,
+    levelIt,
     isEngineeringAdmin: levelEn === 'admin' || levelEn === 'admin_en',
     isEngineeringDocAdmin: levelEn === 'admin' || levelEn === 'admin_en',
     isHrDocAdmin: levelHr === 'admin' || levelHr === 'admin_hr',
     isHrDispatchAdmin: levelHr === 'admin' || levelHr === 'admin_hr' || levelHr === '1',
+    isItAdmin: levelIt === 'admin' || levelIt === 'admin_it',
     isSystemAdmin: levelEn === 'admin' || levelHr === 'admin',
   };
 }
@@ -198,6 +201,7 @@ export function canAccessPage(page) {
       return true;
     case 'hr-shuttle-group':
       return access.isHrDispatchAdmin;
+    case 'admin-access':
     case 'admin-backup':
       return access.isSystemAdmin;
     default:

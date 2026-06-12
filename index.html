@@ -169,9 +169,9 @@
             <div class="register-grid">
               <div class="input-group">
                 <label for="register-employee-id">User / รหัสพนักงาน</label>
-                <input type="text" id="register-employee-id" required placeholder="ตัวเลข 8 หลัก" inputmode="numeric"
-                  autocomplete="username" maxlength="8" pattern="[0-9]{8}">
-                <small>กรอกเฉพาะตัวเลข 8 หลัก</small>
+                <input type="text" id="register-employee-id" required placeholder="ตัวเลข 6-8 หลัก" inputmode="numeric"
+                  autocomplete="username" minlength="6" maxlength="8" pattern="[0-9]{6,8}">
+                <small>กรอกเฉพาะตัวเลข 6-8 หลัก</small>
               </div>
               <div class="input-group">
                 <label for="register-password">Password</label>
@@ -280,6 +280,10 @@
                 (รับ-ส่ง)</span></button>
             <button class="menu-item sub-item" onclick="showPage('hr-list')"><span class="menu-text">Booking
                 List</span></button>
+            <button class="menu-item sub-item" onclick="showPage('hr-shift-swap')"><span
+                class="menu-text">Shift Swap Form</span></button>
+            <button class="menu-item sub-item" onclick="showPage('hr-shift-change')"><span
+                class="menu-text">Shift Change Form</span></button>
             <button class="menu-item sub-item" onclick="showPage('hr-evaluation')"><span class="menu-text">Evaluation</span></button>
             <button class="menu-item sub-item" onclick="showPage('hr-doc')" data-perm="hr-doc"><span
                 class="menu-text">Document</span></button>
@@ -320,6 +324,8 @@
             <i class="fa-solid fa-chevron-down arrow-icon"></i>
           </button>
           <div class="dropdown-container">
+            <button class="menu-item sub-item" onclick="showPage('admin-access')"><span
+                class="menu-text">Permission Management</span></button>
             <button class="menu-item sub-item" onclick="showPage('eng-auto-close')"><span
                 class="menu-text">Auto Close Repair</span></button>
             <button class="menu-item sub-item" onclick="showPage('admin-backup')"><span class="menu-text">Backup /

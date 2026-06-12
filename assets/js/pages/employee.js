@@ -20,6 +20,7 @@ export function render() {
   const email = sessionStorage.getItem('empEmail') || '-';
   const levelEn = sessionStorage.getItem('empLevel_en') || '-';
   const levelHr = sessionStorage.getItem('empLevel_hr') || '-';
+  const levelIt = sessionStorage.getItem('empLevel_it') || '-';
 
   return `
     <div class="app-page app-page-tight">
@@ -80,6 +81,10 @@ export function render() {
               <div class="emp-level-row">
                 <span>Human Resources Level:</span>
                 <strong class="emp-level-value">${escapeHTML(levelHr)}</strong>
+              </div>
+              <div class="emp-level-row">
+                <span>Information Technology Level:</span>
+                <strong class="emp-level-value">${escapeHTML(levelIt)}</strong>
               </div>
               <p class="emp-perm-note">* สิทธิ์การใช้งานถูกกำหนดโดยผู้ดูแลระบบ</p>
             </div>

@@ -58,6 +58,7 @@ function setUserSession(userId, userData) {
   sessionStorage.setItem('empEmail', userData.email || ' ');
   sessionStorage.setItem('empLevel_en', userData.level || ' ');
   sessionStorage.setItem('empLevel_hr', userData.level_Hr || ' ');
+  sessionStorage.setItem('empLevel_it', userData.level_It || ' ');
 }
 
 /**
@@ -136,6 +137,20 @@ function toggleView(isDashboard, name = "") {
   } else {
     loginScreen.style.display = 'block';
     dashboardLayout.style.display = 'none';
+  }
+}
+
+function refreshSessionUi() {
+  if (sessionStorage.getItem('isLoggedIn') !== 'true') return;
+
+  applyMenuPermissions();
+  syncEngAutoCloseForSession();
+
+  const currentPage = getPageFromHash();
+  if (canAccessPage(currentPage)) {
+    showPage(currentPage);
+  } else {
+    showPage('home');
   }
 }
 
@@ -230,8 +245,8 @@ function getRegistrationFormValues() {
 }
 
 function validateRegistrationForm(values) {
-  if (!/^\d{8}$/.test(values.employeeId)) {
-    return 'User ต้องเป็นรหัสพนักงานตัวเลข 8 หลัก';
+  if (!/^\d{6,8}$/.test(values.employeeId)) {
+    return 'User ต้องเป็นรหัสพนักงานตัวเลข 6-8 หลัก';
   }
 
   if (!values.password || values.password.length < 6) {
@@ -444,5 +459,7 @@ authModeLinks.forEach(button => {
 });
 
 registerEmployeeIdInput?.addEventListener('input', sanitizeEmployeeIdInput);
+
+window.addEventListener('csm:session-profile-updated', refreshSessionUi);
 
 export { toggleView };

@@ -1,4 +1,9 @@
-const GOOGLE_SHEETS_SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
+const GOOGLE_API_SCOPE = [
+  'https://www.googleapis.com/auth/spreadsheets',
+  'https://www.googleapis.com/auth/drive.file',
+].join(' ');
+const GOOGLE_DRIVE_UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/files';
+const GOOGLE_DRIVE_API_URL = 'https://www.googleapis.com/drive/v3/files';
 const RESULT_MAX_SCORE_PER_ITEM = 5;
 const RESULT_SECTION_BREAKPOINT = 3;
 
@@ -47,6 +52,28 @@ function getSheetConfig(key) {
       sourceUrl: import.meta.env.VITE_USER_DIRECTORY_SHEET_SOURCE_URL || 'https://docs.google.com/spreadsheets/d/1hDBj97YDY3RVEO6U0V6nCeLaFpkZXyHnpzIqxra4kcw/edit?gid=0#gid=0',
       label: 'ข้อมูลผู้ใช้งาน',
     },
+    shiftEmployees: {
+      id: import.meta.env.VITE_HR_SHIFT_EMPLOYEE_SHEET_ID || '1CP-5FjrpSxLW9mM8lm7d0g_9Gr_EYIw71P0Byk1zMfs',
+      gid: import.meta.env.VITE_HR_SHIFT_EMPLOYEE_SHEET_GID || '0',
+      sheetName: import.meta.env.VITE_HR_SHIFT_EMPLOYEE_SHEET_NAME || 'Data',
+      settingsSheetName: import.meta.env.VITE_HR_SHIFT_SETTINGS_SHEET_NAME || 'Settings',
+      sourceUrl: import.meta.env.VITE_HR_SHIFT_EMPLOYEE_SHEET_SOURCE_URL || 'https://docs.google.com/spreadsheets/d/1CP-5FjrpSxLW9mM8lm7d0g_9Gr_EYIw71P0Byk1zMfs/edit?gid=0#gid=0',
+      label: 'รายชื่อพนักงาน',
+    },
+    shiftSwapReport: {
+      id: import.meta.env.VITE_HR_SHIFT_SWAP_REPORT_SHEET_ID || '1X7MlRlIGUu5FPFuPWExqalecWX1-CL-NBP4t1wGHZnU',
+      gid: import.meta.env.VITE_HR_SHIFT_SWAP_REPORT_SHEET_GID || '358835882',
+      sheetName: import.meta.env.VITE_HR_SHIFT_SWAP_REPORT_SHEET_NAME || 'Data',
+      sourceUrl: import.meta.env.VITE_HR_SHIFT_SWAP_REPORT_SHEET_SOURCE_URL || 'https://docs.google.com/spreadsheets/d/1X7MlRlIGUu5FPFuPWExqalecWX1-CL-NBP4t1wGHZnU/edit?gid=358835882#gid=358835882',
+      label: 'รายงานเปลี่ยนแลกเวร',
+    },
+    shiftChangeReport: {
+      id: import.meta.env.VITE_HR_SHIFT_CHANGE_REPORT_SHEET_ID || '16yv229OL0vKEwFblZgm_f7bbSu5JJ8SrjrIDMVjxYTU',
+      gid: import.meta.env.VITE_HR_SHIFT_CHANGE_REPORT_SHEET_GID || '358835882',
+      sheetName: import.meta.env.VITE_HR_SHIFT_CHANGE_REPORT_SHEET_NAME || 'Data',
+      sourceUrl: import.meta.env.VITE_HR_SHIFT_CHANGE_REPORT_SHEET_SOURCE_URL || 'https://docs.google.com/spreadsheets/d/16yv229OL0vKEwFblZgm_f7bbSu5JJ8SrjrIDMVjxYTU/edit?gid=358835882#gid=358835882',
+      label: 'รายงานเปลี่ยนกะงาน',
+    },
   };
 
   const config = maps[key];
@@ -67,6 +94,8 @@ function getSheetConfig(key) {
   return {
     spreadsheetId,
     sheetGid,
+    sheetName: String(config.sheetName || '').trim(),
+    settingsSheetName: String(config.settingsSheetName || '').trim(),
     sourceUrl,
     label: config.label,
   };
@@ -145,7 +174,39 @@ function pemToArrayBuffer(pem) {
   return bytes.buffer;
 }
 
+let jsrsasignLoadingPromise = null;
+
+function loadJsrsasign() {
+  if (window.KJUR) return Promise.resolve();
+  if (jsrsasignLoadingPromise) return jsrsasignLoadingPromise;
+
+  jsrsasignLoadingPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/10.9.0/jsrsasign-all-min.js';
+    script.onload = () => {
+      resolve();
+    };
+    script.onerror = (err) => {
+      jsrsasignLoadingPromise = null;
+      reject(new Error('ไม่สามารถโหลด jsrsasign จาก CDN ได้: ' + err.message));
+    };
+    document.head.appendChild(script);
+  });
+
+  return jsrsasignLoadingPromise;
+}
+
 async function signJwt(unsignedToken, privateKeyPem) {
+  if (typeof crypto === 'undefined' || !crypto.subtle) {
+    await loadJsrsasign();
+    const sig = new window.KJUR.crypto.Signature({ alg: 'SHA256withRSA' });
+    sig.init(privateKeyPem);
+    sig.updateString(unsignedToken);
+    const sigHex = sig.sign();
+    const bytes = new Uint8Array(sigHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+    return base64UrlEncodeBytes(bytes);
+  }
+
   const key = await crypto.subtle.importKey(
     'pkcs8',
     pemToArrayBuffer(privateKeyPem),
@@ -184,7 +245,7 @@ async function getGoogleAccessToken() {
   const jwtHeader = { alg: 'RS256', typ: 'JWT' };
   const jwtClaim = {
     iss: clientEmail,
-    scope: GOOGLE_SHEETS_SCOPE,
+    scope: GOOGLE_API_SCOPE,
     aud: tokenUri,
     exp: expiresAt,
     iat: issuedAt,
@@ -934,6 +995,136 @@ function serializeForSheet(value) {
   return value ?? '';
 }
 
+function formulaString(value) {
+  return String(value ?? '').replace(/"/g, '""');
+}
+
+function dataUrlToBytes(dataUrl) {
+  const match = String(dataUrl || '').match(/^data:([^;,]+)(;base64|;utf8)?,(.*)$/);
+  if (!match) {
+    throw new Error('รูปแบบลายเซ็นไม่ถูกต้อง');
+  }
+
+  const mimeType = match[1] || 'image/svg+xml';
+  const encoding = match[2] || '';
+  const payload = match[3] || '';
+
+  if (encoding === ';base64') {
+    const binary = atob(payload);
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index += 1) {
+      bytes[index] = binary.charCodeAt(index);
+    }
+    return { mimeType, bytes };
+  }
+
+  return {
+    mimeType,
+    bytes: new TextEncoder().encode(decodeURIComponent(payload)),
+  };
+}
+
+function normalizeDriveFolderId(value) {
+  const text = normalizeText(value);
+  if (!text) return '';
+
+  const folderPathMatch = text.match(/\/folders\/([^/?#]+)/);
+  if (folderPathMatch) return folderPathMatch[1];
+
+  const queryMatch = text.match(/[?&]id=([^&#]+)/);
+  if (queryMatch) return queryMatch[1];
+
+  return text;
+}
+
+async function uploadShiftSignatureImage(record, accessToken) {
+  const signature = normalizeText(record?.approverSignature);
+  if (!signature || !signature.startsWith('data:image/')) {
+    return signature;
+  }
+
+  const { mimeType, bytes } = dataUrlToBytes(signature);
+  const extension = mimeType.includes('png') ? 'png' : 'svg';
+  const safeId = normalizeText(record.id).replace(/[^\w.-]+/g, '-') || Date.now();
+  const metadata = {
+    name: `shift-signature-${safeId}.${extension}`,
+    mimeType,
+  };
+  const folderId = normalizeDriveFolderId(import.meta.env.VITE_HR_SHIFT_SIGNATURE_DRIVE_FOLDER_ID);
+  if (folderId) {
+    metadata.parents = [folderId];
+  }
+
+  const boundary = `shift_signature_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  const body = new Blob([
+    `--${boundary}\r\n`,
+    'Content-Type: application/json; charset=UTF-8\r\n\r\n',
+    JSON.stringify(metadata),
+    `\r\n--${boundary}\r\n`,
+    `Content-Type: ${mimeType}\r\n\r\n`,
+    bytes,
+    `\r\n--${boundary}--`,
+  ], {
+    type: `multipart/related; boundary=${boundary}`,
+  });
+
+  const uploadResponse = await fetch(
+    `${GOOGLE_DRIVE_UPLOAD_URL}?uploadType=multipart&supportsAllDrives=true&fields=id`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body,
+    }
+  );
+
+  if (!uploadResponse.ok) {
+    const detail = await uploadResponse.text();
+    throw new Error(`อัปโหลดรูปลายเซ็นไป Google Drive ไม่สำเร็จ (${uploadResponse.status}) ${detail}`);
+  }
+
+  const uploadedFile = await uploadResponse.json();
+  const fileId = uploadedFile.id;
+  const permissionResponse = await fetch(
+    `${GOOGLE_DRIVE_API_URL}/${encodeURIComponent(fileId)}/permissions?supportsAllDrives=true&fields=id`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        role: 'reader',
+        type: 'anyone',
+      }),
+    }
+  );
+
+  if (!permissionResponse.ok) {
+    const detail = await permissionResponse.text();
+    throw new Error(`ตั้งค่าสิทธิ์รูปลายเซ็นไม่สำเร็จ (${permissionResponse.status}) ${detail}`);
+  }
+
+  const imageUrl = `https://drive.google.com/uc?export=view&id=${encodeURIComponent(fileId)}`;
+  return `=IMAGE("${formulaString(imageUrl)}", 1)`;
+}
+
+async function prepareShiftReportRecord(record, accessToken) {
+  return {
+    ...record,
+    approverSignature: await uploadShiftSignatureImage(record, accessToken),
+  };
+}
+
+function buildGoogleSheetApiError(action, config, status, detail) {
+  const permissionHint = status === 403
+    ? ' กรุณาแชร์ไฟล์ Google Sheet ให้ Google Service Account ที่ตั้งค่าไว้ในระบบมีสิทธิ์ Editor หรือแก้ Sheet ID ให้ชี้ไปยังไฟล์ที่แชร์แล้ว'
+    : '';
+  const sourceHint = config?.sourceUrl ? ` (${config.sourceUrl})` : '';
+  return new Error(`${action} ${config.label} ไม่สำเร็จ (${status})${permissionHint}${sourceHint} ${detail}`);
+}
+
 function encodeSheetPassword(value) {
   const text = String(value ?? '');
   return btoa(String.fromCharCode(...new TextEncoder().encode(text)));
@@ -962,7 +1153,7 @@ async function updateSheetHeaders(config, sheetTitle, accessToken, headers) {
 
   if (!response.ok) {
     const detail = await response.text();
-    throw new Error(`อัปเดต header ของชีตผลประเมินไม่สำเร็จ (${response.status}) ${detail}`);
+    throw buildGoogleSheetApiError('อัปเดต header ของชีต', config, response.status, detail);
   }
 }
 
@@ -978,7 +1169,7 @@ async function fetchSheetValues(config, sheetTitle, accessToken, range = 'A:ZZ')
 
   if (!response.ok) {
     const detail = await response.text();
-    throw new Error(`โหลดข้อมูลจากชีต ${config.label} ไม่สำเร็จ (${response.status}) ${detail}`);
+    throw buildGoogleSheetApiError('โหลดข้อมูลจากชีต', config, response.status, detail);
   }
 
   return response.json();
@@ -1048,6 +1239,615 @@ function getColumnLetter(index) {
   }
 
   return value || 'A';
+}
+
+const SHIFT_FORM_DEFAULT_SETTINGS = {
+  allowedDays: [1, 2, 3, 4, 5, 6],
+  startTime: '08:30',
+  endTime: '17:30',
+  enabled: true,
+};
+
+const SHIFT_SWAP_DEFAULT_HEADERS = [
+  'id',
+  'วันที่บันทึก',
+  'รหัสผู้บันทึก',
+  'ผู้บันทึก',
+  'แผนกผู้บันทึก',
+  'รหัสพนักงาน',
+  'พนักงาน',
+  'ส่วน',
+  'แผนก',
+  'หน่วย',
+  'ตำแหน่ง',
+  'วันที่',
+  'ถึงวันที่',
+  'เวรเดิม',
+  'เวรใหม่',
+  'เหตุผล',
+  'หมายเหตุ',
+  'ลายเซ็นผู้อนุมัติ',
+  'source',
+];
+
+const SHIFT_CHANGE_DEFAULT_HEADERS = [
+  'id',
+  'วันที่บันทึก',
+  'รหัสผู้บันทึก',
+  'ผู้บันทึก',
+  'แผนกผู้บันทึก',
+  'รหัสพนักงาน',
+  'พนักงาน',
+  'ส่วน',
+  'แผนก',
+  'หน่วย',
+  'ตำแหน่ง',
+  'วันที่',
+  'ถึงวันที่',
+  'เวรเดิม',
+  'เวรใหม่',
+  'เหตุผล',
+  'หมายเหตุ',
+  'ลายเซ็นผู้อนุมัติ',
+  'source',
+];
+
+function normalizeSheetKey(value) {
+  return normalizeKey(value).replace(/[\s_\-()/]+/g, '');
+}
+
+function pickRecordValue(record = {}, aliases = []) {
+  const aliasSet = new Set(aliases.map(normalizeSheetKey));
+  const matchKey = Object.keys(record).find(key => aliasSet.has(normalizeSheetKey(key)));
+  return matchKey ? normalizeText(record[matchKey]) : '';
+}
+
+function normalizeShiftEmployeeRows(headers = [], rows = []) {
+  return mapRowsToObjects(headers, rows)
+    .map(record => {
+      const employeeId = pickRecordValue(record, ['รหัสพนักงาน', 'employee id', 'employeeid']);
+      const titlePrefix = pickRecordValue(record, ['คำนำหน้าชื่อ', 'title']);
+      const firstName = pickRecordValue(record, ['ชื่อ ( Thai )', 'ชื่อ Thai', 'ชื่อ', 'firstname']);
+      const lastName = pickRecordValue(record, ['สกุล ( Thai )', 'สกุล Thai', 'สกุล', 'lastname']);
+      const section = pickRecordValue(record, ['ส่วน ( Thai )', 'ส่วน Thai', 'ส่วน', 'section']);
+      const department = pickRecordValue(record, ['แผนก ( Thai )', 'แผนก Thai', 'แผนก', 'department']);
+      const unit = pickRecordValue(record, ['หน่วย ( Thai )', 'หน่วย Thai', 'หน่วย', 'unit']);
+      const position = pickRecordValue(record, ['ตำแหน่ง ( Thai )', 'ตำแหน่ง Thai', 'ตำแหน่ง', 'position']);
+      const activeRaw = pickRecordValue(record, ['Active', 'ใช้งาน']);
+      const fullName = `${firstName} ${lastName}`.trim();
+      const activeKey = normalizeKey(activeRaw);
+      const isActive = !activeKey
+        || activeKey === '-'
+        || normalizeBoolean(activeRaw)
+        || activeKey === 'active'
+        || activeKey === 'ใช้งาน';
+
+      return {
+        employeeId,
+        titlePrefix,
+        firstName,
+        lastName,
+        fullName,
+        displayName: fullName || employeeId,
+        section: section || '-',
+        department: department || '-',
+        unit: unit || '-',
+        position: position || '-',
+        active: isActive,
+        searchText: [
+          employeeId,
+          titlePrefix,
+          firstName,
+          lastName,
+          fullName,
+          section,
+          department,
+          unit,
+          position,
+        ].join(' ').toLowerCase(),
+      };
+    })
+    .filter(employee => employee.employeeId && employee.fullName && employee.active)
+    .sort((left, right) => left.displayName.localeCompare(right.displayName, 'th'));
+}
+
+function parseSettingsRows(headers = [], rows = []) {
+  const settings = {};
+  const normalizedHeaders = headers.map(normalizeSheetKey);
+  const keyIndex = normalizedHeaders.findIndex(header => header === 'key' || header === 'name' || header === 'setting');
+  const valueIndex = normalizedHeaders.findIndex(header => header === 'value' || header === 'val');
+
+  if (keyIndex !== -1 && valueIndex !== -1) {
+    rows.forEach(row => {
+      const key = normalizeText(row?.[keyIndex]);
+      if (key) settings[key] = row?.[valueIndex] ?? '';
+    });
+    return settings;
+  }
+
+  if (normalizedHeaders.some(header => header.startsWith('shiftform'))) {
+    const valueRow = rows.find(row => Array.isArray(row) && row.some(cell => normalizeText(cell) !== '')) || [];
+    headers.forEach((header, index) => {
+      const key = normalizeText(header);
+      if (normalizeSheetKey(key).startsWith('shiftform')) {
+        settings[key] = valueRow[index] ?? '';
+      }
+    });
+    return settings;
+  }
+
+  if (normalizeSheetKey(headers[0]).startsWith('shiftform')) {
+    settings[normalizeText(headers[0])] = headers[1] ?? '';
+  }
+
+  rows.forEach(row => {
+    const key = normalizeText(row?.[0]);
+    if (key) settings[key] = row?.[1] ?? '';
+  });
+  return settings;
+}
+
+function parseAllowedDays(value) {
+  if (value == null || normalizeText(value) === '') {
+    return SHIFT_FORM_DEFAULT_SETTINGS.allowedDays;
+  }
+
+  if (Array.isArray(value)) {
+    const days = value
+      .filter(day => normalizeText(day) !== '')
+      .map(day => normalizeNumber(day, -1))
+      .filter(day => day >= 0 && day <= 6);
+    return days.length > 0 ? days : SHIFT_FORM_DEFAULT_SETTINGS.allowedDays;
+  }
+
+  const days = String(value ?? '')
+    .split(',')
+    .map(day => day.trim())
+    .filter(Boolean)
+    .map(day => normalizeNumber(day, -1))
+    .filter(day => day >= 0 && day <= 6);
+
+  return days.length > 0 ? days : SHIFT_FORM_DEFAULT_SETTINGS.allowedDays;
+}
+
+function normalizeTimeValue(value, fallback) {
+  const text = normalizeText(value);
+  const match = text.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return fallback;
+
+  const hour = normalizeNumber(match[1], -1);
+  const minute = normalizeNumber(match[2], -1);
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return fallback;
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+}
+
+function timeToMinutes(value) {
+  const [hour, minute] = String(value || '00:00').split(':').map(part => normalizeNumber(part, 0));
+  return (hour * 60) + minute;
+}
+
+function formatAllowedDays(days = []) {
+  const names = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+  return days
+    .map(day => names[day] || '')
+    .filter(Boolean)
+    .join(', ');
+}
+
+function createShiftWindowMessage(settings) {
+  return `เปิดให้บันทึกวัน ${formatAllowedDays(settings.allowedDays)} เวลา ${settings.startTime}-${settings.endTime}`;
+}
+
+function normalizeShiftFormSettings(rawSettings = {}) {
+  const hasExplicitSettings = [
+    'shiftFormAllowedDays',
+    'allowedDays',
+    'shiftFormStartTime',
+    'startTime',
+    'shiftFormEndTime',
+    'endTime',
+    'shiftFormEnabled',
+    'enabled',
+  ].some(key => Object.prototype.hasOwnProperty.call(rawSettings, key));
+
+  if (!hasExplicitSettings) {
+    return {
+      ...SHIFT_FORM_DEFAULT_SETTINGS,
+      source: rawSettings.source || 'default',
+    };
+  }
+
+  const rawEnabledValue = rawSettings.shiftFormEnabled ?? rawSettings.enabled;
+  const enabledValue = normalizeText(rawEnabledValue) === ''
+    ? SHIFT_FORM_DEFAULT_SETTINGS.enabled
+    : rawEnabledValue;
+  const enabled = typeof enabledValue === 'boolean'
+    ? enabledValue
+    : normalizeBoolean(enabledValue);
+
+  return {
+    allowedDays: parseAllowedDays(rawSettings.shiftFormAllowedDays ?? rawSettings.allowedDays),
+    startTime: normalizeTimeValue(rawSettings.shiftFormStartTime ?? rawSettings.startTime, SHIFT_FORM_DEFAULT_SETTINGS.startTime),
+    endTime: normalizeTimeValue(rawSettings.shiftFormEndTime ?? rawSettings.endTime, SHIFT_FORM_DEFAULT_SETTINGS.endTime),
+    enabled,
+    source: rawSettings.source || 'Settings',
+  };
+}
+
+function getShiftReportConfig(kind) {
+  if (kind === 'swap') return getSheetConfig('shiftSwapReport');
+  if (kind === 'change') return getSheetConfig('shiftChangeReport');
+  throw new Error(`ไม่รู้จักประเภทรายงาน ${kind}`);
+}
+
+function getShiftReportDefaultHeaders(kind) {
+  return kind === 'swap' ? SHIFT_SWAP_DEFAULT_HEADERS : SHIFT_CHANGE_DEFAULT_HEADERS;
+}
+
+function getShiftReportValue(record = {}, key) {
+  switch (key) {
+    case 'id':
+    case 'รหัสรายการ':
+      return record.id;
+    case 'createdat':
+    case 'submittedat':
+    case 'วันที่บันทึก':
+    case 'วันที่ส่ง':
+      return record.createdAt;
+    case 'reporterid':
+    case 'createdbyid':
+    case 'รหัสผู้บันทึก':
+    case 'รหัสผู้แจ้ง':
+      return record.reporterId;
+    case 'reportername':
+    case 'createdby':
+    case 'ผู้บันทึก':
+    case 'ผู้แจ้ง':
+      return record.reporterName;
+    case 'reporterdepartment':
+    case 'แผนกผู้บันทึก':
+    case 'แผนกผู้แจ้ง':
+      return record.reporterDepartment;
+    case 'primaryemployeeid':
+    case 'employee1id':
+    case 'รหัสพนักงานคนที่1':
+      return record.primaryEmployeeId;
+    case 'primaryemployeename':
+    case 'employee1name':
+    case 'พนักงานคนที่1':
+      return record.primaryEmployeeName;
+    case 'primarysection':
+    case 'ส่วนคนที่1':
+      return record.primarySection;
+    case 'primarydepartment':
+    case 'แผนกคนที่1':
+      return record.primaryDepartment;
+    case 'primaryunit':
+    case 'หน่วยคนที่1':
+      return record.primaryUnit;
+    case 'primaryposition':
+    case 'ตำแหน่งคนที่1':
+      return record.primaryPosition;
+    case 'primaryworkdate':
+    case 'employee1workdate':
+    case 'วันที่เวรคนที่1':
+      return record.primaryWorkDate;
+    case 'primaryworkenddate':
+    case 'employee1workenddate':
+    case 'ถึงวันที่คนที่1':
+    case 'วันที่สิ้นสุดคนที่1':
+      return record.primaryWorkEndDate;
+    case 'primaryshift':
+    case 'employee1shift':
+    case 'กะเวรเดิมคนที่1':
+    case 'กะเดิมคนที่1':
+      return record.primaryShift;
+    case 'primarynewshift':
+    case 'employee1newshift':
+    case 'กะเวรใหม่คนที่1':
+    case 'กะใหม่คนที่1':
+      return record.primaryNewShift;
+    case 'secondaryemployeeid':
+    case 'employee2id':
+    case 'รหัสพนักงานคนที่2':
+      return record.secondaryEmployeeId;
+    case 'secondaryemployeename':
+    case 'employee2name':
+    case 'พนักงานคนที่2':
+      return record.secondaryEmployeeName;
+    case 'secondarysection':
+    case 'ส่วนคนที่2':
+      return record.secondarySection;
+    case 'secondarydepartment':
+    case 'แผนกคนที่2':
+      return record.secondaryDepartment;
+    case 'secondaryunit':
+    case 'หน่วยคนที่2':
+      return record.secondaryUnit;
+    case 'secondaryposition':
+    case 'ตำแหน่งคนที่2':
+      return record.secondaryPosition;
+    case 'secondaryworkdate':
+    case 'employee2workdate':
+    case 'วันที่เวรคนที่2':
+      return record.secondaryWorkDate;
+    case 'secondaryshift':
+    case 'employee2shift':
+    case 'กะเวรเดิมคนที่2':
+    case 'กะเดิมคนที่2':
+      return record.secondaryShift;
+    case 'employeeid':
+    case 'รหัสพนักงาน':
+      return record.employeeId ?? record.primaryEmployeeId;
+    case 'employeename':
+    case 'พนักงาน':
+    case 'ชื่อพนักงาน':
+      return record.employeeName ?? record.primaryEmployeeDisplayName ?? record.primaryEmployeeName;
+    case 'section':
+    case 'ส่วน':
+      return record.section ?? record.primarySection;
+    case 'department':
+    case 'แผนก':
+      return record.department ?? record.primaryDepartment;
+    case 'unit':
+    case 'หน่วย':
+      return record.unit ?? record.primaryUnit;
+    case 'position':
+    case 'ตำแหน่ง':
+      return record.position ?? record.primaryPosition;
+    case 'workdate':
+    case 'วันที่':
+    case 'วันที่ทำงาน':
+      return record.workDate ?? record.primaryWorkDate;
+    case 'workenddate':
+    case 'enddate':
+    case 'ถึงวันที่':
+    case 'วันที่สิ้นสุด':
+      return record.workEndDate ?? record.primaryWorkEndDate;
+    case 'oldshift':
+    case 'กะเดิม':
+    case 'เวรเดิม':
+      return record.oldShift ?? record.primaryShift;
+    case 'newshift':
+    case 'กะใหม่':
+    case 'เวรใหม่':
+      return record.newShift ?? record.primaryNewShift;
+    case 'reason':
+    case 'เหตุผล':
+      return record.reason;
+    case 'remark':
+    case 'หมายเหตุ':
+      return record.remark;
+    case 'approversignature':
+    case 'approvalsignature':
+    case 'ลายเซ็นผู้อนุมัติ':
+    case 'รายเซ็นต์ผู้อนุมัติ':
+    case 'ผู้อนุมัติ':
+      return record.approverSignature;
+    case 'source':
+      return record.source;
+    default:
+      return record[key] ?? '';
+  }
+}
+
+function serializeForUserEnteredSheet(value) {
+  const serializedValue = serializeForSheet(value);
+  const text = String(serializedValue ?? '');
+
+  if (!text) return '';
+  if (text.startsWith('=IMAGE(')) return text;
+  return `'${text}`;
+}
+
+function buildShiftReportUserEnteredRowValues(headers = [], record = {}) {
+  return headers.map(header =>
+    serializeForUserEnteredSheet(getShiftReportValue(record, normalizeSheetKey(header)))
+  );
+}
+
+function getAppendedRowNumber(appendResponse = {}) {
+  const updatedRange = normalizeText(appendResponse?.updates?.updatedRange);
+  const match = updatedRange.match(/![A-Z]+(\d+)(?::[A-Z]+\d+)?$/);
+  return match ? normalizeNumber(match[1], 0) : 0;
+}
+
+function getShiftRecordDateRange(record = {}) {
+  return {
+    startDate: normalizeText(record.workDate ?? record.primaryWorkDate),
+    endDate: normalizeText(record.workEndDate ?? record.primaryWorkEndDate),
+  };
+}
+
+function shouldHighlightShiftDateRange(record = {}) {
+  const { startDate, endDate } = getShiftRecordDateRange(record);
+  return Boolean(startDate && endDate && startDate !== endDate);
+}
+
+async function highlightShiftDateRangeRow(config, accessToken, headers, record, appendResponse) {
+  if (!shouldHighlightShiftDateRange(record)) return;
+
+  const rowNumber = getAppendedRowNumber(appendResponse);
+  const sheetId = normalizeNumber(config.sheetGid, -1);
+  if (rowNumber <= 0 || sheetId < 0) return;
+
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(config.spreadsheetId)}:batchUpdate`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requests: [
+          {
+            repeatCell: {
+              range: {
+                sheetId,
+                startRowIndex: rowNumber - 1,
+                endRowIndex: rowNumber,
+                startColumnIndex: 0,
+                endColumnIndex: Math.max(1, headers.length),
+              },
+              cell: {
+                userEnteredFormat: {
+                  backgroundColor: { red: 1, green: 0.949, blue: 0.769 },
+                  textFormat: {
+                    foregroundColor: { red: 0.573, green: 0.251, blue: 0.054 },
+                    bold: true,
+                  },
+                },
+              },
+              fields: 'userEnteredFormat(backgroundColor,textFormat)',
+            },
+          },
+        ],
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw buildGoogleSheetApiError('ไฮไลต์แถววันที่ไม่ตรงกันในชีต', config, response.status, detail);
+  }
+}
+
+export async function loadHrShiftEmployees() {
+  const config = getSheetConfig('shiftEmployees');
+  const sheetName = config.sheetName || 'Data';
+  const fetchedSheet = await fetchGvizSheetByTabName(config.spreadsheetId, sheetName);
+  const normalizedSheet = normalizeHeaderSet(fetchedSheet.columns, fetchedSheet.rows);
+
+  return {
+    employees: normalizeShiftEmployeeRows(normalizedSheet.headers, normalizedSheet.dataRows),
+    sourceUrl: config.sourceUrl,
+  };
+}
+
+export async function loadHrShiftFormSettings({ allowDefaultFallback = true } = {}) {
+  const config = getSheetConfig('shiftEmployees');
+  const settingsSheetName = config.settingsSheetName || 'Settings';
+
+  try {
+    const fetchedSheet = await fetchGvizSheetByTabName(config.spreadsheetId, settingsSheetName);
+    const normalizedSheet = normalizeHeaderSet(fetchedSheet.columns, fetchedSheet.rows);
+    const rawSettings = parseSettingsRows(normalizedSheet.headers, normalizedSheet.dataRows);
+    const hasShiftSettings = Object.keys(rawSettings).some(key => normalizeSheetKey(key).startsWith('shiftform'));
+    if (!hasShiftSettings) {
+      console.warn(`ไม่พบ key shiftForm ในแท็บ ${settingsSheetName} ใช้ค่าเริ่มต้นแทน`);
+    }
+    return normalizeShiftFormSettings({
+      ...rawSettings,
+      source: hasShiftSettings ? settingsSheetName : 'default',
+    });
+  } catch (error) {
+    if (!allowDefaultFallback) {
+      throw error;
+    }
+
+    console.warn(`โหลด Settings ของฟอร์มเปลี่ยนเวรไม่สำเร็จ ใช้ค่าเริ่มต้นแทน: ${error.message}`);
+    return normalizeShiftFormSettings({
+      shiftFormAllowedDays: SHIFT_FORM_DEFAULT_SETTINGS.allowedDays.join(','),
+      shiftFormStartTime: SHIFT_FORM_DEFAULT_SETTINGS.startTime,
+      shiftFormEndTime: SHIFT_FORM_DEFAULT_SETTINGS.endTime,
+      shiftFormEnabled: SHIFT_FORM_DEFAULT_SETTINGS.enabled,
+      source: 'default',
+    });
+  }
+}
+
+export function validateHrShiftFormWindow(settings = SHIFT_FORM_DEFAULT_SETTINGS, date = new Date()) {
+  const normalizedSettings = normalizeShiftFormSettings(settings);
+  const day = date.getDay();
+  const currentMinutes = (date.getHours() * 60) + date.getMinutes();
+  const startMinutes = timeToMinutes(normalizedSettings.startTime);
+  const endMinutes = timeToMinutes(normalizedSettings.endTime);
+  const dayAllowed = normalizedSettings.allowedDays.includes(day);
+  const timeAllowed = startMinutes <= endMinutes
+    ? currentMinutes >= startMinutes && currentMinutes <= endMinutes
+    : currentMinutes >= startMinutes || currentMinutes <= endMinutes;
+  const windowText = createShiftWindowMessage(normalizedSettings);
+
+  if (!normalizedSettings.enabled) {
+    return {
+      allowed: false,
+      message: 'ระบบปิดรับการบันทึกข้อมูลแลกเวร/เปลี่ยนกะงานชั่วคราว',
+      windowText,
+      settings: normalizedSettings,
+    };
+  }
+
+  if (!dayAllowed || !timeAllowed) {
+    return {
+      allowed: false,
+      message: `ไม่สามารถบันทึกได้นอกช่วงเวลาที่กำหนด (${windowText})`,
+      windowText,
+      settings: normalizedSettings,
+    };
+  }
+
+  return {
+    allowed: true,
+    message: `สามารถบันทึกได้ (${windowText})`,
+    windowText,
+    settings: normalizedSettings,
+  };
+}
+
+export async function appendHrShiftReport(kind, record) {
+  const config = getShiftReportConfig(kind);
+  const sheetTitle = config.sheetName || 'Data';
+  const accessToken = await getGoogleAccessToken();
+  const preparedRecord = await prepareShiftReportRecord(record, accessToken);
+  const payload = await fetchSheetValues(config, sheetTitle, accessToken);
+  const values = Array.isArray(payload.values) ? payload.values : [];
+  const defaultHeaders = getShiftReportDefaultHeaders(kind);
+  const existingHeaders = Array.isArray(values[0])
+    ? values[0].map(header => normalizeText(header)).filter(Boolean)
+    : [];
+  const missingHeaders = defaultHeaders.filter(header =>
+    !existingHeaders.some(existingHeader => normalizeSheetKey(existingHeader) === normalizeSheetKey(header))
+  );
+  const headers = existingHeaders.length > 0
+    ? [...existingHeaders, ...missingHeaders]
+    : defaultHeaders;
+
+  if (existingHeaders.length === 0 || missingHeaders.length > 0) {
+    await updateSheetHeaders(config, sheetTitle, accessToken, headers);
+  }
+
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(config.spreadsheetId)}/values/${encodeURIComponent(`${sheetTitle}!A1`)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        majorDimension: 'ROWS',
+        values: [buildShiftReportUserEnteredRowValues(headers, preparedRecord)],
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw buildGoogleSheetApiError('บันทึกข้อมูลลง', config, response.status, detail);
+  }
+
+  const responsePayload = await response.json();
+  try {
+    await highlightShiftDateRangeRow(config, accessToken, headers, preparedRecord, responsePayload);
+  } catch (error) {
+    console.warn('highlightShiftDateRangeRow failed:', error);
+  }
+
+  return {
+    ...responsePayload,
+    sourceUrl: config.sourceUrl,
+  };
 }
 
 export async function upsertEvaluationResult(record, { existingRowIndex = null, headers = [] } = {}) {
@@ -1159,6 +1959,92 @@ export async function updateUserDirectoryPassword(employeeId, nextPassword, { al
     rowNumber,
     previousPassword,
     encodedPassword,
+    sourceUrl: config.sourceUrl,
+  };
+}
+
+function findUserDirectoryColumnIndex(headers = [], aliases = []) {
+  return headers.findIndex(header => aliases.includes(normalizeCompactKey(header)));
+}
+
+export async function updateUserDirectoryAccess(employeeId, { level = '', levelHr = '', levelIt = '', active = '' } = {}) {
+  const config = getSheetConfig('userDirectory');
+  const sheetTitle = await getSheetTitle('userDirectory');
+  const accessToken = await getGoogleAccessToken();
+  const payload = await fetchSheetValues(config, sheetTitle, accessToken);
+  const values = Array.isArray(payload.values) ? payload.values : [];
+
+  if (values.length === 0) {
+    throw new Error('ไม่พบข้อมูลในชีตผู้ใช้งาน');
+  }
+
+  const headerRow = Array.isArray(values[0]) ? values[0].map(header => normalizeText(header)) : [];
+  const employeeIdColumnIndex = findUserDirectoryColumnIndex(headerRow, ['employeeid']);
+  const levelColumnIndex = findUserDirectoryColumnIndex(headerRow, ['level']);
+  const levelHrColumnIndex = findUserDirectoryColumnIndex(headerRow, ['levelhr']);
+  const levelItColumnIndex = findUserDirectoryColumnIndex(headerRow, ['levelit']);
+  const activeColumnIndex = findUserDirectoryColumnIndex(headerRow, ['active']);
+
+  if (employeeIdColumnIndex === -1) {
+    throw new Error('ไม่พบคอลัมน์ employee ID ในชีตผู้ใช้งาน');
+  }
+
+  if (levelColumnIndex === -1 || levelHrColumnIndex === -1 || levelItColumnIndex === -1 || activeColumnIndex === -1) {
+    throw new Error('ไม่พบคอลัมน์ level, levelHr, levelIt หรือ active ในชีตผู้ใช้งาน');
+  }
+
+  const normalizedEmployeeId = normalizeText(employeeId);
+  const matchedRowIndex = values.findIndex((row, index) => {
+    if (index === 0) return false;
+    return normalizeText(row?.[employeeIdColumnIndex]) === normalizedEmployeeId;
+  });
+
+  if (matchedRowIndex === -1) {
+    throw new Error(`ไม่พบ employee ID ${normalizedEmployeeId} ในชีตผู้ใช้งาน`);
+  }
+
+  const nextRowLength = Math.max(
+    headerRow.length,
+    Array.isArray(values[matchedRowIndex]) ? values[matchedRowIndex].length : 0
+  );
+  const nextRowValues = Array.from({ length: nextRowLength }, (_, index) => values[matchedRowIndex]?.[index] ?? '');
+  const previousValues = {
+    level: nextRowValues[levelColumnIndex] ?? '',
+    levelHr: nextRowValues[levelHrColumnIndex] ?? '',
+    levelIt: nextRowValues[levelItColumnIndex] ?? '',
+    active: nextRowValues[activeColumnIndex] ?? '',
+  };
+
+  nextRowValues[levelColumnIndex] = serializeForSheet(level);
+  nextRowValues[levelHrColumnIndex] = serializeForSheet(levelHr);
+  nextRowValues[levelItColumnIndex] = serializeForSheet(levelIt);
+  nextRowValues[activeColumnIndex] = serializeForSheet(normalizeBoolean(active));
+
+  const rowNumber = matchedRowIndex + 1;
+  const targetRange = `${sheetTitle}!A${rowNumber}:${getColumnLetter(nextRowValues.length)}${rowNumber}`;
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(config.spreadsheetId)}/values/${encodeURIComponent(targetRange)}?valueInputOption=RAW`,
+    {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        majorDimension: 'ROWS',
+        values: [nextRowValues],
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`อัปเดตสิทธิ์ใน Google Sheet ไม่สำเร็จ (${response.status}) ${detail}`);
+  }
+
+  return {
+    rowNumber,
+    previousValues,
     sourceUrl: config.sourceUrl,
   };
 }

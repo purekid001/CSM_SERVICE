@@ -460,6 +460,7 @@ function renderFormPanel() {
     </div>
 
     ${groupedTopics.map(group => `
+      ${normalizeKey(group.section) === 'ผลสัมฤทธิ์ของงาน' ? renderEvaluationInstructionNotice() : ''}
       <section class="evaluation-topic-group">
         <div class="evaluation-topic-group-head">
           <h4>${escapeHTML(group.section)}</h4>
@@ -547,6 +548,46 @@ function renderFormPanel() {
   panel.querySelector('#evaluation-submit-btn')?.addEventListener('click', submitEvaluation);
 
   updateScorePreview();
+}
+
+function renderEvaluationInstructionNotice() {
+  return `
+    <div class="booking-notice">
+      <div class="booking-notice-header">
+        <i class="fa-solid fa-circle-info"></i>
+        <h4>ขั้นตอนการประเมิน ก่อนการประเมินทุกครั้ง</h4>
+      </div>
+      <ul class="booking-notice-list">
+        <li>
+          เกณฑ์การให้คะแนน แบ่งออกเป็น 2 ส่วน
+          <ul class="booking-notice-list">
+            <li>ข้อที่ 1-3 เป็นการประเมินประสิทธิภาพการทำงาน</li>
+            <li>ข้อที่ 4-12 เป็นการประเมินทักษะการทำงานร่วมกันกับผู้อื่น</li>
+          </ul>
+        </li>
+        <li>
+          เกณฑ์การลงคะแนน แบ่งออกเป็น 5 ระดับ ใช้สำหรับการประเมิน ข้อที่ 1-3
+          <ul class="booking-notice-list">
+            <li>5 คะแนน ปฏิบัติได้ดีกว่าเป้าหมายเกิน 25%</li>
+            <li>4 คะแนน ปฏิบัติได้ดีกว่าเป้าหมาย แต่ไม่เกิน 25%</li>
+            <li>3 คะแนน ปฏิบัติได้ตามเป้าหมาย</li>
+            <li>2 คะแนน ปฏิบัติไม่ได้ตามเป้าหมาย แต่ไม่เกิน 25%</li>
+            <li>1 คะแนน ปฏิบัติไม่ได้ตามเป้าหมายเกิน 25%</li>
+          </ul>
+        </li>
+        <li>
+          เกณฑ์การลงคะแนน แบ่งออกเป็น 5 ระดับ ใช้สำหรับการประเมิน ข้อที่ 4-12
+          <ul class="booking-notice-list">
+            <li>5 คะแนน อยู่ในระดับที่ดีเลิศจนเป็นแบบอย่างได้ชัดเจน</li>
+            <li>4 คะแนน อยู่ในระดับที่ยอมรับได้เป็นอย่างดี</li>
+            <li>3 คะแนน อยู่ในระดับที่ยอมรับได้</li>
+            <li>2 คะแนน อยู่ในระดับที่มีปัญหา</li>
+            <li>1 คะแนน อยู่ในระดับที่มีปัญหาเป็นอย่างยิ่ง</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  `;
 }
 
 function groupTopicsBySection(topics) {
