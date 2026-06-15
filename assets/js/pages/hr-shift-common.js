@@ -506,8 +506,8 @@ function validateChangeForm(config, state, form) {
   requireEmployees(config, state, 'main', 'พนักงาน', errors);
   requireField(config, 'work-date', 'วันที่', errors);
   requireField(config, 'work-end-date', 'ถึงวันที่', errors);
-  requireField(config, 'old-shift', 'เวรเดิม', errors);
-  requireField(config, 'new-shift', 'เวรใหม่', errors);
+  requireField(config, 'old-shift', 'กะเดิม', errors);
+  requireField(config, 'new-shift', 'กะใหม่', errors);
   requireField(config, 'reason', 'เหตุผล', errors);
   requireField(config, 'approver-signature', 'ลายเซ็นผู้อนุมัติ', errors);
   return errors;

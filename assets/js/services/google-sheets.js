@@ -363,7 +363,7 @@ async function getSheetMetadata(key) {
 
   const accessToken = await getGoogleAccessToken();
   const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(config.spreadsheetId)}?fields=sheets(properties(sheetId,title,index))`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(config.spreadsheetId)}?fields=sheets(properties(sheetId,title,index,tabColor,tabColorStyle))`,
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -379,6 +379,12 @@ async function getSheetMetadata(key) {
   const payload = await response.json();
   metadataCache.set(cacheKey, payload);
   return payload;
+}
+
+function getSheetPropertiesByGid(metadata, sheetGid) {
+  const targetGid = normalizeNumber(sheetGid, -1);
+  if (targetGid < 0 || !Array.isArray(metadata?.sheets)) return null;
+  return metadata.sheets.find(sheet => Number(sheet?.properties?.sheetId) === targetGid)?.properties || null;
 }
 
 async function getSheetTitle(key) {
@@ -1284,8 +1290,8 @@ const SHIFT_CHANGE_DEFAULT_HEADERS = [
   'ตำแหน่ง',
   'วันที่',
   'ถึงวันที่',
-  'เวรเดิม',
-  'เวรใหม่',
+  'กะเดิม',
+  'กะใหม่',
   'เหตุผล',
   'หมายเหตุ',
   'ลายเซ็นผู้อนุมัติ',
@@ -1652,6 +1658,24 @@ function getAppendedRowNumber(appendResponse = {}) {
   return match ? normalizeNumber(match[1], 0) : 0;
 }
 
+const SHIFT_ROW_FORMATS = {
+  dateGroups: [
+    {
+      backgroundColor: { red: 1, green: 1, blue: 1 },
+    },
+    {
+      backgroundColor: { red: 0.937, green: 0.969, blue: 1 },
+    },
+  ],
+  dateRangeAlert: {
+    backgroundColor: { red: 1, green: 0.949, blue: 0.769 },
+    textFormat: {
+      foregroundColor: { red: 0.573, green: 0.251, blue: 0.054 },
+      bold: true,
+    },
+  },
+};
+
 function getShiftRecordDateRange(record = {}) {
   return {
     startDate: normalizeText(record.workDate ?? record.primaryWorkDate),
@@ -1664,8 +1688,67 @@ function shouldHighlightShiftDateRange(record = {}) {
   return Boolean(startDate && endDate && startDate !== endDate);
 }
 
-async function highlightShiftDateRangeRow(config, accessToken, headers, record, appendResponse) {
-  if (!shouldHighlightShiftDateRange(record)) return;
+function getDatePart(value) {
+  const text = normalizeText(value);
+  return text ? text.split(' ')[0] : '';
+}
+
+function getShiftReportCreatedAtColumnIndex(headers = []) {
+  return headers.findIndex(header => {
+    const normalizedHeader = normalizeSheetKey(header);
+    return normalizedHeader === 'createdat'
+      || normalizedHeader === 'submittedat'
+      || normalizedHeader === 'วันที่บันทึก'
+      || normalizedHeader === 'วันที่ส่ง';
+  });
+}
+
+function getShiftReportDateGroupIndex(values = [], headers = [], record = {}) {
+  const recordDate = getDatePart(record.createdAt);
+  if (!recordDate) return 0;
+
+  const headerRow = Array.isArray(values[0]) && values[0].length > 0 ? values[0] : headers;
+  const createdAtColumnIndex = getShiftReportCreatedAtColumnIndex(headerRow);
+  if (createdAtColumnIndex === -1) return 0;
+
+  const seenDates = [];
+  const seenDateSet = new Set();
+
+  values.slice(1).forEach(row => {
+    const rowDate = getDatePart(row?.[createdAtColumnIndex]);
+    if (!rowDate || seenDateSet.has(rowDate)) return;
+    seenDateSet.add(rowDate);
+    seenDates.push(rowDate);
+  });
+
+  if (!seenDateSet.has(recordDate)) {
+    seenDates.push(recordDate);
+  }
+
+  const groupIndex = seenDates.indexOf(recordDate);
+  return groupIndex >= 0 ? groupIndex : 0;
+}
+
+function buildShiftRowFormat(values = [], headers = [], record = {}) {
+  if (shouldHighlightShiftDateRange(record)) {
+    return {
+      userEnteredFormat: SHIFT_ROW_FORMATS.dateRangeAlert,
+      fields: 'userEnteredFormat(backgroundColor,textFormat)',
+    };
+  }
+
+  const groupIndex = getShiftReportDateGroupIndex(values, headers, record);
+  const backgroundFormat = SHIFT_ROW_FORMATS.dateGroups[groupIndex % SHIFT_ROW_FORMATS.dateGroups.length];
+
+  return {
+    userEnteredFormat: backgroundFormat,
+    fields: 'userEnteredFormat(backgroundColor)',
+  };
+}
+
+async function formatShiftReportRow(config, accessToken, headers, values, record, appendResponse) {
+  const rowFormat = buildShiftRowFormat(values, headers, record);
+  if (!rowFormat) return;
 
   const rowNumber = getAppendedRowNumber(appendResponse);
   const sheetId = normalizeNumber(config.sheetGid, -1);
@@ -1691,15 +1774,9 @@ async function highlightShiftDateRangeRow(config, accessToken, headers, record, 
                 endColumnIndex: Math.max(1, headers.length),
               },
               cell: {
-                userEnteredFormat: {
-                  backgroundColor: { red: 1, green: 0.949, blue: 0.769 },
-                  textFormat: {
-                    foregroundColor: { red: 0.573, green: 0.251, blue: 0.054 },
-                    bold: true,
-                  },
-                },
+                userEnteredFormat: rowFormat.userEnteredFormat,
               },
-              fields: 'userEnteredFormat(backgroundColor,textFormat)',
+              fields: rowFormat.fields,
             },
           },
         ],
@@ -1709,8 +1786,64 @@ async function highlightShiftDateRangeRow(config, accessToken, headers, record, 
 
   if (!response.ok) {
     const detail = await response.text();
-    throw buildGoogleSheetApiError('ไฮไลต์แถววันที่ไม่ตรงกันในชีต', config, response.status, detail);
+    throw buildGoogleSheetApiError('จัดรูปแบบสีแถวในชีตเปลี่ยนแลกเวร', config, response.status, detail);
   }
+}
+
+async function syncShiftChangeSheetTabColor(accessToken) {
+  const sourceConfig = getSheetConfig('shiftSwapReport');
+  const targetConfig = getSheetConfig('shiftChangeReport');
+  const [sourceMetadata, targetMetadata] = await Promise.all([
+    getSheetMetadata('shiftSwapReport'),
+    getSheetMetadata('shiftChangeReport'),
+  ]);
+  const sourceProperties = getSheetPropertiesByGid(sourceMetadata, sourceConfig.sheetGid);
+  const targetProperties = getSheetPropertiesByGid(targetMetadata, targetConfig.sheetGid);
+
+  if (!sourceProperties || !targetProperties) return;
+
+  const nextProperties = {
+    sheetId: Number(targetProperties.sheetId),
+  };
+  let fields = '';
+
+  if (sourceProperties.tabColorStyle?.rgbColor) {
+    nextProperties.tabColorStyle = sourceProperties.tabColorStyle;
+    fields = 'tabColorStyle';
+  } else if (sourceProperties.tabColor) {
+    nextProperties.tabColor = sourceProperties.tabColor;
+    fields = 'tabColor';
+  }
+
+  if (!fields) return;
+
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(targetConfig.spreadsheetId)}:batchUpdate`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requests: [
+          {
+            updateSheetProperties: {
+              properties: nextProperties,
+              fields,
+            },
+          },
+        ],
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw buildGoogleSheetApiError('ซิงก์สีแท็บชีตรายงานเปลี่ยนกะงาน', targetConfig, response.status, detail);
+  }
+
+  metadataCache.delete(`${targetConfig.spreadsheetId}:${targetConfig.sheetGid}`);
 }
 
 export async function loadHrShiftEmployees() {
@@ -1799,6 +1932,15 @@ export async function appendHrShiftReport(kind, record) {
   const config = getShiftReportConfig(kind);
   const sheetTitle = config.sheetName || 'Data';
   const accessToken = await getGoogleAccessToken();
+
+  if (kind === 'change') {
+    try {
+      await syncShiftChangeSheetTabColor(accessToken);
+    } catch (error) {
+      console.warn('syncShiftChangeSheetTabColor failed:', error);
+    }
+  }
+
   const preparedRecord = await prepareShiftReportRecord(record, accessToken);
   const payload = await fetchSheetValues(config, sheetTitle, accessToken);
   const values = Array.isArray(payload.values) ? payload.values : [];
@@ -1839,9 +1981,9 @@ export async function appendHrShiftReport(kind, record) {
 
   const responsePayload = await response.json();
   try {
-    await highlightShiftDateRangeRow(config, accessToken, headers, preparedRecord, responsePayload);
+    await formatShiftReportRow(config, accessToken, headers, values, preparedRecord, responsePayload);
   } catch (error) {
-    console.warn('highlightShiftDateRangeRow failed:', error);
+    console.warn('formatShiftReportRow failed:', error);
   }
 
   return {
