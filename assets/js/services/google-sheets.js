@@ -494,6 +494,14 @@ function formatDepartmentPath(section, department, unit) {
     .join(' / ') || '-';
 }
 
+function extractSectionFromDepartmentPath(value) {
+  const normalized = normalizeText(value);
+  if (!normalized || normalized === '-') return '-';
+
+  const [section] = normalized.split('/').map(part => normalizeText(part));
+  return section || normalized;
+}
+
 function deriveTopicSection(key) {
   return normalizeNumber(key, 0) <= RESULT_SECTION_BREAKPOINT
     ? 'ผลสัมฤทธิ์ของงาน'
@@ -698,6 +706,7 @@ function normalizeResultRows(columns, rows) {
       employeeId: normalizeText(raw.employeeId || raw['รหัสพนักงาน']),
       employeeName: normalizeText(raw.employeeName),
       employeePosition: normalizeText(raw.employeePosition),
+      employeeSection: normalizeText(raw.employeeSection || raw['ส่วน'] || extractSectionFromDepartmentPath(raw.employeeDepartment)),
       employeeDepartment: normalizeText(raw.employeeDepartment),
       evaluatorEmployeeId: normalizeText(raw.evaluatorEmployeeId || parsedRecordId.evaluatorEmployeeId),
       evaluatorName: normalizeText(raw.evaluatorName),
@@ -811,6 +820,7 @@ function enrichEvaluationResults(results, employees = [], evaluators = []) {
       ...result,
       employeeName: employee?.displayName || employee?.fullName || result.employeeName,
       employeePosition: employee?.position || result.employeePosition,
+      employeeSection: employee?.section || result.employeeSection || extractSectionFromDepartmentPath(result.employeeDepartment),
       employeeDepartment: employee
         ? formatDepartmentPath(employee.section, employee.department, employee.unit)
         : result.employeeDepartment,
@@ -957,6 +967,7 @@ export function createEvaluationResultRecord({ cycleLabel, employee, evaluator, 
     employeeId: employee.employeeId,
     employeeName: employee.fullName,
     employeePosition: employee.position,
+    employeeSection: employee.section,
     employeeDepartment: formatDepartmentPath(employee.section, employee.department, employee.unit),
     evaluatorEmployeeId: normalizeText(evaluator.employeeId),
     evaluatorName: evaluator.fullName,
