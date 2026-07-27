@@ -6,6 +6,21 @@ const GOOGLE_DRIVE_UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/file
 const GOOGLE_DRIVE_API_URL = 'https://www.googleapis.com/drive/v3/files';
 const RESULT_MAX_SCORE_PER_ITEM = 5;
 const RESULT_SECTION_BREAKPOINT = 3;
+const LABOUR_GRIEVANCE_HEADERS = [
+  'วันที่และเวลาที่ส่ง',
+  'การเปิดเผยตัวตน',
+  'ชื่อ-นามสกุล',
+  'แผนก',
+  'เบอร์โทร',
+  'ประเภทปัญหา',
+  'ปัญหาอื่น ๆ',
+  'วันที่เกิดเหตุ',
+  'สถานที่',
+  'รายละเอียดเหตุการณ์',
+  'บุคคลที่เกี่ยวข้อง',
+  'ต้องการให้บริษัทดำเนินการอย่างไร',
+  'ยืนยันข้อมูลเป็นความจริง',
+];
 
 const tokenCache = {
   accessToken: '',
@@ -47,32 +62,38 @@ function getSheetConfig(key) {
       label: 'ผลการประเมิน',
     },
     userDirectory: {
-      id: import.meta.env.VITE_USER_DIRECTORY_SHEET_ID || '1hDBj97YDY3RVEO6U0V6nCeLaFpkZXyHnpzIqxra4kcw',
-      gid: import.meta.env.VITE_USER_DIRECTORY_SHEET_GID || '0',
-      sourceUrl: import.meta.env.VITE_USER_DIRECTORY_SHEET_SOURCE_URL || 'https://docs.google.com/spreadsheets/d/1hDBj97YDY3RVEO6U0V6nCeLaFpkZXyHnpzIqxra4kcw/edit?gid=0#gid=0',
+      id: import.meta.env.VITE_USER_DIRECTORY_SHEET_ID,
+      gid: import.meta.env.VITE_USER_DIRECTORY_SHEET_GID,
+      sourceUrl: import.meta.env.VITE_USER_DIRECTORY_SHEET_SOURCE_URL,
       label: 'ข้อมูลผู้ใช้งาน',
     },
     shiftEmployees: {
-      id: import.meta.env.VITE_HR_SHIFT_EMPLOYEE_SHEET_ID || '1CP-5FjrpSxLW9mM8lm7d0g_9Gr_EYIw71P0Byk1zMfs',
-      gid: import.meta.env.VITE_HR_SHIFT_EMPLOYEE_SHEET_GID || '0',
+      id: import.meta.env.VITE_HR_SHIFT_EMPLOYEE_SHEET_ID,
+      gid: import.meta.env.VITE_HR_SHIFT_EMPLOYEE_SHEET_GID,
       sheetName: import.meta.env.VITE_HR_SHIFT_EMPLOYEE_SHEET_NAME || 'Data',
       settingsSheetName: import.meta.env.VITE_HR_SHIFT_SETTINGS_SHEET_NAME || 'Settings',
-      sourceUrl: import.meta.env.VITE_HR_SHIFT_EMPLOYEE_SHEET_SOURCE_URL || 'https://docs.google.com/spreadsheets/d/1CP-5FjrpSxLW9mM8lm7d0g_9Gr_EYIw71P0Byk1zMfs/edit?gid=0#gid=0',
+      sourceUrl: import.meta.env.VITE_HR_SHIFT_EMPLOYEE_SHEET_SOURCE_URL,
       label: 'รายชื่อพนักงาน',
     },
     shiftSwapReport: {
-      id: import.meta.env.VITE_HR_SHIFT_SWAP_REPORT_SHEET_ID || '1X7MlRlIGUu5FPFuPWExqalecWX1-CL-NBP4t1wGHZnU',
-      gid: import.meta.env.VITE_HR_SHIFT_SWAP_REPORT_SHEET_GID || '358835882',
+      id: import.meta.env.VITE_HR_SHIFT_SWAP_REPORT_SHEET_ID,
+      gid: import.meta.env.VITE_HR_SHIFT_SWAP_REPORT_SHEET_GID,
       sheetName: import.meta.env.VITE_HR_SHIFT_SWAP_REPORT_SHEET_NAME || 'Data',
-      sourceUrl: import.meta.env.VITE_HR_SHIFT_SWAP_REPORT_SHEET_SOURCE_URL || 'https://docs.google.com/spreadsheets/d/1X7MlRlIGUu5FPFuPWExqalecWX1-CL-NBP4t1wGHZnU/edit?gid=358835882#gid=358835882',
+      sourceUrl: import.meta.env.VITE_HR_SHIFT_SWAP_REPORT_SHEET_SOURCE_URL,
       label: 'รายงานเปลี่ยนแลกเวร',
     },
     shiftChangeReport: {
-      id: import.meta.env.VITE_HR_SHIFT_CHANGE_REPORT_SHEET_ID || '16yv229OL0vKEwFblZgm_f7bbSu5JJ8SrjrIDMVjxYTU',
-      gid: import.meta.env.VITE_HR_SHIFT_CHANGE_REPORT_SHEET_GID || '358835882',
+      id: import.meta.env.VITE_HR_SHIFT_CHANGE_REPORT_SHEET_ID,
+      gid: import.meta.env.VITE_HR_SHIFT_CHANGE_REPORT_SHEET_GID,
       sheetName: import.meta.env.VITE_HR_SHIFT_CHANGE_REPORT_SHEET_NAME || 'Data',
-      sourceUrl: import.meta.env.VITE_HR_SHIFT_CHANGE_REPORT_SHEET_SOURCE_URL || 'https://docs.google.com/spreadsheets/d/16yv229OL0vKEwFblZgm_f7bbSu5JJ8SrjrIDMVjxYTU/edit?gid=358835882#gid=358835882',
+      sourceUrl: import.meta.env.VITE_HR_SHIFT_CHANGE_REPORT_SHEET_SOURCE_URL,
       label: 'รายงานเปลี่ยนกะงาน',
+    },
+    labourGrievance: {
+      id: import.meta.env.VITE_LABOUR_GRIEVANCE_SHEET_ID,
+      gid: import.meta.env.VITE_LABOUR_GRIEVANCE_SHEET_GID,
+      sourceUrl: import.meta.env.VITE_LABOUR_GRIEVANCE_SHEET_SOURCE_URL,
+      label: 'แบบฟอร์มแจ้งปัญหาด้านแรงงาน',
     },
   };
 
@@ -1999,6 +2020,105 @@ export async function appendHrShiftReport(kind, record) {
 
   return {
     ...responsePayload,
+    sourceUrl: config.sourceUrl,
+  };
+}
+
+export async function appendLabourGrievance(record = {}) {
+  const identityMode = record.identityMode === 'named'
+    ? 'named'
+    : record.identityMode === 'anonymous'
+      ? 'anonymous'
+      : '';
+  const issueTypes = Array.isArray(record.issueTypes)
+    ? record.issueTypes.map(normalizeText).filter(Boolean)
+    : [];
+  const fullName = normalizeText(record.fullName);
+  const otherIssue = normalizeText(record.otherIssue);
+  const incidentDetails = normalizeText(record.incidentDetails);
+  const requestedAction = normalizeText(record.requestedAction);
+  const hasOtherIssue = issueTypes.some(issueType => normalizeSheetKey(issueType) === normalizeSheetKey('อื่น ๆ'));
+
+  if (
+    !identityMode
+    || (identityMode === 'named' && !fullName)
+    || issueTypes.length === 0
+    || (hasOtherIssue && !otherIssue)
+    || !incidentDetails
+    || !requestedAction
+    || record.truthConfirmed !== true
+  ) {
+    throw new Error('ข้อมูลแบบฟอร์มแจ้งปัญหาด้านแรงงานไม่ครบถ้วน');
+  }
+
+  const config = getSheetConfig('labourGrievance');
+  const sheetTitle = await getSheetTitle('labourGrievance');
+  const accessToken = await getGoogleAccessToken();
+  const payload = await fetchSheetValues(config, sheetTitle, accessToken, '1:1');
+  const existingHeaders = Array.isArray(payload.values?.[0])
+    ? payload.values[0].map(header => normalizeText(header))
+    : [];
+
+  while (existingHeaders.length > 0 && !existingHeaders.at(-1)) {
+    existingHeaders.pop();
+  }
+
+  const missingHeaders = LABOUR_GRIEVANCE_HEADERS.filter(header =>
+    !existingHeaders.some(existingHeader => normalizeSheetKey(existingHeader) === normalizeSheetKey(header))
+  );
+  const headers = existingHeaders.length > 0
+    ? [...existingHeaders, ...missingHeaders]
+    : [...LABOUR_GRIEVANCE_HEADERS];
+
+  if (existingHeaders.length === 0 || missingHeaders.length > 0) {
+    await updateSheetHeaders(config, sheetTitle, accessToken, headers);
+  }
+
+  const isAnonymous = identityMode === 'anonymous';
+  const sheetRecord = {
+    'วันที่และเวลาที่ส่ง': normalizeText(record.submittedAt),
+    'การเปิดเผยตัวตน': isAnonymous ? 'ไม่เปิดเผยชื่อ (Anonymous)' : 'เปิดเผยชื่อ',
+    'ชื่อ-นามสกุล': isAnonymous ? '' : fullName,
+    'แผนก': isAnonymous ? '' : normalizeText(record.department),
+    'เบอร์โทร': isAnonymous ? '' : normalizeText(record.phone),
+    'ประเภทปัญหา': issueTypes.join(' | '),
+    'ปัญหาอื่น ๆ': otherIssue,
+    'วันที่เกิดเหตุ': normalizeText(record.incidentDate),
+    'สถานที่': normalizeText(record.location),
+    'รายละเอียดเหตุการณ์': incidentDetails,
+    'บุคคลที่เกี่ยวข้อง': normalizeText(record.involvedPeople),
+    'ต้องการให้บริษัทดำเนินการอย่างไร': requestedAction,
+    'ยืนยันข้อมูลเป็นความจริง': true,
+  };
+  const normalizedSheetRecord = new Map(
+    Object.entries(sheetRecord).map(([header, value]) => [normalizeSheetKey(header), value])
+  );
+  const rowValues = headers.map(header =>
+    serializeForSheet(normalizedSheetRecord.get(normalizeSheetKey(header)) ?? '')
+  );
+
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(config.spreadsheetId)}/values/${encodeURIComponent(`${sheetTitle}!A1`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        majorDimension: 'ROWS',
+        values: [rowValues],
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw buildGoogleSheetApiError('บันทึกข้อมูลลง', config, response.status, detail);
+  }
+
+  return {
+    ...(await response.json()),
     sourceUrl: config.sourceUrl,
   };
 }

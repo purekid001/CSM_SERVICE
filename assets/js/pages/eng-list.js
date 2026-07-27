@@ -5,6 +5,8 @@ import { database, ref, get, update } from '../firebase.js';
 import { getEngStepBadge as getStepBadge, getEngStepText, parseDMY, dateToString, parseDateTime, buildPaginationHTML, bindPaginationEvents, escapeHTML, escapeAttr, sanitizeUrl } from '../utils.js';
 
 export function render() {
+  const summarySheetUrl = sanitizeUrl(import.meta.env.VITE_ENG_REPAIR_REPORT_SHEET_SOURCE_URL);
+
   // === ส่วนของ HTML Template (หน้าตาของตารางและฟอร์ม) ===
   // ฟังก์ชันนี้ส่งคืน HTML ที่จะนำไปแสดงในหน้าจอ ประกอบด้วย 2 ตารางหลัก (Table 1 รออนุมัติ และ Table 2 ค้นหา)
   // === Header columns (shared) ===
@@ -160,7 +162,7 @@ export function render() {
               <h2>Search — ค้นหาใบแจ้งซ่อม</h2>
               <p>ค้นหาตามช่วงวันที่ สถานะ หรือคำสำคัญ เพื่อย้อนดูใบแจ้งซ่อมทุกขั้นตอน</p>
               <p>
-                <a href="https://docs.google.com/spreadsheets/d/1FHZzCkpgSFwb1vgg9n7XKhNrGY9qbzAZGHwtjZaEGeY/edit?gid=0#gid=0" target="_blank" rel="noopener noreferrer">
+                <a href="${escapeAttr(summarySheetUrl)}" target="_blank" rel="noopener noreferrer">
                   <i class="fa-solid fa-up-right-from-square"></i>
                   เปิดไฟล์สรุปใน Google Sheets
                 </a>

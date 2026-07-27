@@ -2,9 +2,11 @@
  * HR — Booking List (ตารางการจองรถ)
  */
 import { hrDatabase, ref, get, update } from '../firebase-hr.js';
-import { getHrStepBadge as getStepBadge, getHrStepText as getStepLabel, buildPaginationHTML, bindPaginationEvents, canAccessPage, escapeHTML, escapeAttr } from '../utils.js';
+import { getHrStepBadge as getStepBadge, getHrStepText as getStepLabel, buildPaginationHTML, bindPaginationEvents, canAccessPage, escapeHTML, escapeAttr, sanitizeUrl } from '../utils.js';
 
 export function render() {
+  const summarySheetUrl = sanitizeUrl(import.meta.env.VITE_HR_BOOKING_REPORT_SHEET_SOURCE_URL);
+
   // === ส่วนของ HTML Template ===
   // คืนค่า HTML โครงสร้างหลักสำหรับแสดงตารางใบขอรถ (รออนุมัติ และ ค้นหาประวัติ)
   const thCols = `
@@ -158,7 +160,7 @@ export function render() {
             <h2>Search — ค้นหารายการจองรถ</h2>
             <p>ค้นหาตามช่วงวันที่ สถานะ หรือคำสำคัญ เพื่อย้อนดูงานเก่าและตรวจสอบเคสเฉพาะได้เร็วขึ้น</p>
             <p>
-              <a href="https://docs.google.com/spreadsheets/d/1IFoa5NFgvBFxeSL923TSaq932gPN1iNhYMqNF75k9x8/edit?gid=0#gid=0" target="_blank" rel="noopener noreferrer">
+              <a href="${escapeAttr(summarySheetUrl)}" target="_blank" rel="noopener noreferrer">
                 <i class="fa-solid fa-up-right-from-square"></i>
                 เปิดไฟล์สรุปใน Google Sheets
               </a>

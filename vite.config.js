@@ -32,7 +32,11 @@ function collectHtmlInputs(dirPath) {
 
 const rootDir = process.cwd()
 const reportHtmlInputs = collectHtmlInputs(resolve(rootDir, 'reports'))
-const buildInputs = [resolve(rootDir, 'index.html'), ...reportHtmlInputs]
+const buildInputs = [
+  resolve(rootDir, 'index.html'),
+  resolve(rootDir, 'labour-grievance.html'),
+  ...reportHtmlInputs,
+]
 
 export default defineConfig({
   envDir: projectEnvDir,
