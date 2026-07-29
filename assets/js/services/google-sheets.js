@@ -1,9 +1,5 @@
-const GOOGLE_API_SCOPE = [
-  'https://www.googleapis.com/auth/spreadsheets',
-  'https://www.googleapis.com/auth/drive.file',
-].join(' ');
-const GOOGLE_DRIVE_UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/files';
-const GOOGLE_DRIVE_API_URL = 'https://www.googleapis.com/drive/v3/files';
+import { callWorkspaceFunction } from '../firebase.js';
+
 const RESULT_MAX_SCORE_PER_ITEM = 5;
 const RESULT_SECTION_BREAKPOINT = 3;
 const LABOUR_GRIEVANCE_HEADERS = [
@@ -22,77 +18,53 @@ const LABOUR_GRIEVANCE_HEADERS = [
   'ยืนยันข้อมูลเป็นความจริง',
 ];
 
-const tokenCache = {
-  accessToken: '',
-  expiresAt: 0,
-};
-
 const metadataCache = new Map();
 
 function getSheetConfig(key) {
   const maps = {
     evaluatorCodes: {
-      id: import.meta.env.VITE_HR_EVALUATION_CODE_SHEET_ID || import.meta.env.VITE_HR_EVALUATION_SHEET_ID,
-      gid: import.meta.env.VITE_HR_EVALUATION_CODE_SHEET_GID || import.meta.env.VITE_HR_EVALUATION_SHEET_GID || '0',
-      sourceUrl: import.meta.env.VITE_HR_EVALUATION_CODE_SHEET_SOURCE_URL || import.meta.env.VITE_HR_EVALUATION_SHEET_SOURCE_URL,
+      key: 'evaluatorCodes',
+      settingsSheetName: 'Settings',
       label: 'รหัสผู้ประเมิน',
     },
     employees: {
-      id: import.meta.env.VITE_HR_EVALUATION_EMPLOYEE_SHEET_ID,
-      gid: import.meta.env.VITE_HR_EVALUATION_EMPLOYEE_SHEET_GID || '0',
-      sourceUrl: import.meta.env.VITE_HR_EVALUATION_EMPLOYEE_SHEET_SOURCE_URL,
+      key: 'employees',
       label: 'รายชื่อผู้ถูกประเมิน',
     },
     topics: {
-      id: import.meta.env.VITE_HR_EVALUATION_TOPIC_SHEET_ID,
-      gid: import.meta.env.VITE_HR_EVALUATION_TOPIC_SHEET_GID || '0',
-      sourceUrl: import.meta.env.VITE_HR_EVALUATION_TOPIC_SHEET_SOURCE_URL,
+      key: 'topics',
       label: 'หัวข้อการประเมิน',
     },
     weights: {
-      id: import.meta.env.VITE_HR_EVALUATION_WEIGHT_SHEET_ID,
-      gid: import.meta.env.VITE_HR_EVALUATION_WEIGHT_SHEET_GID || '0',
-      sourceUrl: import.meta.env.VITE_HR_EVALUATION_WEIGHT_SHEET_SOURCE_URL,
+      key: 'weights',
       label: 'น้ำหนักการประเมิน',
     },
     results: {
-      id: import.meta.env.VITE_HR_EVALUATION_RESULT_SHEET_ID,
-      gid: import.meta.env.VITE_HR_EVALUATION_RESULT_SHEET_GID || '0',
-      sourceUrl: import.meta.env.VITE_HR_EVALUATION_RESULT_SHEET_SOURCE_URL,
+      key: 'results',
       label: 'ผลการประเมิน',
     },
     userDirectory: {
-      id: import.meta.env.VITE_USER_DIRECTORY_SHEET_ID,
-      gid: import.meta.env.VITE_USER_DIRECTORY_SHEET_GID,
-      sourceUrl: import.meta.env.VITE_USER_DIRECTORY_SHEET_SOURCE_URL,
+      key: 'userDirectory',
       label: 'ข้อมูลผู้ใช้งาน',
     },
     shiftEmployees: {
-      id: import.meta.env.VITE_HR_SHIFT_EMPLOYEE_SHEET_ID,
-      gid: import.meta.env.VITE_HR_SHIFT_EMPLOYEE_SHEET_GID,
-      sheetName: import.meta.env.VITE_HR_SHIFT_EMPLOYEE_SHEET_NAME || 'Data',
-      settingsSheetName: import.meta.env.VITE_HR_SHIFT_SETTINGS_SHEET_NAME || 'Settings',
-      sourceUrl: import.meta.env.VITE_HR_SHIFT_EMPLOYEE_SHEET_SOURCE_URL,
+      key: 'shiftEmployees',
+      sheetName: 'Data',
+      settingsSheetName: 'Settings',
       label: 'รายชื่อพนักงาน',
     },
     shiftSwapReport: {
-      id: import.meta.env.VITE_HR_SHIFT_SWAP_REPORT_SHEET_ID,
-      gid: import.meta.env.VITE_HR_SHIFT_SWAP_REPORT_SHEET_GID,
-      sheetName: import.meta.env.VITE_HR_SHIFT_SWAP_REPORT_SHEET_NAME || 'Data',
-      sourceUrl: import.meta.env.VITE_HR_SHIFT_SWAP_REPORT_SHEET_SOURCE_URL,
+      key: 'shiftSwapReport',
+      sheetName: 'Data',
       label: 'รายงานเปลี่ยนแลกเวร',
     },
     shiftChangeReport: {
-      id: import.meta.env.VITE_HR_SHIFT_CHANGE_REPORT_SHEET_ID,
-      gid: import.meta.env.VITE_HR_SHIFT_CHANGE_REPORT_SHEET_GID,
-      sheetName: import.meta.env.VITE_HR_SHIFT_CHANGE_REPORT_SHEET_NAME || 'Data',
-      sourceUrl: import.meta.env.VITE_HR_SHIFT_CHANGE_REPORT_SHEET_SOURCE_URL,
+      key: 'shiftChangeReport',
+      sheetName: 'Data',
       label: 'รายงานเปลี่ยนกะงาน',
     },
     labourGrievance: {
-      id: import.meta.env.VITE_LABOUR_GRIEVANCE_SHEET_ID,
-      gid: import.meta.env.VITE_LABOUR_GRIEVANCE_SHEET_GID,
-      sourceUrl: import.meta.env.VITE_LABOUR_GRIEVANCE_SHEET_SOURCE_URL,
+      key: 'labourGrievance',
       label: 'แบบฟอร์มแจ้งปัญหาด้านแรงงาน',
     },
   };
@@ -102,22 +74,13 @@ function getSheetConfig(key) {
     throw new Error(`ไม่รู้จัก config ของชีต ${key}`);
   }
 
-  const spreadsheetId = String(config.id || '').trim();
-  const sheetGid = String(config.gid || '0').trim() || '0';
-  const sourceUrl = String(
-    config.sourceUrl || (spreadsheetId ? `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit#gid=${sheetGid}` : '')
-  ).trim();
-
-  if (!spreadsheetId) {
-    throw new Error(`ยังไม่ได้ตั้งค่า Sheet: ${config.label}`);
-  }
-
   return {
-    spreadsheetId,
-    sheetGid,
+    key: config.key,
+    spreadsheetId: '',
+    sheetGid: '0',
     sheetName: String(config.sheetName || '').trim(),
     settingsSheetName: String(config.settingsSheetName || '').trim(),
-    sourceUrl,
+    sourceUrl: '',
     label: config.label,
   };
 }
@@ -165,239 +128,35 @@ function roundTo(value, digits = 2) {
   return Math.round((Number(value) + Number.EPSILON) * factor) / factor;
 }
 
-function normalizePrivateKey(value) {
-  return String(value || '').replace(/\\n/g, '\n').trim();
-}
-
-function base64UrlEncodeText(text) {
-  return base64UrlEncodeBytes(new TextEncoder().encode(text));
-}
-
-function base64UrlEncodeBytes(bytesLike) {
-  const bytes = bytesLike instanceof Uint8Array ? bytesLike : new Uint8Array(bytesLike);
-  let binary = '';
-  bytes.forEach(byte => {
-    binary += String.fromCharCode(byte);
-  });
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-}
-
-function pemToArrayBuffer(pem) {
-  const base64 = pem
-    .replace(/-----BEGIN PRIVATE KEY-----/g, '')
-    .replace(/-----END PRIVATE KEY-----/g, '')
-    .replace(/\s+/g, '');
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes.buffer;
-}
-
-let jsrsasignLoadingPromise = null;
-
-function loadJsrsasign() {
-  if (window.KJUR) return Promise.resolve();
-  if (jsrsasignLoadingPromise) return jsrsasignLoadingPromise;
-
-  jsrsasignLoadingPromise = new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/10.9.0/jsrsasign-all-min.js';
-    script.onload = () => {
-      resolve();
-    };
-    script.onerror = (err) => {
-      jsrsasignLoadingPromise = null;
-      reject(new Error('ไม่สามารถโหลด jsrsasign จาก CDN ได้: ' + err.message));
-    };
-    document.head.appendChild(script);
-  });
-
-  return jsrsasignLoadingPromise;
-}
-
-async function signJwt(unsignedToken, privateKeyPem) {
-  if (typeof crypto === 'undefined' || !crypto.subtle) {
-    await loadJsrsasign();
-    const sig = new window.KJUR.crypto.Signature({ alg: 'SHA256withRSA' });
-    sig.init(privateKeyPem);
-    sig.updateString(unsignedToken);
-    const sigHex = sig.sign();
-    const bytes = new Uint8Array(sigHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-    return base64UrlEncodeBytes(bytes);
-  }
-
-  const key = await crypto.subtle.importKey(
-    'pkcs8',
-    pemToArrayBuffer(privateKeyPem),
-    {
-      name: 'RSASSA-PKCS1-v1_5',
-      hash: 'SHA-256',
-    },
-    false,
-    ['sign']
-  );
-
-  const signature = await crypto.subtle.sign(
-    'RSASSA-PKCS1-v1_5',
-    key,
-    new TextEncoder().encode(unsignedToken)
-  );
-
-  return base64UrlEncodeBytes(signature);
-}
-
-async function getGoogleAccessToken() {
-  if (tokenCache.accessToken && tokenCache.expiresAt > Date.now() + 60_000) {
-    return tokenCache.accessToken;
-  }
-
-  const clientEmail = normalizeText(import.meta.env.VITE_GOOGLE_CLIENT_EMAIL || import.meta.env.VITE_CLIENT_EMAIL);
-  const privateKey = normalizePrivateKey(import.meta.env.VITE_GOOGLE_SHEET_API_KEY || import.meta.env.VITE_GOOGLE_PRIVATE_KEY);
-  const tokenUri = normalizeText(import.meta.env.VITE_TOKEN_URI || 'https://oauth2.googleapis.com/token');
-
-  if (!clientEmail || !privateKey) {
-    throw new Error('ยังไม่ได้ตั้งค่า Google Service Account สำหรับการบันทึกผลประเมิน');
-  }
-
-  const issuedAt = Math.floor(Date.now() / 1000);
-  const expiresAt = issuedAt + 3600;
-  const jwtHeader = { alg: 'RS256', typ: 'JWT' };
-  const jwtClaim = {
-    iss: clientEmail,
-    scope: GOOGLE_API_SCOPE,
-    aud: tokenUri,
-    exp: expiresAt,
-    iat: issuedAt,
-  };
-
-  const unsignedToken = `${base64UrlEncodeText(JSON.stringify(jwtHeader))}.${base64UrlEncodeText(JSON.stringify(jwtClaim))}`;
-  const signedToken = `${unsignedToken}.${await signJwt(unsignedToken, privateKey)}`;
-
-  const response = await fetch(tokenUri, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: signedToken,
-    }),
-  });
-
-  if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`ขอ access token จาก Google ไม่สำเร็จ (${response.status}) ${detail}`);
-  }
-
-  const payload = await response.json();
-  tokenCache.accessToken = payload.access_token;
-  tokenCache.expiresAt = Date.now() + (Number(payload.expires_in || 3600) * 1000);
-  return tokenCache.accessToken;
-}
-
 async function fetchGvizSheet(key) {
-  const { spreadsheetId, sheetGid, sourceUrl } = getSheetConfig(key);
-  const url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(spreadsheetId)}/gviz/tq?tqx=out:json&gid=${encodeURIComponent(sheetGid)}&cb=${Date.now()}`;
-  const response = await fetch(url, {
-    method: 'GET',
-    cache: 'no-store',
-    headers: {
-      Accept: 'application/json, text/plain, */*',
-    },
+  return callWorkspaceFunction('read', {
+    sheetKey: key,
   });
-
-  if (!response.ok) {
-    throw new Error(`โหลดข้อมูลจากชีต ${key} ไม่สำเร็จ (${response.status})`);
-  }
-
-  const payload = parseGvizResponse(await response.text());
-  if (payload.status !== 'ok' || !payload.table) {
-    throw new Error(`Google Sheet (${key}) ตอบกลับไม่สำเร็จ`);
-  }
-
-  const columns = Array.isArray(payload.table.cols)
-    ? payload.table.cols.map(col => normalizeText(col?.label ?? col?.id ?? ''))
-    : [];
-  const rows = Array.isArray(payload.table.rows)
-    ? payload.table.rows.map(row => Array.isArray(row?.c) ? row.c.map(readCellValue) : [])
-    : [];
-
-  return {
-    sourceUrl,
-    spreadsheetId,
-    sheetGid,
-    columns,
-    rows,
-  };
 }
 
-async function fetchGvizSheetByTabName(spreadsheetId, sheetName) {
-  const normalizedSpreadsheetId = normalizeText(spreadsheetId);
+async function fetchGvizSheetByTabName(sheetKey, sheetName) {
   const normalizedSheetName = normalizeText(sheetName);
 
-  if (!normalizedSpreadsheetId || !normalizedSheetName) {
-    throw new Error('ยังระบุ spreadsheet หรือชื่อแท็บไม่ครบสำหรับการโหลด settings');
+  if (!sheetKey || !normalizedSheetName) {
+    throw new Error('ยังระบุชุดข้อมูลหรือชื่อแท็บไม่ครบสำหรับการโหลด settings');
   }
 
-  const url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(normalizedSpreadsheetId)}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(normalizedSheetName)}&cb=${Date.now()}`;
-  const response = await fetch(url, {
-    method: 'GET',
-    cache: 'no-store',
-    headers: {
-      Accept: 'application/json, text/plain, */*',
-    },
+  return callWorkspaceFunction('read', {
+    sheetKey,
+    tabName: normalizedSheetName,
   });
-
-  if (!response.ok) {
-    throw new Error(`โหลดข้อมูลจากแท็บ ${normalizedSheetName} ไม่สำเร็จ (${response.status})`);
-  }
-
-  const payload = parseGvizResponse(await response.text());
-  if (payload.status !== 'ok' || !payload.table) {
-    throw new Error(`Google Sheet ตอบกลับไม่สำเร็จสำหรับแท็บ ${normalizedSheetName}`);
-  }
-
-  const columns = Array.isArray(payload.table.cols)
-    ? payload.table.cols.map(col => normalizeText(col?.label ?? col?.id ?? ''))
-    : [];
-  const rows = Array.isArray(payload.table.rows)
-    ? payload.table.rows.map(row => Array.isArray(row?.c) ? row.c.map(readCellValue) : [])
-    : [];
-
-  return {
-    sourceUrl: `https://docs.google.com/spreadsheets/d/${normalizedSpreadsheetId}/edit#gid=0`,
-    spreadsheetId: normalizedSpreadsheetId,
-    sheetName: normalizedSheetName,
-    columns,
-    rows,
-  };
 }
 
 async function getSheetMetadata(key) {
   const config = getSheetConfig(key);
-  const cacheKey = `${config.spreadsheetId}:${config.sheetGid}`;
+  const cacheKey = config.key;
   if (metadataCache.has(cacheKey)) {
     return metadataCache.get(cacheKey);
   }
 
-  const accessToken = await getGoogleAccessToken();
-  const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(config.spreadsheetId)}?fields=sheets(properties(sheetId,title,index,tabColor,tabColorStyle))`,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }
-  );
-
-  if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`โหลด metadata ของชีต ${key} ไม่สำเร็จ (${response.status}) ${detail}`);
-  }
-
-  const payload = await response.json();
+  const payload = await callWorkspaceFunction('metadata', {
+    sheetKey: key,
+  });
   metadataCache.set(cacheKey, payload);
   return payload;
 }
@@ -864,7 +623,7 @@ export async function loadEvaluationReferenceData() {
     fetchGvizSheet('topics'),
     fetchGvizSheet('weights'),
     fetchGvizSheet('results'),
-    fetchGvizSheetByTabName(evaluatorConfig.spreadsheetId, 'Settings'),
+    fetchGvizSheetByTabName(evaluatorConfig.key, 'Settings'),
   ]);
 
   const settings = normalizeSettingsRows(settingsSheet.columns, settingsSheet.rows);
@@ -1033,136 +792,6 @@ function serializeForSheet(value) {
   return value ?? '';
 }
 
-function formulaString(value) {
-  return String(value ?? '').replace(/"/g, '""');
-}
-
-function dataUrlToBytes(dataUrl) {
-  const match = String(dataUrl || '').match(/^data:([^;,]+)(;base64|;utf8)?,(.*)$/);
-  if (!match) {
-    throw new Error('รูปแบบลายเซ็นไม่ถูกต้อง');
-  }
-
-  const mimeType = match[1] || 'image/svg+xml';
-  const encoding = match[2] || '';
-  const payload = match[3] || '';
-
-  if (encoding === ';base64') {
-    const binary = atob(payload);
-    const bytes = new Uint8Array(binary.length);
-    for (let index = 0; index < binary.length; index += 1) {
-      bytes[index] = binary.charCodeAt(index);
-    }
-    return { mimeType, bytes };
-  }
-
-  return {
-    mimeType,
-    bytes: new TextEncoder().encode(decodeURIComponent(payload)),
-  };
-}
-
-function normalizeDriveFolderId(value) {
-  const text = normalizeText(value);
-  if (!text) return '';
-
-  const folderPathMatch = text.match(/\/folders\/([^/?#]+)/);
-  if (folderPathMatch) return folderPathMatch[1];
-
-  const queryMatch = text.match(/[?&]id=([^&#]+)/);
-  if (queryMatch) return queryMatch[1];
-
-  return text;
-}
-
-async function uploadShiftSignatureImage(record, accessToken) {
-  const signature = normalizeText(record?.approverSignature);
-  if (!signature || !signature.startsWith('data:image/')) {
-    return signature;
-  }
-
-  const { mimeType, bytes } = dataUrlToBytes(signature);
-  const extension = mimeType.includes('png') ? 'png' : 'svg';
-  const safeId = normalizeText(record.id).replace(/[^\w.-]+/g, '-') || Date.now();
-  const metadata = {
-    name: `shift-signature-${safeId}.${extension}`,
-    mimeType,
-  };
-  const folderId = normalizeDriveFolderId(import.meta.env.VITE_HR_SHIFT_SIGNATURE_DRIVE_FOLDER_ID);
-  if (folderId) {
-    metadata.parents = [folderId];
-  }
-
-  const boundary = `shift_signature_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-  const body = new Blob([
-    `--${boundary}\r\n`,
-    'Content-Type: application/json; charset=UTF-8\r\n\r\n',
-    JSON.stringify(metadata),
-    `\r\n--${boundary}\r\n`,
-    `Content-Type: ${mimeType}\r\n\r\n`,
-    bytes,
-    `\r\n--${boundary}--`,
-  ], {
-    type: `multipart/related; boundary=${boundary}`,
-  });
-
-  const uploadResponse = await fetch(
-    `${GOOGLE_DRIVE_UPLOAD_URL}?uploadType=multipart&supportsAllDrives=true&fields=id`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body,
-    }
-  );
-
-  if (!uploadResponse.ok) {
-    const detail = await uploadResponse.text();
-    throw new Error(`อัปโหลดรูปลายเซ็นไป Google Drive ไม่สำเร็จ (${uploadResponse.status}) ${detail}`);
-  }
-
-  const uploadedFile = await uploadResponse.json();
-  const fileId = uploadedFile.id;
-  const permissionResponse = await fetch(
-    `${GOOGLE_DRIVE_API_URL}/${encodeURIComponent(fileId)}/permissions?supportsAllDrives=true&fields=id`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        role: 'reader',
-        type: 'anyone',
-      }),
-    }
-  );
-
-  if (!permissionResponse.ok) {
-    const detail = await permissionResponse.text();
-    throw new Error(`ตั้งค่าสิทธิ์รูปลายเซ็นไม่สำเร็จ (${permissionResponse.status}) ${detail}`);
-  }
-
-  const imageUrl = `https://drive.google.com/uc?export=view&id=${encodeURIComponent(fileId)}`;
-  return `=IMAGE("${formulaString(imageUrl)}", 1)`;
-}
-
-async function prepareShiftReportRecord(record, accessToken) {
-  return {
-    ...record,
-    approverSignature: await uploadShiftSignatureImage(record, accessToken),
-  };
-}
-
-function buildGoogleSheetApiError(action, config, status, detail) {
-  const permissionHint = status === 403
-    ? ' กรุณาแชร์ไฟล์ Google Sheet ให้ Google Service Account ที่ตั้งค่าไว้ในระบบมีสิทธิ์ Editor หรือแก้ Sheet ID ให้ชี้ไปยังไฟล์ที่แชร์แล้ว'
-    : '';
-  const sourceHint = config?.sourceUrl ? ` (${config.sourceUrl})` : '';
-  return new Error(`${action} ${config.label} ไม่สำเร็จ (${status})${permissionHint}${sourceHint} ${detail}`);
-}
-
 function encodeSheetPassword(value) {
   const text = String(value ?? '');
   return btoa(String.fromCharCode(...new TextEncoder().encode(text)));
@@ -1170,47 +799,6 @@ function encodeSheetPassword(value) {
 
 function buildRowValues(headers, record) {
   return headers.map(header => serializeForSheet(record[header] ?? ''));
-}
-
-async function updateSheetHeaders(config, sheetTitle, accessToken, headers) {
-  const headerRange = `${sheetTitle}!A1:${getColumnLetter(headers.length)}1`;
-  const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(config.spreadsheetId)}/values/${encodeURIComponent(headerRange)}?valueInputOption=RAW`,
-    {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        majorDimension: 'ROWS',
-        values: [headers],
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    const detail = await response.text();
-    throw buildGoogleSheetApiError('อัปเดต header ของชีต', config, response.status, detail);
-  }
-}
-
-async function fetchSheetValues(config, sheetTitle, accessToken, range = 'A:ZZ') {
-  const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(config.spreadsheetId)}/values/${encodeURIComponent(`${sheetTitle}!${range}`)}`,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }
-  );
-
-  if (!response.ok) {
-    const detail = await response.text();
-    throw buildGoogleSheetApiError('โหลดข้อมูลจากชีต', config, response.status, detail);
-  }
-
-  return response.json();
 }
 
 function normalizeCompactKey(value) {
@@ -1881,7 +1469,7 @@ async function syncShiftChangeSheetTabColor(accessToken) {
 export async function loadHrShiftEmployees() {
   const config = getSheetConfig('shiftEmployees');
   const sheetName = config.sheetName || 'Data';
-  const fetchedSheet = await fetchGvizSheetByTabName(config.spreadsheetId, sheetName);
+  const fetchedSheet = await fetchGvizSheetByTabName(config.key, sheetName);
   const normalizedSheet = normalizeHeaderSet(fetchedSheet.columns, fetchedSheet.rows);
 
   return {
@@ -1895,7 +1483,7 @@ export async function loadHrShiftFormSettings({ allowDefaultFallback = true } = 
   const settingsSheetName = config.settingsSheetName || 'Settings';
 
   try {
-    const fetchedSheet = await fetchGvizSheetByTabName(config.spreadsheetId, settingsSheetName);
+    const fetchedSheet = await fetchGvizSheetByTabName(config.key, settingsSheetName);
     const normalizedSheet = normalizeHeaderSet(fetchedSheet.columns, fetchedSheet.rows);
     const rawSettings = parseSettingsRows(normalizedSheet.headers, normalizedSheet.dataRows);
     const hasShiftSettings = Object.keys(rawSettings).some(key => normalizeSheetKey(key).startsWith('shiftform'));
@@ -1961,279 +1549,34 @@ export function validateHrShiftFormWindow(settings = SHIFT_FORM_DEFAULT_SETTINGS
 }
 
 export async function appendHrShiftReport(kind, record) {
-  const config = getShiftReportConfig(kind);
-  const sheetTitle = config.sheetName || 'Data';
-  const accessToken = await getGoogleAccessToken();
-
-  if (kind === 'change') {
-    try {
-      await syncShiftChangeSheetTabColor(accessToken);
-    } catch (error) {
-      console.warn('syncShiftChangeSheetTabColor failed:', error);
-    }
-  }
-
-  const preparedRecord = await prepareShiftReportRecord(record, accessToken);
-  const payload = await fetchSheetValues(config, sheetTitle, accessToken);
-  const values = Array.isArray(payload.values) ? payload.values : [];
-  const defaultHeaders = getShiftReportDefaultHeaders(kind);
-  const existingHeaders = Array.isArray(values[0])
-    ? values[0].map(header => normalizeText(header)).filter(Boolean)
-    : [];
-  const missingHeaders = defaultHeaders.filter(header =>
-    !existingHeaders.some(existingHeader => normalizeSheetKey(existingHeader) === normalizeSheetKey(header))
-  );
-  const headers = existingHeaders.length > 0
-    ? [...existingHeaders, ...missingHeaders]
-    : defaultHeaders;
-
-  if (existingHeaders.length === 0 || missingHeaders.length > 0) {
-    await updateSheetHeaders(config, sheetTitle, accessToken, headers);
-  }
-
-  const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(config.spreadsheetId)}/values/${encodeURIComponent(`${sheetTitle}!A1`)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        majorDimension: 'ROWS',
-        values: [buildShiftReportUserEnteredRowValues(headers, preparedRecord)],
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    const detail = await response.text();
-    throw buildGoogleSheetApiError('บันทึกข้อมูลลง', config, response.status, detail);
-  }
-
-  const responsePayload = await response.json();
-  try {
-    await formatShiftReportRow(config, accessToken, headers, values, preparedRecord, responsePayload);
-  } catch (error) {
-    console.warn('formatShiftReportRow failed:', error);
-  }
-
-  return {
-    ...responsePayload,
-    sourceUrl: config.sourceUrl,
-  };
+  return callWorkspaceFunction('appendShiftReport', {
+    kind,
+    record,
+  });
 }
 
 export async function appendLabourGrievance(record = {}) {
-  const identityMode = record.identityMode === 'named'
-    ? 'named'
-    : record.identityMode === 'anonymous'
-      ? 'anonymous'
-      : '';
-  const issueTypes = Array.isArray(record.issueTypes)
-    ? record.issueTypes.map(normalizeText).filter(Boolean)
-    : [];
-  const fullName = normalizeText(record.fullName);
-  const otherIssue = normalizeText(record.otherIssue);
-  const incidentDetails = normalizeText(record.incidentDetails);
-  const requestedAction = normalizeText(record.requestedAction);
-  const hasOtherIssue = issueTypes.some(issueType => normalizeSheetKey(issueType) === normalizeSheetKey('อื่น ๆ'));
-
-  if (
-    !identityMode
-    || (identityMode === 'named' && !fullName)
-    || issueTypes.length === 0
-    || (hasOtherIssue && !otherIssue)
-    || !incidentDetails
-    || !requestedAction
-    || record.truthConfirmed !== true
-  ) {
-    throw new Error('ข้อมูลแบบฟอร์มแจ้งปัญหาด้านแรงงานไม่ครบถ้วน');
-  }
-
-  const config = getSheetConfig('labourGrievance');
-  const sheetTitle = await getSheetTitle('labourGrievance');
-  const accessToken = await getGoogleAccessToken();
-  const payload = await fetchSheetValues(config, sheetTitle, accessToken, '1:1');
-  const existingHeaders = Array.isArray(payload.values?.[0])
-    ? payload.values[0].map(header => normalizeText(header))
-    : [];
-
-  while (existingHeaders.length > 0 && !existingHeaders.at(-1)) {
-    existingHeaders.pop();
-  }
-
-  const missingHeaders = LABOUR_GRIEVANCE_HEADERS.filter(header =>
-    !existingHeaders.some(existingHeader => normalizeSheetKey(existingHeader) === normalizeSheetKey(header))
-  );
-  const headers = existingHeaders.length > 0
-    ? [...existingHeaders, ...missingHeaders]
-    : [...LABOUR_GRIEVANCE_HEADERS];
-
-  if (existingHeaders.length === 0 || missingHeaders.length > 0) {
-    await updateSheetHeaders(config, sheetTitle, accessToken, headers);
-  }
-
-  const isAnonymous = identityMode === 'anonymous';
-  const sheetRecord = {
-    'วันที่และเวลาที่ส่ง': normalizeText(record.submittedAt),
-    'การเปิดเผยตัวตน': isAnonymous ? 'ไม่เปิดเผยชื่อ (Anonymous)' : 'เปิดเผยชื่อ',
-    'ชื่อ-นามสกุล': isAnonymous ? '' : fullName,
-    'แผนก': isAnonymous ? '' : normalizeText(record.department),
-    'เบอร์โทร': isAnonymous ? '' : normalizeText(record.phone),
-    'ประเภทปัญหา': issueTypes.join(' | '),
-    'ปัญหาอื่น ๆ': otherIssue,
-    'วันที่เกิดเหตุ': normalizeText(record.incidentDate),
-    'สถานที่': normalizeText(record.location),
-    'รายละเอียดเหตุการณ์': incidentDetails,
-    'บุคคลที่เกี่ยวข้อง': normalizeText(record.involvedPeople),
-    'ต้องการให้บริษัทดำเนินการอย่างไร': requestedAction,
-    'ยืนยันข้อมูลเป็นความจริง': true,
-  };
-  const normalizedSheetRecord = new Map(
-    Object.entries(sheetRecord).map(([header, value]) => [normalizeSheetKey(header), value])
-  );
-  const rowValues = headers.map(header =>
-    serializeForSheet(normalizedSheetRecord.get(normalizeSheetKey(header)) ?? '')
-  );
-
-  const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(config.spreadsheetId)}/values/${encodeURIComponent(`${sheetTitle}!A1`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        majorDimension: 'ROWS',
-        values: [rowValues],
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    const detail = await response.text();
-    throw buildGoogleSheetApiError('บันทึกข้อมูลลง', config, response.status, detail);
-  }
-
-  return {
-    ...(await response.json()),
-    sourceUrl: config.sourceUrl,
-  };
+  return callWorkspaceFunction('appendLabourGrievance', {
+    record,
+  });
 }
 
 export async function upsertEvaluationResult(record, { existingRowIndex = null, headers = [] } = {}) {
-  const config = getSheetConfig('results');
-  const sheetTitle = await getSheetTitle('results');
-  const fetchedResultSheet = await fetchGvizSheet('results');
-  const normalizedResultSheet = normalizeHeaderSet(fetchedResultSheet.columns, fetchedResultSheet.rows);
-  const normalizedResults = normalizeResultRows(normalizedResultSheet.headers, normalizedResultSheet.dataRows);
-  const baseHeaders = headers.length > 0 ? headers : normalizedResultSheet.headers;
-  const missingHeaders = Object.keys(record).filter(key => !baseHeaders.includes(key));
-  const resultHeaders = missingHeaders.length > 0 ? [...baseHeaders, ...missingHeaders] : baseHeaders;
-  const accessToken = await getGoogleAccessToken();
-  const matchedRowIndex = findResultRowIndexByRecordId(normalizedResults, record.id);
-  const safeExistingRowIndex = matchedRowIndex
-    ?? (Number.isInteger(existingRowIndex) && existingRowIndex >= 2 ? existingRowIndex : null);
-
-  if (missingHeaders.length > 0) {
-    await updateSheetHeaders(config, sheetTitle, accessToken, resultHeaders);
-  }
-
-  const rowValues = buildRowValues(resultHeaders, record);
-  const isUpdate = Number.isInteger(safeExistingRowIndex) && safeExistingRowIndex >= 2;
-
-  const range = isUpdate
-    ? `${sheetTitle}!A${safeExistingRowIndex}:${getColumnLetter(resultHeaders.length)}${safeExistingRowIndex}`
-    : `${sheetTitle}!A1`;
-
-  const endpoint = isUpdate
-    ? `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(config.spreadsheetId)}/values/${encodeURIComponent(range)}?valueInputOption=RAW`
-    : `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(config.spreadsheetId)}/values/${encodeURIComponent(range)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
-
-  const response = await fetch(endpoint, {
-    method: isUpdate ? 'PUT' : 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      majorDimension: 'ROWS',
-      values: [rowValues],
-    }),
+  void existingRowIndex;
+  void headers;
+  return callWorkspaceFunction('upsertEvaluationResult', {
+    record,
   });
-
-  if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`บันทึกผลประเมินลง Google Sheet ไม่สำเร็จ (${response.status}) ${detail}`);
-  }
-
-  return response.json();
 }
 
 export async function updateUserDirectoryPassword(employeeId, nextPassword, { alreadyEncoded = false } = {}) {
-  const config = getSheetConfig('userDirectory');
-  const sheetTitle = await getSheetTitle('userDirectory');
-  const accessToken = await getGoogleAccessToken();
-  const payload = await fetchSheetValues(config, sheetTitle, accessToken);
-  const values = Array.isArray(payload.values) ? payload.values : [];
-
-  if (values.length === 0) {
-    throw new Error('ไม่พบข้อมูลในชีตผู้ใช้งาน');
+  if (alreadyEncoded) {
+    throw new Error('ไม่รองรับการ rollback รหัสผ่านจากหน้าเว็บแล้ว');
   }
-
-  const headerRow = Array.isArray(values[0]) ? values[0] : [];
-  const employeeIdColumnIndex = headerRow.findIndex(header => {
-    const normalized = normalizeKey(header).replace(/\s+/g, '');
-    return normalized === 'employeeid' || normalized === 'employee_id';
+  return callWorkspaceFunction('updateUserDirectoryPassword', {
+    employeeId,
+    nextPassword,
   });
-  const passwordColumnIndex = headerRow.findIndex(header => normalizeKey(header) === 'password');
-
-  if (employeeIdColumnIndex === -1 || passwordColumnIndex === -1) {
-    throw new Error('ไม่พบคอลัมน์ employee ID หรือ password ในชีตผู้ใช้งาน');
-  }
-
-  const normalizedEmployeeId = normalizeText(employeeId);
-  const matchedRowIndex = values.findIndex((row, index) => {
-    if (index === 0) return false;
-    return normalizeText(row?.[employeeIdColumnIndex]) === normalizedEmployeeId;
-  });
-
-  if (matchedRowIndex === -1) {
-    throw new Error(`ไม่พบ employee ID ${normalizedEmployeeId} ในชีตผู้ใช้งาน`);
-  }
-
-  const rowNumber = matchedRowIndex + 1;
-  const previousPassword = values[matchedRowIndex]?.[passwordColumnIndex] ?? '';
-  const encodedPassword = alreadyEncoded ? String(nextPassword ?? '') : encodeSheetPassword(nextPassword);
-  const passwordCell = `${sheetTitle}!${getColumnLetter(passwordColumnIndex + 1)}${rowNumber}`;
-  const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(config.spreadsheetId)}/values/${encodeURIComponent(passwordCell)}?valueInputOption=RAW`,
-    {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        majorDimension: 'ROWS',
-        values: [[encodedPassword]],
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`อัปเดตรหัสผ่านใน Google Sheet ไม่สำเร็จ (${response.status}) ${detail}`);
-  }
-
-  return {
-    rowNumber,
-    previousPassword,
-    encodedPassword,
-    sourceUrl: config.sourceUrl,
-  };
 }
 
 function findUserDirectoryColumnIndex(headers = [], aliases = []) {
@@ -2241,85 +1584,13 @@ function findUserDirectoryColumnIndex(headers = [], aliases = []) {
 }
 
 export async function updateUserDirectoryAccess(employeeId, { level = '', levelHr = '', levelIt = '', active = '' } = {}) {
-  const config = getSheetConfig('userDirectory');
-  const sheetTitle = await getSheetTitle('userDirectory');
-  const accessToken = await getGoogleAccessToken();
-  const payload = await fetchSheetValues(config, sheetTitle, accessToken);
-  const values = Array.isArray(payload.values) ? payload.values : [];
-
-  if (values.length === 0) {
-    throw new Error('ไม่พบข้อมูลในชีตผู้ใช้งาน');
-  }
-
-  const headerRow = Array.isArray(values[0]) ? values[0].map(header => normalizeText(header)) : [];
-  const employeeIdColumnIndex = findUserDirectoryColumnIndex(headerRow, ['employeeid']);
-  const levelColumnIndex = findUserDirectoryColumnIndex(headerRow, ['level']);
-  const levelHrColumnIndex = findUserDirectoryColumnIndex(headerRow, ['levelhr']);
-  const levelItColumnIndex = findUserDirectoryColumnIndex(headerRow, ['levelit']);
-  const activeColumnIndex = findUserDirectoryColumnIndex(headerRow, ['active']);
-
-  if (employeeIdColumnIndex === -1) {
-    throw new Error('ไม่พบคอลัมน์ employee ID ในชีตผู้ใช้งาน');
-  }
-
-  if (levelColumnIndex === -1 || levelHrColumnIndex === -1 || levelItColumnIndex === -1 || activeColumnIndex === -1) {
-    throw new Error('ไม่พบคอลัมน์ level, levelHr, levelIt หรือ active ในชีตผู้ใช้งาน');
-  }
-
-  const normalizedEmployeeId = normalizeText(employeeId);
-  const matchedRowIndex = values.findIndex((row, index) => {
-    if (index === 0) return false;
-    return normalizeText(row?.[employeeIdColumnIndex]) === normalizedEmployeeId;
+  return callWorkspaceFunction('updateUserDirectoryAccess', {
+    employeeId,
+    level,
+    levelHr,
+    levelIt,
+    active,
   });
-
-  if (matchedRowIndex === -1) {
-    throw new Error(`ไม่พบ employee ID ${normalizedEmployeeId} ในชีตผู้ใช้งาน`);
-  }
-
-  const nextRowLength = Math.max(
-    headerRow.length,
-    Array.isArray(values[matchedRowIndex]) ? values[matchedRowIndex].length : 0
-  );
-  const nextRowValues = Array.from({ length: nextRowLength }, (_, index) => values[matchedRowIndex]?.[index] ?? '');
-  const previousValues = {
-    level: nextRowValues[levelColumnIndex] ?? '',
-    levelHr: nextRowValues[levelHrColumnIndex] ?? '',
-    levelIt: nextRowValues[levelItColumnIndex] ?? '',
-    active: nextRowValues[activeColumnIndex] ?? '',
-  };
-
-  nextRowValues[levelColumnIndex] = serializeForSheet(level);
-  nextRowValues[levelHrColumnIndex] = serializeForSheet(levelHr);
-  nextRowValues[levelItColumnIndex] = serializeForSheet(levelIt);
-  nextRowValues[activeColumnIndex] = serializeForSheet(normalizeBoolean(active));
-
-  const rowNumber = matchedRowIndex + 1;
-  const targetRange = `${sheetTitle}!A${rowNumber}:${getColumnLetter(nextRowValues.length)}${rowNumber}`;
-  const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(config.spreadsheetId)}/values/${encodeURIComponent(targetRange)}?valueInputOption=RAW`,
-    {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        majorDimension: 'ROWS',
-        values: [nextRowValues],
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`อัปเดตสิทธิ์ใน Google Sheet ไม่สำเร็จ (${response.status}) ${detail}`);
-  }
-
-  return {
-    rowNumber,
-    previousValues,
-    sourceUrl: config.sourceUrl,
-  };
 }
 
 export async function getUserDirectoryRecords() {
@@ -2350,45 +1621,15 @@ export async function getUserDirectoryDepartments() {
 }
 
 export async function appendUserDirectoryRecord(record) {
-  const config = getSheetConfig('userDirectory');
-  const sheetTitle = await getSheetTitle('userDirectory');
-  const accessToken = await getGoogleAccessToken();
-  const payload = await fetchSheetValues(config, sheetTitle, accessToken);
-  const values = Array.isArray(payload.values) ? payload.values : [];
+  return callWorkspaceFunction('appendUserDirectoryRecord', {
+    record,
+  });
+}
 
-  if (values.length === 0) {
-    throw new Error('ไม่พบ header ในชีตผู้ใช้งาน');
-  }
-
-  const headerRow = Array.isArray(values[0]) ? values[0].map(header => normalizeText(header)) : [];
-  if (headerRow.length === 0) {
-    throw new Error('ไม่พบ header ในชีตผู้ใช้งาน');
-  }
-
-  const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(config.spreadsheetId)}/values/${encodeURIComponent(`${sheetTitle}!A1`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        majorDimension: 'ROWS',
-        values: [buildUserDirectoryRowValues(headerRow, record)],
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`เพิ่มข้อมูลผู้ใช้ลง Google Sheet ไม่สำเร็จ (${response.status}) ${detail}`);
-  }
-
-  return {
-    ...(await response.json()),
-    sourceUrl: config.sourceUrl,
-  };
+export async function registerEmployeeAccount(record) {
+  return callWorkspaceFunction('registerEmployeeAccount', {
+    record,
+  });
 }
 
 function isSyncedEvaluationResult(item, expectedRecord) {

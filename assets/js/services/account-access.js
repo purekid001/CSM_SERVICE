@@ -10,9 +10,6 @@ import {
   hrDatabase,
   ref as hrRef,
   get as hrGet,
-  set as hrSet,
-  update as hrUpdate,
-  remove as hrRemove,
 } from '../firebase-hr.js';
 import {
   appendUserDirectoryRecord,
@@ -261,19 +258,6 @@ export async function updateUserAccessProfile({ employeeId, level = '', level_Hr
       employeeId: normalizedEmployeeId,
       exists: Boolean(engineeringRecord),
       previousRecord: engineeringRecord,
-      nextProfile,
-      baseRecord,
-    }));
-
-    rollbacks.push(await updateFirebaseAccessRecord({
-      databaseRef: hrDatabase,
-      refFactory: hrRef,
-      updateValue: hrUpdate,
-      setValue: hrSet,
-      removeValue: hrRemove,
-      employeeId: normalizedEmployeeId,
-      exists: Boolean(hrRecord),
-      previousRecord: hrRecord,
       nextProfile,
       baseRecord,
     }));

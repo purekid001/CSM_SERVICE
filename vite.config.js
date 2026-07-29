@@ -50,6 +50,7 @@ export default defineConfig({
       '@firebase/app',
       '@firebase/component',
       '@firebase/database',
+      '@firebase/functions',
       '@firebase/logger',
       '@firebase/storage',
       '@firebase/util',

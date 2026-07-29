@@ -213,6 +213,12 @@
               ยังไม่มีบัญชีผู้ใช้?
               <button type="button" class="auth-inline-btn" data-auth-mode-link="register">สมัครสมาชิก</button>
             </p>
+            <button type="button" class="status-indicator login-functions-status" data-state="checking"
+              data-functions-health-status aria-live="polite"
+              title="กำลังตรวจสอบการเชื่อมต่อ Firebase Functions">
+              <span class="status-dot" aria-hidden="true"></span>
+              <span data-functions-health-label>กำลังตรวจสอบ Functions...</span>
+            </button>
             <p>© 2026 CSM SERVICE | All Rights Reserved</p>
           </div>
         </div>
@@ -350,10 +356,12 @@
             <i class="fa-solid fa-water"></i>
             <span class="top-nav-btn-text">พื้นหลัง</span>
           </button>
-          <div class="status-indicator">
-            <span class="status-dot"></span>
-            <span>ระบบพร้อมใช้งาน</span>
-          </div>
+          <button type="button" id="functions-health-status" class="status-indicator" data-state="checking"
+            data-functions-health-status aria-live="polite"
+            title="กำลังตรวจสอบการเชื่อมต่อ Firebase Functions">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span data-functions-health-label>กำลังตรวจสอบ Functions...</span>
+          </button>
         </div>
       </header>
       <div id="app-container" class="content-body"></div>

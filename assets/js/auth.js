@@ -1,5 +1,12 @@
 // --- ระบบ Authentication (Login / Auto-login / Logout) ---
-import { database, ref, get } from './firebase.js';
+import {
+  auth,
+  database,
+  get,
+  ref,
+  signInEmployee,
+  signOutEmployee,
+} from './firebase.js';
 import { getPageFromHash } from './router.js';
 import { escapeAttr, escapeHTML, getUserAccessProfile, isActiveUserRecord } from './utils.js';
 import { syncEngAutoCloseForSession } from './services/eng-auto-close.js';
@@ -47,8 +54,8 @@ const AUTH_COPY = {
  * ใช้ร่วมกันทั้ง Auto-login และ Manual Login เพื่อลด Code Duplication
  */
 function setUserSession(userId, userData) {
-  // TODO(next-security): sessionStorage ควรเป็นแค่ cache ฝั่ง UI ไม่ใช่ source of truth ของสิทธิ์การใช้งาน
-  // รอบถัดไปควรย้าย auth ไปใช้ Firebase Auth / backend session แล้วให้ route ต่าง ๆ ตรวจจาก token/session จริง
+  // sessionStorage เป็นเพียง UI cache; Firebase Auth ID token คือ source of truth
+  // สำหรับ Functions และ Security Rules
   sessionStorage.setItem('isLoggedIn', 'true');
   sessionStorage.setItem('empId', userId);
   sessionStorage.setItem('empName', userData.firstname || 'User');
@@ -276,43 +283,65 @@ function validateRegistrationForm(values) {
   return '';
 }
 
+async function loadAuthenticatedUser(userId) {
+  const snapshot = await get(ref(database, `DHR/User/${userId}`));
+  if (!snapshot.exists()) {
+    throw new Error('ไม่พบข้อมูลรหัสพนักงานนี้ในระบบ');
+  }
+
+  const userData = snapshot.val() || {};
+  if (!isUserActive(userData)) {
+    await signOutEmployee();
+    sessionStorage.clear();
+    throw new Error('บัญชีผู้ใช้นี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ');
+  }
+
+  setUserSession(userId, userData);
+  toggleView(true, getDisplayName(userData, userId));
+  return userData;
+}
+
+function getLoginErrorMessage(error) {
+  const code = String(error?.code || '');
+  if (code === 'auth/user-disabled') {
+    return 'บัญชีผู้ใช้นี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ';
+  }
+  if (code === 'auth/too-many-requests') {
+    return 'มีการเข้าสู่ระบบผิดหลายครั้ง กรุณารอสักครู่แล้วลองใหม่';
+  }
+  if (
+    code === 'auth/invalid-credential'
+    || code === 'auth/invalid-login-credentials'
+    || code === 'auth/user-not-found'
+    || code === 'auth/wrong-password'
+  ) {
+    return 'รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง';
+  }
+  return error?.message || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ';
+}
+
 /**
  * --- ระบบตรวจสอบ Auto-login (DOMContentLoaded) ---
- * ทำงานทันทีที่โหลดหน้าเว็บ เพื่อเช็คว่าเคย "จดจำการเข้าสู่ระบบ" ไว้หรือไม่
+ * Firebase Auth จะคืน session ตาม persistence ที่ผู้ใช้เลือกไว้
  */
 window.addEventListener('DOMContentLoaded', async () => {
   setAuthMode('login');
   void initLoginWeatherTheme();
   await loadRegistrationDepartments();
 
-  const savedUser = localStorage.getItem('rememberedUser');
-  const autoLogin = localStorage.getItem('autoLogin');
+  const rememberedUser = localStorage.getItem('rememberedUser') || '';
+  if (rememberedUser && loginUsernameInput) {
+    loginUsernameInput.value = rememberedUser;
+  }
 
-  if (savedUser && autoLogin === 'true') {
-    try {
-      const userRef = ref(database, `DHR/User/${savedUser}`);
-      const snapshot = await get(userRef);
-
-      if (snapshot.exists()) {
-        const userData = snapshot.val();
-
-        if (!isUserActive(userData)) {
-          localStorage.removeItem('rememberedUser');
-          localStorage.removeItem('autoLogin');
-          sessionStorage.clear();
-          errorMsg.textContent = "บัญชีผู้ใช้นี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ";
-          return;
-        }
-
-        // บันทึก Session ชั่วคราว
-        setUserSession(savedUser, userData);
-
-        console.log("🚀 ระบบจำคุณได้: กำลังเข้าสู่หน้า Dashboard");
-        toggleView(true, getDisplayName(userData, savedUser));
-      }
-    } catch (e) {
-      console.error("Auto-login error:", e);
+  try {
+    await auth.authStateReady();
+    if (auth.currentUser?.uid) {
+      await loadAuthenticatedUser(auth.currentUser.uid);
     }
+  } catch (error) {
+    console.error('Firebase Auth restore error:', error);
+    errorMsg.textContent = getLoginErrorMessage(error);
   }
 });
 
@@ -329,7 +358,7 @@ window.logout = async () => {
 
   if (confirmed) {
     localStorage.removeItem('rememberedUser');
-    localStorage.removeItem('autoLogin');
+    await signOutEmployee();
     sessionStorage.clear();
     window.location.reload();
   }
@@ -351,48 +380,23 @@ loginForm.addEventListener('submit', async (e) => {
   submitBtn.disabled = true;
 
   try {
-    const userRef = ref(database, `DHR/User/${username}`);
-    const snapshot = await get(userRef);
+    const credential = await signInEmployee(
+      username,
+      password,
+      rememberChecked,
+    );
+    await loadAuthenticatedUser(credential.user.uid);
 
-    if (snapshot.exists()) {
-      const userData = snapshot.val();
-
-      // TODO(next-security): ห้ามตรวจ password ตรงจาก client ในระยะยาว
-      // จุดนี้ควรย้ายไป verify ผ่าน Firebase Auth หรือ Cloud Function เพื่อไม่ให้ client อ่าน/เทียบรหัสผ่านเอง
-      // ตรวจสอบรหัสผ่านตรงๆ จาก Database
-      if (userData.password === password) {
-        if (!isUserActive(userData)) {
-          localStorage.removeItem('rememberedUser');
-          localStorage.removeItem('autoLogin');
-          sessionStorage.clear();
-          errorMsg.textContent = "บัญชีผู้ใช้นี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ";
-          return;
-        }
-
-        // จัดการระบบจดจำรหัส (localStorage)
-        if (rememberChecked) {
-          localStorage.setItem('rememberedUser', username);
-          localStorage.setItem('autoLogin', 'true');
-        } else {
-          localStorage.removeItem('rememberedUser');
-          localStorage.removeItem('autoLogin');
-        }
-
-        // เก็บข้อมูลลง Session
-        setUserSession(username, userData);
-
-        console.log("✅ เข้าสู่ระบบสำเร็จ");
-        toggleView(true, getDisplayName(userData, username));
-
-      } else {
-        errorMsg.textContent = "รหัสผ่านไม่ถูกต้อง";
-      }
+    if (rememberChecked) {
+      localStorage.setItem('rememberedUser', username);
     } else {
-      errorMsg.textContent = "ไม่พบข้อมูลรหัสพนักงานนี้";
+      localStorage.removeItem('rememberedUser');
     }
+
+    console.log('เข้าสู่ระบบผ่าน Firebase Auth สำเร็จ');
   } catch (error) {
-    console.error(error);
-    errorMsg.textContent = "เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล";
+    console.error('Firebase Auth login error:', error);
+    errorMsg.textContent = getLoginErrorMessage(error);
   } finally {
     submitBtn.textContent = 'เข้าสู่ระบบ';
     submitBtn.disabled = false;

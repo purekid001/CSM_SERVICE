@@ -1,6 +1,5 @@
 import { database, ref as engRef, get as engGet, set as engSet, remove as engRemove } from '../firebase.js';
-import { hrDatabase, ref as hrRef, get as hrGet, set as hrSet, remove as hrRemove } from '../firebase-hr.js';
-import { appendUserDirectoryRecord, getUserDirectoryRecords } from './google-sheets.js';
+import { getUserDirectoryRecords, registerEmployeeAccount } from './google-sheets.js';
 
 function normalizeText(value) {
   return String(value ?? '').trim();
@@ -54,13 +53,12 @@ export async function registerUserAccount({ employeeId, password, firstname, las
   const normalizedPassword = String(password ?? '');
   const userPath = `DHR/User/${normalizedEmployeeId}`;
 
-  const [engineeringSnapshot, hrSnapshot, directoryResult] = await Promise.all([
+  const [engineeringSnapshot, directoryResult] = await Promise.all([
     engGet(engRef(database, userPath)),
-    hrGet(hrRef(hrDatabase, userPath)),
     getUserDirectoryRecords(),
   ]);
 
-  if (engineeringSnapshot.exists() || hrSnapshot.exists()) {
+  if (engineeringSnapshot.exists()) {
     throw new Error(`รหัสพนักงาน ${normalizedEmployeeId} มีอยู่ในระบบแล้ว`);
   }
 
@@ -84,10 +82,7 @@ export async function registerUserAccount({ employeeId, password, firstname, las
     await engSet(engRef(database, userPath), firebaseRecord);
     rollbacks.push(() => engRemove(engRef(database, userPath)));
 
-    await hrSet(hrRef(hrDatabase, userPath), firebaseRecord);
-    rollbacks.push(() => hrRemove(hrRef(hrDatabase, userPath)));
-
-    const sheetResult = await appendUserDirectoryRecord(buildSheetUserRecord({
+    const registrationResult = await registerEmployeeAccount(buildSheetUserRecord({
       employeeId: normalizedEmployeeId,
       password: normalizedPassword,
       firstname: normalizedFirstname,
@@ -96,10 +91,16 @@ export async function registerUserAccount({ employeeId, password, firstname, las
       email: normalizedEmail,
     }));
 
+    if (registrationResult.authUid !== normalizedEmployeeId) {
+      throw new Error('สร้าง Firebase Auth UID ไม่ตรงกับรหัสพนักงาน');
+    }
+
     return {
       employeeId: normalizedEmployeeId,
-      sheetSourceUrl: sheetResult.sourceUrl || directoryResult.sourceUrl || '',
+      authUid: registrationResult.authUid,
+      sheetSourceUrl: registrationResult.sourceUrl || directoryResult.sourceUrl || '',
       createdTargets: [
+        'Firebase Authentication',
         'Firebase DHR/User (ฝั่ง EN)',
         'Firebase DHR/User (ฝั่ง HR)',
         'Google Sheet / User Directory',

@@ -1,5 +1,10 @@
-import { database, ref as engRef, get as engGet, update as engUpdate } from '../firebase.js';
-import { hrDatabase, ref as hrRef, get as hrGet, update as hrUpdate } from '../firebase-hr.js';
+import {
+  changeFirebaseAuthPassword,
+  database,
+  ref as engRef,
+  get as engGet,
+  update as engUpdate,
+} from '../firebase.js';
 import { updateUserDirectoryPassword } from './google-sheets.js';
 
 function normalizeText(value) {
@@ -25,12 +30,13 @@ export async function changeUserPassword({ employeeId, currentPassword, newPassw
   }
 
   const engPath = `DHR/User/${normalizedEmployeeId}`;
-  const hrPath = `DHR/User/${normalizedEmployeeId}`;
-
-  const [engineeringRecord, hrRecord] = await Promise.all([
-    getRequiredUserRecord(database, engRef, engGet, engPath, 'Firebase DHR/User (ฝั่ง EN)'),
-    getRequiredUserRecord(hrDatabase, hrRef, hrGet, hrPath, 'Firebase DHR/User'),
-  ]);
+  const engineeringRecord = await getRequiredUserRecord(
+    database,
+    engRef,
+    engGet,
+    engPath,
+    'Firebase DHR/User (ฝั่ง EN)',
+  );
 
   if (String(engineeringRecord.password ?? '') !== String(currentPassword ?? '')) {
     throw new Error('รหัสผ่านปัจจุบันไม่ถูกต้อง');
@@ -39,19 +45,19 @@ export async function changeUserPassword({ employeeId, currentPassword, newPassw
   const rollbacks = [];
 
   try {
-    const sheetResult = await updateUserDirectoryPassword(normalizedEmployeeId, newPassword);
-    rollbacks.push(() => updateUserDirectoryPassword(normalizedEmployeeId, sheetResult.previousPassword, { alreadyEncoded: true }));
+    await changeFirebaseAuthPassword(currentPassword, newPassword);
+    rollbacks.push(() => changeFirebaseAuthPassword(newPassword, currentPassword));
 
     await updatePasswordField(database, engRef, engUpdate, engPath, newPassword);
     rollbacks.push(() => updatePasswordField(database, engRef, engUpdate, engPath, engineeringRecord.password ?? ''));
 
-    await updatePasswordField(hrDatabase, hrRef, hrUpdate, hrPath, newPassword);
-    rollbacks.push(() => updatePasswordField(hrDatabase, hrRef, hrUpdate, hrPath, hrRecord.password ?? ''));
+    const sheetResult = await updateUserDirectoryPassword(normalizedEmployeeId, newPassword);
 
     return {
       employeeId: normalizedEmployeeId,
       sheetRowNumber: sheetResult.rowNumber,
       updatedTargets: [
+        'Firebase Authentication',
         'Google Sheet / User',
         'Firebase DHR/User (ฝั่ง EN)',
         'Firebase DHR/User',
