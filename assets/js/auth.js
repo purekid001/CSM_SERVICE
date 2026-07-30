@@ -186,7 +186,7 @@ function setAuthMode(mode = 'login') {
   if (authSubtitle) authSubtitle.textContent = copy.subtitle;
 
   if (authInlineSwitch) {
-    authInlineSwitch.innerHTML = `${copy.inlinePrefix} <button type="button" class="auth-inline-btn" data-auth-mode-link="${copy.inlineTarget}">${copy.inlineAction}</button>`;
+    authInlineSwitch.innerHTML = `${escapeHTML(copy.inlinePrefix)} <button type="button" class="auth-inline-btn" data-auth-mode-link="${escapeAttr(copy.inlineTarget)}">${escapeHTML(copy.inlineAction)}</button>`;
     authInlineSwitch
       .querySelector('[data-auth-mode-link]')
       ?.addEventListener('click', () => setAuthMode(copy.inlineTarget));
@@ -201,7 +201,7 @@ function setAuthMode(mode = 'login') {
 
 function setDepartmentLoadingState(message, disabled = true) {
   if (!registerDepartmentSelect) return;
-  registerDepartmentSelect.innerHTML = `<option value="">${message}</option>`;
+  registerDepartmentSelect.innerHTML = `<option value="">${escapeHTML(message)}</option>`;
   registerDepartmentSelect.disabled = disabled;
 }
 

@@ -28,7 +28,7 @@ export function getEngStepBadge(step) {
     '6': { label: 'ยกเลิก', css: 'badge-danger' },
   };
   const s = map[String(step)] || { label: `Step ${step}`, css: 'badge-default' };
-  return `<span class="badge-status ${s.css}">${s.label}</span>`;
+  return `<span class="badge-status ${s.css}">${escapeHTML(s.label)}</span>`;
 }
 
 // ==========================================
@@ -54,7 +54,7 @@ export function getHrStepBadge(step) {
     '5': { label: 'ยกเลิก', css: 'badge-danger' }
   };
   const s = map[String(step)] || { label: `Status ${step}`, css: 'badge-default' };
-  return `<span class="badge-status ${s.css}">${s.label}</span>`;
+  return `<span class="badge-status ${s.css}">${escapeHTML(s.label)}</span>`;
 }
 
 // ==========================================
