@@ -1,5 +1,9 @@
 import { database, ref, get } from '../firebase.js';
-import { hrDatabase } from '../firebase-hr.js';
+import {
+  hrDatabase,
+  ref as hrRef,
+  get as hrGet,
+} from '../firebase-hr.js';
 import { parseDateTime, canAccessPage } from '../utils.js';
 
 export function render() {
@@ -134,8 +138,8 @@ async function loadDashboardData() {
 
   try {
     const [snapB1, snapB2, snapFix] = await Promise.all([
-      get(ref(hrDatabase, 'Booking/Booking1')),
-      get(ref(hrDatabase, 'Booking/Booking2')),
+      hrGet(hrRef(hrDatabase, 'Booking/Booking1')),
+      hrGet(hrRef(hrDatabase, 'Booking/Booking2')),
       get(ref(database, 'DEN/FIX')),
     ]);
 

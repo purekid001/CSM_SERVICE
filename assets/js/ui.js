@@ -33,6 +33,74 @@ window.toggleDropdown = (btn) => {
   }
 };
 
+const mobileMenuMedia = window.matchMedia('(max-width: 768px)');
+const dashboardLayout = document.getElementById('dashboard-layout');
+const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+const mobileSidebarBackdrop = document.getElementById('mobile-sidebar-backdrop');
+const appSidebar = document.getElementById('app-sidebar');
+const sidebarMenu = document.querySelector('.sidebar-menu');
+
+function setMobileMenuOpen(isOpen, { restoreFocus = false } = {}) {
+  if (!dashboardLayout || !mobileMenuToggle || !appSidebar) return;
+
+  const shouldOpen = mobileMenuMedia.matches && Boolean(isOpen);
+  dashboardLayout.classList.toggle('mobile-menu-open', shouldOpen);
+  mobileMenuToggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+  mobileMenuToggle.setAttribute('aria-label', shouldOpen ? 'ปิดเมนูหลัก' : 'เปิดเมนูหลัก');
+
+  if (mobileMenuMedia.matches) {
+    appSidebar.setAttribute('aria-hidden', shouldOpen ? 'false' : 'true');
+  } else {
+    appSidebar.removeAttribute('aria-hidden');
+  }
+
+  if (!shouldOpen && restoreFocus && mobileMenuMedia.matches) {
+    mobileMenuToggle.focus();
+  }
+}
+
+window.toggleMobileMenu = () => {
+  const isOpen = dashboardLayout?.classList.contains('mobile-menu-open');
+  setMobileMenuOpen(!isOpen);
+};
+
+window.closeMobileMenu = (restoreFocus = false) => {
+  setMobileMenuOpen(false, { restoreFocus });
+};
+
+mobileMenuToggle?.addEventListener('click', window.toggleMobileMenu);
+mobileSidebarBackdrop?.addEventListener('click', () => window.closeMobileMenu(true));
+
+sidebarMenu?.addEventListener('click', (event) => {
+  const menuItem = event.target.closest('.menu-item');
+  if (!menuItem || menuItem.classList.contains('dropdown-btn')) return;
+  window.closeMobileMenu(false);
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && dashboardLayout?.classList.contains('mobile-menu-open')) {
+    window.closeMobileMenu(true);
+  }
+});
+
+const syncMobileMenuState = () => {
+  if (!mobileMenuMedia.matches) {
+    setMobileMenuOpen(false);
+    return;
+  }
+
+  const isOpen = dashboardLayout?.classList.contains('mobile-menu-open');
+  setMobileMenuOpen(isOpen);
+};
+
+if (typeof mobileMenuMedia.addEventListener === 'function') {
+  mobileMenuMedia.addEventListener('change', syncMobileMenuState);
+} else {
+  mobileMenuMedia.addListener(syncMobileMenuState);
+}
+
+syncMobileMenuState();
+
 
 /**
  * Global Confirm Modal (Standardized Ocean Design)

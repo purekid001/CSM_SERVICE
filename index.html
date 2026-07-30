@@ -213,12 +213,6 @@
               ยังไม่มีบัญชีผู้ใช้?
               <button type="button" class="auth-inline-btn" data-auth-mode-link="register">สมัครสมาชิก</button>
             </p>
-            <button type="button" class="status-indicator login-functions-status" data-state="checking"
-              data-functions-health-status aria-live="polite"
-              title="กำลังตรวจสอบการเชื่อมต่อ Firebase Functions">
-              <span class="status-dot" aria-hidden="true"></span>
-              <span data-functions-health-label>กำลังตรวจสอบ Functions...</span>
-            </button>
             <p>© 2026 CSM SERVICE | All Rights Reserved</p>
           </div>
         </div>
@@ -227,7 +221,7 @@
   </div>
 
   <div id="dashboard-layout" style="display: none;">
-    <aside class="sidebar">
+    <aside id="app-sidebar" class="sidebar" aria-label="เมนูหลัก">
       <div class="sidebar-header">
         <div class="sidebar-brand">
           <div class="sidebar-logo-frame">
@@ -341,8 +335,15 @@
       </nav>
     </aside>
 
+    <button type="button" id="mobile-sidebar-backdrop" class="mobile-sidebar-backdrop"
+      aria-label="ปิดเมนูหลัก" tabindex="-1"></button>
+
     <main class="main-content">
       <header class="top-nav">
+        <button type="button" id="mobile-menu-toggle" class="mobile-menu-toggle"
+          aria-label="เปิดเมนูหลัก" aria-controls="app-sidebar" aria-expanded="false">
+          <i class="fa-solid fa-bars" aria-hidden="true"></i>
+        </button>
         <div class="top-nav-context">
           <span class="top-nav-eyebrow">Internal Service Platform</span>
           <div class="user-display">
@@ -355,12 +356,6 @@
             title="เปิด/ปิด คลื่นพื้นหลัง">
             <i class="fa-solid fa-water"></i>
             <span class="top-nav-btn-text">พื้นหลัง</span>
-          </button>
-          <button type="button" id="functions-health-status" class="status-indicator" data-state="checking"
-            data-functions-health-status aria-live="polite"
-            title="กำลังตรวจสอบการเชื่อมต่อ Firebase Functions">
-            <span class="status-dot" aria-hidden="true"></span>
-            <span data-functions-health-label>กำลังตรวจสอบ Functions...</span>
           </button>
         </div>
       </header>
