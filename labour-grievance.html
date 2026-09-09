@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta id="page-description" name="description" content="แบบฟอร์มแจ้งปัญหาด้านแรงงานของ CSM SERVICE" />
+  <link rel="icon" type="image/png" href="assets/img/CSM_New_logo1.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Myanmar:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="assets/css/labour-grievance.css" />
+  <title>แบบฟอร์มแจ้งปัญหาด้านแรงงาน | CSM SERVICE</title>
+</head>
+
+<body>
+  <a class="skip-link" href="#grievance-form" data-i18n="skipLink">ข้ามไปยังแบบฟอร์ม</a>
+
+  <header class="public-header">
+    <div class="public-header__inner">
+      <div class="public-header__brand">
+        <img class="brand-logo" src="assets/img/CSM_New_logo1.png" alt="CSM SERVICE" />
+        <div>
+          <p class="brand-name">CSM SERVICE</p>
+          <p class="brand-context" data-i18n="brandContext">ช่องทางรับฟังข้อร้องเรียนด้านแรงงาน</p>
+        </div>
+      </div>
+      <div class="language-switcher" role="group" aria-label="เลือกภาษา" data-i18n-aria-label="languageSwitcherLabel">
+        <button class="language-button" type="button" data-language="th" aria-pressed="true" lang="th">ไทย</button>
+        <button class="language-button" type="button" data-language="en" aria-pressed="false" lang="en">English</button>
+        <button class="language-button" type="button" data-language="my" aria-pressed="false" lang="my">မြန်မာ</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <section class="intro" aria-labelledby="page-title">
+      <p class="intro__eyebrow" data-i18n="publicChannel">ช่องทางสาธารณะ ไม่ต้องเข้าสู่ระบบ</p>
+      <h1 id="page-title" tabindex="-1" data-i18n="formTitle">แบบฟอร์มแจ้งปัญหาด้านแรงงาน</h1>
+      <p class="intro__subtitle" data-i18n="formSubtitle">Labour Grievance Form</p>
+      <p class="intro__description">
+        <span data-i18n="introDescription">โปรดแจ้งข้อมูลตามที่ทราบ เพื่อให้บริษัทตรวจสอบและดำเนินการอย่างเหมาะสม</span>
+        <span data-i18n="fieldsMarked">ช่องที่มีเครื่องหมาย</span>
+        <span class="required-mark" aria-hidden="true">*</span>
+        <span data-i18n="requiredDescription">เป็นข้อมูลจำเป็น</span>
+      </p>
+      <div class="privacy-note">
+        <strong data-i18n="privacyTitle">ความเป็นส่วนตัว:</strong>
+        <span data-i18n="privacyDescription">หากเลือกไม่เปิดเผยชื่อ ระบบจะไม่ส่งชื่อ แผนก หรือเบอร์โทรไปกับรายการนี้</span>
+      </div>
+    </section>
+
+    <div id="form-error-summary" class="error-summary" role="alert" tabindex="-1" hidden>
+      <p class="error-summary__title" data-i18n="errorSummaryTitle">กรุณาตรวจสอบข้อมูลที่จำเป็น</p>
+      <ul id="form-error-list"></ul>
+    </div>
+
+    <form id="grievance-form" class="grievance-form" novalidate>
+      <section class="form-section" aria-labelledby="identity-title">
+        <div class="section-heading">
+          <span class="section-number" aria-hidden="true">1</span>
+          <div>
+            <h2 id="identity-title" data-i18n="identityTitle">การเปิดเผยตัวตน</h2>
+            <p data-i18n="identityDescription">โปรดเลือกด้วยตนเองก่อนกรอกข้อมูลส่วนอื่น</p>
+          </div>
+        </div>
+
+        <fieldset class="field-group" id="identity-field-group">
+          <legend>
+            <span data-i18n="identityQuestion">ต้องการเปิดเผยชื่อหรือไม่</span>
+            <span class="required-mark" aria-hidden="true">*</span>
+            <span class="sr-only" data-i18n="required">จำเป็น</span>
+          </legend>
+          <div class="identity-options">
+            <label class="choice-card">
+              <input
+                type="radio"
+                name="identityMode"
+                value="named"
+                data-validation-key="identityMode"
+                aria-controls="identity-details"
+                aria-expanded="false"
+              />
+              <span class="choice-card__control" aria-hidden="true"></span>
+              <span>
+                <strong data-i18n="namedChoice">ต้องการเปิดเผยชื่อ</strong>
+                <small data-i18n="namedChoiceDescription">กรอกชื่อเพื่อให้บริษัทสามารถติดต่อกลับได้</small>
+              </span>
+            </label>
+            <label class="choice-card">
+              <input
+                type="radio"
+                name="identityMode"
+                value="anonymous"
+                data-validation-key="identityMode"
+                aria-controls="identity-details"
+                aria-expanded="false"
+              />
+              <span class="choice-card__control" aria-hidden="true"></span>
+              <span>
+                <strong data-i18n="anonymousChoice">ไม่เปิดเผยชื่อ</strong>
+                <small lang="en">Anonymous</small>
+              </span>
+            </label>
+          </div>
+          <p class="field-error" id="identityMode-error" hidden></p>
+        </fieldset>
+
+        <div id="identity-details" class="identity-details" hidden>
+          <div class="field-grid">
+            <div class="field-block field-block--wide">
+              <label for="full-name">
+                <span data-i18n="fullName">ชื่อ-นามสกุล</span>
+                <span class="required-mark" aria-hidden="true">*</span>
+                <span class="sr-only" data-i18n="required">จำเป็น</span>
+              </label>
+              <input
+                id="full-name"
+                name="fullName"
+                type="text"
+                maxlength="150"
+                autocomplete="name"
+                data-validation-key="fullName"
+              />
+              <p class="field-error" id="fullName-error" hidden></p>
+            </div>
+            <div class="field-block">
+              <label for="department"><span data-i18n="department">แผนก</span> <span class="optional-label" data-i18n="ifAvailable">(ถ้ามี)</span></label>
+              <input id="department" name="department" type="text" maxlength="120" />
+            </div>
+            <div class="field-block">
+              <label for="phone"><span data-i18n="phone">เบอร์โทร</span> <span class="optional-label" data-i18n="ifAvailable">(ถ้ามี)</span></label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                inputmode="tel"
+                maxlength="30"
+                autocomplete="tel"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section" aria-labelledby="issue-title">
+        <div class="section-heading">
+          <span class="section-number" aria-hidden="true">2</span>
+          <div>
+            <h2 id="issue-title" data-i18n="issueTitle">ประเภทปัญหา</h2>
+            <p data-i18n="issueDescription">เลือกได้มากกว่าหนึ่งข้อ</p>
+          </div>
+        </div>
+
+        <fieldset class="field-group" id="issue-types-field-group">
+          <legend class="sr-only" data-i18n="issueTitle">ประเภทปัญหา</legend>
+          <div class="checkbox-grid">
+            <label class="checkbox-choice"><input type="checkbox" name="issueTypes" value="ค่าจ้าง" data-validation-key="issueTypes" /><span data-i18n="issueWages">ค่าจ้าง</span></label>
+            <label class="checkbox-choice"><input type="checkbox" name="issueTypes" value="ชั่วโมงการทำงาน" data-validation-key="issueTypes" /><span data-i18n="issueHours">ชั่วโมงการทำงาน</span></label>
+            <label class="checkbox-choice"><input type="checkbox" name="issueTypes" value="OT" data-validation-key="issueTypes" /><span data-i18n="issueOvertime">OT</span></label>
+            <label class="checkbox-choice"><input type="checkbox" name="issueTypes" value="การเลือกปฏิบัติ" data-validation-key="issueTypes" /><span data-i18n="issueDiscrimination">การเลือกปฏิบัติ</span></label>
+            <label class="checkbox-choice"><input type="checkbox" name="issueTypes" value="การล่วงละเมิด" data-validation-key="issueTypes" /><span data-i18n="issueHarassment">การล่วงละเมิด</span></label>
+            <label class="checkbox-choice"><input type="checkbox" name="issueTypes" value="ความปลอดภัยในการทำงาน" data-validation-key="issueTypes" /><span data-i18n="issueSafety">ความปลอดภัยในการทำงาน</span></label>
+            <label class="checkbox-choice"><input type="checkbox" name="issueTypes" value="สุขอนามัย" data-validation-key="issueTypes" /><span data-i18n="issueHygiene">สุขอนามัย</span></label>
+            <label class="checkbox-choice"><input type="checkbox" name="issueTypes" value="สวัสดิการ" data-validation-key="issueTypes" /><span data-i18n="issueWelfare">สวัสดิการ</span></label>
+            <label class="checkbox-choice"><input type="checkbox" name="issueTypes" value="หัวหน้างาน" data-validation-key="issueTypes" /><span data-i18n="issueSupervisor">หัวหน้างาน</span></label>
+            <label class="checkbox-choice"><input type="checkbox" name="issueTypes" value="เพื่อนร่วมงาน" data-validation-key="issueTypes" /><span data-i18n="issueCoworker">เพื่อนร่วมงาน</span></label>
+            <label class="checkbox-choice"><input type="checkbox" name="issueTypes" value="แรงงานเด็ก" data-validation-key="issueTypes" /><span data-i18n="issueChildLabour">แรงงานเด็ก</span></label>
+            <label class="checkbox-choice"><input type="checkbox" name="issueTypes" value="แรงงานบังคับ" data-validation-key="issueTypes" /><span data-i18n="issueForcedLabour">แรงงานบังคับ</span></label>
+            <label class="checkbox-choice"><input id="issue-other" type="checkbox" name="issueTypes" value="อื่น ๆ" data-validation-key="issueTypes" /><span data-i18n="issueOther">อื่น ๆ</span></label>
+          </div>
+          <p class="field-error" id="issueTypes-error" hidden></p>
+        </fieldset>
+
+        <div id="other-issue-wrapper" class="field-block field-block--spaced" hidden>
+          <label for="other-issue">
+            <span data-i18n="otherIssueLabel">โปรดระบุปัญหาอื่น ๆ</span>
+            <span class="required-mark" aria-hidden="true">*</span>
+            <span class="sr-only" data-i18n="requiredWhenOther">จำเป็นเมื่อเลือกอื่น ๆ</span>
+          </label>
+          <input id="other-issue" name="otherIssue" type="text" maxlength="200" data-validation-key="otherIssue" />
+          <p class="field-error" id="otherIssue-error" hidden></p>
+        </div>
+      </section>
+
+      <section class="form-section" aria-labelledby="incident-title">
+        <div class="section-heading">
+          <span class="section-number" aria-hidden="true">3</span>
+          <div>
+            <h2 id="incident-title" data-i18n="incidentTitle">รายละเอียดเหตุการณ์</h2>
+            <p data-i18n="incidentDescription">กรอกเท่าที่ทราบ หากไม่แน่ใจสามารถเว้นช่องที่ไม่บังคับได้</p>
+          </div>
+        </div>
+
+        <div class="field-grid">
+          <div class="field-block">
+            <label for="incident-date"><span data-i18n="incidentDate">วันที่เกิดเหตุ</span> <span class="optional-label" data-i18n="ifKnown">(ถ้าทราบ)</span></label>
+            <div class="date-picker-control">
+              <div class="date-picker-field">
+                <input
+                  id="incident-date"
+                  name="incidentDate"
+                  type="text"
+                  placeholder="dd/MM/yyyy"
+                  readonly
+                  data-validation-key="incidentDate"
+                  data-i18n-aria-label="openCalendarLabel"
+                  aria-label="เปิดปฏิทินเพื่อเลือกวันที่"
+                  aria-describedby="incident-date-format"
+                  aria-haspopup="dialog"
+                  aria-controls="incident-calendar"
+                  aria-expanded="false"
+                />
+                <div
+                  id="incident-calendar"
+                  class="calendar-popover"
+                  role="dialog"
+                  data-i18n-aria-label="calendarLabel"
+                  aria-label="ปฏิทินเลือกวันที่"
+                  aria-labelledby="incident-calendar-title"
+                  hidden
+                >
+                  <div class="calendar-toolbar">
+                    <button
+                      id="incident-calendar-prev"
+                      class="calendar-nav"
+                      type="button"
+                      data-i18n-aria-label="previousMonthLabel"
+                      aria-label="เดือนก่อนหน้า"
+                    >
+                      <span aria-hidden="true">‹</span>
+                    </button>
+                    <p id="incident-calendar-title" class="calendar-month-label" aria-live="polite"></p>
+                    <button
+                      id="incident-calendar-next"
+                      class="calendar-nav"
+                      type="button"
+                      data-i18n-aria-label="nextMonthLabel"
+                      aria-label="เดือนถัดไป"
+                    >
+                      <span aria-hidden="true">›</span>
+                    </button>
+                  </div>
+                  <div id="incident-calendar-weekdays" class="calendar-weekdays" role="row"></div>
+                  <div id="incident-calendar-grid" class="calendar-grid" role="grid"></div>
+                </div>
+              </div>
+              <button id="clear-incident-date" class="clear-date-button" type="button" data-i18n="clearDateButton" hidden>
+                ล้างวันที่
+              </button>
+            </div>
+            <p class="field-help" id="incident-date-format" data-i18n="dateFormatHelp">รูปแบบ วัน/เดือน/ปี เช่น 24/07/2026</p>
+            <p class="field-error" id="incidentDate-error" hidden></p>
+          </div>
+          <div class="field-block">
+            <label for="location"><span data-i18n="location">สถานที่</span> <span class="optional-label" data-i18n="ifKnown">(ถ้าทราบ)</span></label>
+            <input id="location" name="location" type="text" maxlength="300" />
+          </div>
+          <div class="field-block field-block--wide">
+            <label for="incident-details">
+              <span data-i18n="incidentDetails">รายละเอียดเหตุการณ์</span>
+              <span class="required-mark" aria-hidden="true">*</span>
+              <span class="sr-only" data-i18n="required">จำเป็น</span>
+            </label>
+            <textarea
+              id="incident-details"
+              name="incidentDetails"
+              rows="6"
+              maxlength="5000"
+              data-validation-key="incidentDetails"
+              aria-describedby="incident-details-help"
+            ></textarea>
+            <p class="field-help" id="incident-details-help" data-i18n="incidentHelp">ระบุสิ่งที่เกิดขึ้น ลำดับเหตุการณ์ และข้อมูลสำคัญที่ช่วยในการตรวจสอบ</p>
+            <p class="field-error" id="incidentDetails-error" hidden></p>
+          </div>
+          <div class="field-block field-block--wide">
+            <label for="involved-people"><span data-i18n="involvedPeople">บุคคลที่เกี่ยวข้อง</span> <span class="optional-label" data-i18n="ifKnown">(ถ้าทราบ)</span></label>
+            <textarea id="involved-people" name="involvedPeople" rows="3" maxlength="1000"></textarea>
+          </div>
+          <div class="field-block field-block--wide">
+            <label for="requested-action">
+              <span data-i18n="requestedAction">ต้องการให้บริษัทดำเนินการอย่างไร</span>
+              <span class="required-mark" aria-hidden="true">*</span>
+              <span class="sr-only" data-i18n="required">จำเป็น</span>
+            </label>
+            <textarea
+              id="requested-action"
+              name="requestedAction"
+              rows="4"
+              maxlength="2000"
+              data-validation-key="requestedAction"
+            ></textarea>
+            <p class="field-error" id="requestedAction-error" hidden></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section form-section--confirm" aria-labelledby="confirm-title">
+        <div class="section-heading">
+          <span class="section-number" aria-hidden="true">4</span>
+          <div>
+            <h2 id="confirm-title" data-i18n="confirmTitle">ยืนยันและส่งข้อมูล</h2>
+            <p data-i18n="confirmDescription">โปรดตรวจสอบข้อมูลก่อนส่ง</p>
+          </div>
+        </div>
+
+        <div class="truth-field" id="truth-field-group">
+          <label class="truth-choice">
+            <input id="truth-confirmed" name="truthConfirmed" type="checkbox" data-validation-key="truthConfirmed" />
+            <span>
+              <span data-i18n="truthConfirmation">ข้าพเจ้ายืนยันว่าข้อมูลทั้งหมดเป็นความจริงตามที่ข้าพเจ้าทราบ</span>
+              <span class="required-mark" aria-hidden="true">*</span>
+              <span class="sr-only" data-i18n="required">จำเป็น</span>
+            </span>
+          </label>
+          <p class="field-error" id="truthConfirmed-error" hidden></p>
+        </div>
+
+        <button id="submit-button" class="submit-button" type="submit">
+          <span class="submit-button__spinner" aria-hidden="true"></span>
+          <span class="submit-button__label" data-i18n="submitButton">ส่งข้อมูล</span>
+        </button>
+        <p id="submit-status" class="submit-status" aria-live="polite"></p>
+      </section>
+    </form>
+
+    <section id="success-state" class="success-state" tabindex="-1" aria-labelledby="success-title" hidden>
+      <div class="success-state__icon" aria-hidden="true">✓</div>
+      <p class="success-state__eyebrow" data-i18n="successEyebrow">ส่งข้อมูลเรียบร้อย</p>
+      <h2 id="success-title" data-i18n="successTitle">บริษัทได้รับข้อมูลของคุณแล้ว</h2>
+      <p data-i18n="successDescription">ขอบคุณที่แจ้งข้อมูล บริษัทจะนำเรื่องเข้าสู่กระบวนการตรวจสอบที่เกี่ยวข้อง</p>
+      <button id="new-submission-button" class="secondary-button" type="button" data-i18n="newSubmissionButton">ส่งข้อมูลอีกครั้ง</button>
+    </section>
+  </main>
+
+  <footer class="public-footer">
+    <p>CSM SERVICE · Labour Grievance Form</p>
+  </footer>
+
+  <script type="module" src="assets/js/public/labour-grievance.js?v=20260727-1"></script>
+</body>
+
+</html>

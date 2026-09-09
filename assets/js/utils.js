@@ -28,7 +28,7 @@ export function getEngStepBadge(step) {
     '6': { label: 'ยกเลิก', css: 'badge-danger' },
   };
   const s = map[String(step)] || { label: `Step ${step}`, css: 'badge-default' };
-  return `<span class="badge-status ${s.css}">${s.label}</span>`;
+  return `<span class="badge-status ${s.css}">${escapeHTML(s.label)}</span>`;
 }
 
 // ==========================================
@@ -54,7 +54,7 @@ export function getHrStepBadge(step) {
     '5': { label: 'ยกเลิก', css: 'badge-danger' }
   };
   const s = map[String(step)] || { label: `Status ${step}`, css: 'badge-default' };
-  return `<span class="badge-status ${s.css}">${s.label}</span>`;
+  return `<span class="badge-status ${s.css}">${escapeHTML(s.label)}</span>`;
 }
 
 // ==========================================
@@ -127,18 +127,61 @@ export function sanitizeUrl(value, fallback = '#') {
   return fallback;
 }
 
+function normalizeText(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
+function normalizeDepartment(value) {
+  return normalizeText(value).replace(/\s+/g, '');
+}
+
+export function isActiveUserRecord(value) {
+  const normalized = normalizeText(value);
+  return normalized === 'true';
+}
+
+export function getApproversByDepartment(allUsers, department, scope = 'engineering') {
+  const normalizedDepartment = normalizeDepartment(department);
+  if (!allUsers || typeof allUsers !== 'object' || !normalizedDepartment) return [];
+
+  const scopeKey = scope === 'hr' ? 'level_Hr' : 'level';
+  const allowedLevels = scope === 'hr'
+    ? new Set(['1', 'admin', 'admin_hr'])
+    : new Set(['1', 'admin', 'admin_en']);
+
+  return Object.entries(allUsers)
+    .filter(([id, user]) => {
+      if (!user || typeof user !== 'object') return false;
+
+      const userDepartment = normalizeDepartment(user.department);
+      const userLevel = normalizeText(user[scopeKey]);
+
+      return userDepartment === normalizedDepartment
+        && isActiveUserRecord(user.active)
+        && allowedLevels.has(userLevel);
+    })
+    .sort(([, userA], [, userB]) => {
+      const nameA = `${userA?.firstname || ''} ${userA?.lastname || ''}`.trim();
+      const nameB = `${userB?.firstname || ''} ${userB?.lastname || ''}`.trim();
+      return nameA.localeCompare(nameB, 'th');
+    });
+}
+
 export function getUserAccessProfile() {
   const levelEn = String(sessionStorage.getItem('empLevel_en') || '').trim().toLowerCase();
   const levelHr = String(sessionStorage.getItem('empLevel_hr') || sessionStorage.getItem('level_Hr') || '').trim().toLowerCase();
+  const levelIt = String(sessionStorage.getItem('empLevel_it') || sessionStorage.getItem('level_It') || '').trim().toLowerCase();
 
   return {
     isLoggedIn: sessionStorage.getItem('isLoggedIn') === 'true',
     levelEn,
     levelHr,
+    levelIt,
     isEngineeringAdmin: levelEn === 'admin' || levelEn === 'admin_en',
     isEngineeringDocAdmin: levelEn === 'admin' || levelEn === 'admin_en',
     isHrDocAdmin: levelHr === 'admin' || levelHr === 'admin_hr',
     isHrDispatchAdmin: levelHr === 'admin' || levelHr === 'admin_hr' || levelHr === '1',
+    isItAdmin: levelIt === 'admin' || levelIt === 'admin_it',
     isSystemAdmin: levelEn === 'admin' || levelHr === 'admin',
   };
 }
@@ -154,8 +197,11 @@ export function canAccessPage(page) {
       return access.isEngineeringDocAdmin;
     case 'hr-doc':
       return access.isHrDocAdmin;
+    case 'hr-evaluation-report':
+      return true;
     case 'hr-shuttle-group':
       return access.isHrDispatchAdmin;
+    case 'admin-access':
     case 'admin-backup':
       return access.isSystemAdmin;
     default:

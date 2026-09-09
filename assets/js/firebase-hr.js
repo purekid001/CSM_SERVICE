@@ -1,29 +1,75 @@
-// --- Firebase HR Configuration & Initialization ---
-// ใช้สำหรับระบบ HR (จองรถ, Shuttle, etc.) แยก project จาก Firebase หลัก
-import { initializeApp } from "firebase/app";
-import { getDatabase, ref, get, set, update, remove } from "firebase/database";
+// HR data is accessed only through an authenticated Cloud Function proxy.
+// No HR Firebase API key, database URL, or direct database client is bundled.
+import { callHrDatabaseFunction } from './firebase.js';
 
-const firebaseConfigHR = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY_HR,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN_HR,
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL_HR,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID_HR,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET_HR,
-};
+const hrDatabase = Object.freeze({ type: 'hr-database-proxy' });
 
-function validateFirebaseConfig(config, label) {
-  const missing = ['apiKey', 'authDomain', 'projectId'].filter(key => !config[key]);
-  if (missing.length > 0) {
-    throw new Error(`[Firebase ${label}] Missing config: ${missing.join(', ')}. Please check your .env file and restart Vite.`);
+class HrDataSnapshot {
+  constructor(path, value) {
+    this.path = path;
+    this.key = path.split('/').filter(Boolean).at(-1) || null;
+    this._value = value ?? null;
+  }
+
+  exists() {
+    return this._value !== null && this._value !== undefined;
+  }
+
+  val() {
+    return this._value;
+  }
+
+  child(childPath) {
+    const parts = String(childPath ?? '').split('/').filter(Boolean);
+    let value = this._value;
+    for (const part of parts) {
+      value = value && typeof value === 'object' ? value[part] : null;
+    }
+    return new HrDataSnapshot(
+      [this.path, ...parts].filter(Boolean).join('/'),
+      value,
+    );
+  }
+
+  forEach(callback) {
+    if (!this._value || typeof this._value !== 'object') return false;
+    for (const [key, value] of Object.entries(this._value)) {
+      if (callback(new HrDataSnapshot(`${this.path}/${key}`, value)) === true) {
+        return true;
+      }
+    }
+    return false;
   }
 }
 
-validateFirebaseConfig(firebaseConfigHR, 'HR');
+function ref(database, path) {
+  if (database !== hrDatabase) {
+    throw new Error('HR database reference is invalid');
+  }
+  const normalizedPath = String(path ?? '')
+    .trim()
+    .replace(/^\/+|\/+$/g, '');
+  if (!normalizedPath) {
+    throw new Error('HR database path is required');
+  }
+  return Object.freeze({ path: normalizedPath });
+}
 
-// สร้าง Firebase App แยก (ใช้ชื่อ 'hrApp' เพื่อไม่ชนกับ App หลัก)
-const hrApp = initializeApp(firebaseConfigHR, 'hrApp');
-const hrDatabase = firebaseConfigHR.databaseURL
-  ? getDatabase(hrApp, firebaseConfigHR.databaseURL)
-  : getDatabase(hrApp);
+async function get(reference) {
+  const result = await callHrDatabaseFunction('get', reference.path);
+  return new HrDataSnapshot(reference.path, result?.value ?? null);
+}
+
+async function set(reference, value) {
+  await callHrDatabaseFunction('set', reference.path, value);
+}
+
+async function update(reference, value) {
+  await callHrDatabaseFunction('update', reference.path, value);
+}
+
+async function remove(reference) {
+  await callHrDatabaseFunction('remove', reference.path);
+}
 
 export { hrDatabase, ref, get, set, update, remove };

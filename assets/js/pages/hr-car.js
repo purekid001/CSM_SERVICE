@@ -3,7 +3,7 @@
  */
 import { hrDatabase, ref, get, set } from '../firebase-hr.js';
 import { province_th } from '../province_th.js';
-import { escapeHTML, escapeAttr } from '../utils.js';
+import { escapeHTML, escapeAttr, getApproversByDepartment } from '../utils.js';
 
 /** แปลง Date → "dd/MM/yyyy HH:mm:ss" */
 function dateToString(date) {
@@ -233,7 +233,6 @@ export function init() {
   // --- Flatpickr: Date Picker dd/MM/yyyy ---
   const datePicker = flatpickr('#bk-date', {
     dateFormat: 'd/m/Y',
-    minDate: 'today',
     defaultDate: 'today',
     disableMobile: true,
     allowInput: false,
@@ -350,11 +349,7 @@ export function init() {
       const snapshot = await get(ref(hrDatabase, 'DHR/User'));
       if (snapshot.exists()) {
         const allUsers = snapshot.val();
-        const approvers = Object.entries(allUsers).filter(([id, user]) => {
-          return user.department === userDepartment
-            && user.active === 'Yes'
-            && (user.level_Hr === '1' || user.level_Hr === 1 || user.level_Hr === 'admin' || user.level_Hr === 'admin_hr');
-        });
+        const approvers = getApproversByDepartment(allUsers, userDepartment, 'hr');
 
         approverSelect.innerHTML = '<option value="" disabled selected>-- เลือกผู้อนุมัติ --</option>';
 

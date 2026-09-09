@@ -37,10 +37,8 @@ export function render() {
           เลือกช่วงวันที่และรูปแบบรายงานก่อนสร้างผลลัพธ์ ระบบจะแสดงทั้งกราฟ ตาราง และ timeline เพื่อให้ดูภาพรวมและไล่เคสย้อนหลังได้ต่อเนื่อง
         </div>
       </div>
-
-      <div class="report-page fade-in">
-        <section class="form-card report-filter-card">
-          <div class="form-header">
+      <section class="form-card report-filter-card fade-in">
+        <div class="form-header">
             <div class="form-header-copy">
               <div class="form-header-icon">
                 <i class="fa-solid fa-chart-line"></i>
@@ -143,7 +141,6 @@ export function render() {
           </div>
           <div id="rep-table-pagination" class="pagination-bar"></div>
         </section>
-      </div>
     </div>
   `;
 }
@@ -362,7 +359,7 @@ function renderType1(records) {
 
   destroyChart();
   const ctx = document.getElementById('reportChart').getContext('2d');
-  
+
   // Premium status-mapped harmonized color palette
   const statusColors = {
     'รอหัวหน้าอนุมัติ': '#f59e0b',          // Amber
@@ -407,7 +404,24 @@ function renderType1(records) {
         duration: 1600,
         easing: 'easeOutBack'
       }
-    }
+    },
+    plugins: [{
+      id: 'centerText',
+      afterDraw(chart) {
+        const { ctx, width, height } = chart;
+        const total = chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+        ctx.save();
+        ctx.font = "bold 26px 'Inter', 'Noto Sans Thai', sans-serif";
+        ctx.fillStyle = '#0f172a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(total, width / 2, height / 2 - 8);
+        ctx.font = "600 11px 'Inter', 'Noto Sans Thai', sans-serif";
+        ctx.fillStyle = '#64748b';
+        ctx.fillText('ใบแจ้งซ่อม', width / 2, height / 2 + 16);
+        ctx.restore();
+      }
+    }]
   });
 
   document.getElementById('rep-thead').innerHTML = `
@@ -692,7 +706,7 @@ function renderType4(records) {
 
   destroyChart();
   const ctx = document.getElementById('reportChart').getContext('2d');
-  
+
   // Premium glowing indigo line gradient
   const gradient = ctx.createLinearGradient(0, 0, 0, 350);
   gradient.addColorStop(0, 'rgba(99, 102, 241, 0.35)');

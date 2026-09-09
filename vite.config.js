@@ -32,7 +32,11 @@ function collectHtmlInputs(dirPath) {
 
 const rootDir = process.cwd()
 const reportHtmlInputs = collectHtmlInputs(resolve(rootDir, 'reports'))
-const buildInputs = [resolve(rootDir, 'index.html'), ...reportHtmlInputs]
+const buildInputs = [
+  resolve(rootDir, 'index.html'),
+  resolve(rootDir, 'labour-grievance.html'),
+  ...reportHtmlInputs,
+]
 
 export default defineConfig({
   envDir: projectEnvDir,
@@ -46,6 +50,7 @@ export default defineConfig({
       '@firebase/app',
       '@firebase/component',
       '@firebase/database',
+      '@firebase/functions',
       '@firebase/logger',
       '@firebase/storage',
       '@firebase/util',

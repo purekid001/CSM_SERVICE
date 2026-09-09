@@ -1,0 +1,119 @@
+.brand-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  overflow-y: auto;
+  background: rgba(215, 238, 246, 0.62);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  outline: none;
+  cursor: wait;
+}
+
+.brand-loader[hidden] {
+  display: none;
+}
+
+.brand-loader-card {
+  width: min(100%, 292px);
+  padding: 32px 24px 26px;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 24px 70px -28px rgba(26, 93, 112, 0.32);
+  text-align: center;
+}
+
+.brand-loader-emblem {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 148px;
+  height: 148px;
+  margin: 0 auto 26px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 8px #f0f9fc;
+}
+
+.brand-loader-emblem::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 3px solid #e2f1f5;
+  border-top-color: #008cdb;
+  border-right-color: #109b74;
+  border-radius: 50%;
+  animation: brand-loader-orbit 1.6s linear infinite;
+}
+
+.brand-loader-mark {
+  display: block;
+  width: 104px;
+  height: 88px;
+  object-fit: contain;
+  animation: brand-loader-float 2.4s ease-in-out infinite;
+}
+
+.brand-loader-message {
+  color: #163c52;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.brand-loader-caption {
+  margin-top: 5px;
+  color: #607b8a;
+  font-size: 13px;
+}
+
+.brand-loader-dots {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 20px;
+}
+
+.brand-loader-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #008cdb;
+  animation: brand-loader-dot 1.2s ease-in-out infinite;
+}
+
+.brand-loader-dots span:nth-child(2) { animation-delay: 0.16s; }
+.brand-loader-dots span:nth-child(3) { animation-delay: 0.32s; background: #109b74; }
+
+@keyframes brand-loader-orbit {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes brand-loader-float {
+  0%, 100% { transform: translateY(2px); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes brand-loader-dot {
+  0%, 80%, 100% { opacity: 0.35; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-4px); }
+}
+
+@media (max-height: 420px) {
+  .brand-loader-card { padding: 20px; }
+  .brand-loader-emblem { width: 112px; height: 112px; margin-bottom: 18px; }
+  .brand-loader-mark { width: 80px; height: 68px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-loader *,
+  .brand-loader *::before,
+  .brand-loader *::after {
+    animation: none !important;
+  }
+}

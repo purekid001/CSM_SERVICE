@@ -2,9 +2,11 @@
  * HR — Booking List (ตารางการจองรถ)
  */
 import { hrDatabase, ref, get, update } from '../firebase-hr.js';
-import { getHrStepBadge as getStepBadge, getHrStepText as getStepLabel, buildPaginationHTML, bindPaginationEvents, canAccessPage, escapeHTML, escapeAttr } from '../utils.js';
+import { getHrStepBadge as getStepBadge, getHrStepText as getStepLabel, buildPaginationHTML, bindPaginationEvents, canAccessPage, escapeHTML, escapeAttr, sanitizeUrl } from '../utils.js';
 
 export function render() {
+  const summarySheetUrl = sanitizeUrl(import.meta.env.VITE_HR_BOOKING_REPORT_SHEET_SOURCE_URL);
+
   // === ส่วนของ HTML Template ===
   // คืนค่า HTML โครงสร้างหลักสำหรับแสดงตารางใบขอรถ (รออนุมัติ และ ค้นหาประวัติ)
   const thCols = `
@@ -132,7 +134,7 @@ export function render() {
       </div>
 
       <div class="ops-table-caption">
-        <span><i class="fa-solid fa-arrow-down-wide-short"></i> เรียงจากวันที่จองล่าสุดไปเก่าสุด</span>
+        <span><i class="fa-solid fa-arrow-up-wide-short"></i> เรียงวันที่ขอจากน้อยไปมาก</span>
         <span><i class="fa-solid fa-table-list"></i> รองรับการเลื่อนแนวนอนในหน้าจอเล็ก</span>
       </div>
 
@@ -158,7 +160,7 @@ export function render() {
             <h2>Search — ค้นหารายการจองรถ</h2>
             <p>ค้นหาตามช่วงวันที่ สถานะ หรือคำสำคัญ เพื่อย้อนดูงานเก่าและตรวจสอบเคสเฉพาะได้เร็วขึ้น</p>
             <p>
-              <a href="https://docs.google.com/spreadsheets/d/1IFoa5NFgvBFxeSL923TSaq932gPN1iNhYMqNF75k9x8/edit?gid=0#gid=0" target="_blank" rel="noopener noreferrer">
+              <a href="${escapeAttr(summarySheetUrl)}" target="_blank" rel="noopener noreferrer">
                 <i class="fa-solid fa-up-right-from-square"></i>
                 เปิดไฟล์สรุปใน Google Sheets
               </a>
@@ -216,7 +218,7 @@ export function render() {
       </div>
 
       <div class="ops-table-caption">
-        <span><i class="fa-solid fa-clock-rotate-left"></i> ใช้สำหรับค้นย้อนหลังทั้งฝั่ง Car และ Shuttle</span>
+        <span><i class="fa-solid fa-clock-rotate-left"></i> ใช้สำหรับค้นย้อนหลังทั้งฝั่ง Car และ Shuttle โดยเรียงวันที่ขอจากน้อยไปมาก</span>
         <span><i class="fa-solid fa-expand"></i> เปิด modal เพื่อตรวจข้อมูลและอัปเดตสถานะต่อได้ทันที</span>
       </div>
 
@@ -334,6 +336,15 @@ const rowsPerPage = 20;
 
 // Helpers moved to utils.js
 
+function getBookingDateValue(str) {
+  if (!str || str === '-') return 0;
+  const parts = str.split('/');
+  if (parts.length === 3) {
+    return new Date(parts[2], parts[1] - 1, parts[0]).getTime();
+  }
+  return 0;
+}
+
 async function loadBookings() {
   try {
     document.getElementById('bl-tbody').innerHTML = '<tr><td colspan="10" class="table-loading"><i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลดข้อมูล...</td></tr>';
@@ -418,17 +429,8 @@ async function loadBookings() {
       }
     }
 
-    // Sort by bookingDate descending (newest first)
-    // bookingDate format: dd/mm/yyyy
-    function parseDate(str) {
-      if (!str) return 0;
-      const parts = str.split('/');
-      if (parts.length === 3) {
-        return new Date(parts[2], parts[1] - 1, parts[0]).getTime();
-      }
-      return 0;
-    }
-    allBookings.sort((a, b) => parseDate(b.bookingDate) - parseDate(a.bookingDate));
+    // Sort by bookingDate ascending (oldest first)
+    allBookings.sort((a, b) => getBookingDateValue(a.bookingDate) - getBookingDateValue(b.bookingDate));
 
     updateOverviewStats();
     renderTable1();

@@ -452,13 +452,15 @@ function renderFormPanel() {
         <p>กรอกคะแนนทุกหัวข้อจาก 1 ถึง 5 คะแนน ระบบจะคำนวณคะแนนถ่วงน้ำหนักอัตโนมัติ</p>
       </div>
       <div class="evaluation-score-preview" id="evaluation-score-preview">
-        <span>คะแนนรวม</span>
-        <strong>-</strong>
-        <small>ตอบแล้ว 0 / ${state.refs.topics.length} ข้อ</small>
+        ${renderScorePreviewMarkup(null, {
+          answered: 0,
+          totalTopics: state.refs.topics.length,
+        })}
       </div>
     </div>
 
     ${groupedTopics.map(group => `
+      ${normalizeKey(group.section) === 'ผลสัมฤทธิ์ของงาน' ? renderEvaluationInstructionNotice() : ''}
       <section class="evaluation-topic-group">
         <div class="evaluation-topic-group-head">
           <h4>${escapeHTML(group.section)}</h4>
@@ -494,6 +496,9 @@ function renderFormPanel() {
                         <span class="evaluation-score-value">${option.value}</span>
                       </button>
                     `).join('')}
+                  </div>
+                  <div class="evaluation-topic-weight-preview" id="evaluation-weight-preview-${escapeAttr(topic.key)}">
+                    ${renderTopicWeightPreview(topic, selectedScore)}
                   </div>
                 </div>
               </div>
@@ -536,12 +541,53 @@ function renderFormPanel() {
         item.setAttribute('aria-pressed', isActive ? 'true' : 'false');
       });
 
+      updateTopicWeightPreview(topicKey, Number(score || 0));
       updateScorePreview();
     });
   });
   panel.querySelector('#evaluation-submit-btn')?.addEventListener('click', submitEvaluation);
 
   updateScorePreview();
+}
+
+function renderEvaluationInstructionNotice() {
+  return `
+    <div class="booking-notice">
+      <div class="booking-notice-header">
+        <i class="fa-solid fa-circle-info"></i>
+        <h4>ขั้นตอนการประเมิน ก่อนการประเมินทุกครั้ง</h4>
+      </div>
+      <ul class="booking-notice-list">
+        <li>
+          เกณฑ์การให้คะแนน แบ่งออกเป็น 2 ส่วน
+          <ul class="booking-notice-list">
+            <li>ข้อที่ 1-3 เป็นการประเมินประสิทธิภาพการทำงาน</li>
+            <li>ข้อที่ 4-12 เป็นการประเมินทักษะการทำงานร่วมกันกับผู้อื่น</li>
+          </ul>
+        </li>
+        <li>
+          เกณฑ์การลงคะแนน แบ่งออกเป็น 5 ระดับ ใช้สำหรับการประเมิน ข้อที่ 1-3
+          <ul class="booking-notice-list">
+            <li>5 คะแนน ปฏิบัติได้ดีกว่าเป้าหมายเกิน 25%</li>
+            <li>4 คะแนน ปฏิบัติได้ดีกว่าเป้าหมาย แต่ไม่เกิน 25%</li>
+            <li>3 คะแนน ปฏิบัติได้ตามเป้าหมาย</li>
+            <li>2 คะแนน ปฏิบัติไม่ได้ตามเป้าหมาย แต่ไม่เกิน 25%</li>
+            <li>1 คะแนน ปฏิบัติไม่ได้ตามเป้าหมายเกิน 25%</li>
+          </ul>
+        </li>
+        <li>
+          เกณฑ์การลงคะแนน แบ่งออกเป็น 5 ระดับ ใช้สำหรับการประเมิน ข้อที่ 4-12
+          <ul class="booking-notice-list">
+            <li>5 คะแนน อยู่ในระดับที่ดีเลิศจนเป็นแบบอย่างได้ชัดเจน</li>
+            <li>4 คะแนน อยู่ในระดับที่ยอมรับได้เป็นอย่างดี</li>
+            <li>3 คะแนน อยู่ในระดับที่ยอมรับได้</li>
+            <li>2 คะแนน อยู่ในระดับที่มีปัญหา</li>
+            <li>1 คะแนน อยู่ในระดับที่มีปัญหาเป็นอย่างยิ่ง</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  `;
 }
 
 function groupTopicsBySection(topics) {
@@ -594,11 +640,50 @@ function updateScorePreview() {
     topics: state.refs.topics,
   });
 
-  preview.innerHTML = `
-    <span>คะแนนรวม</span>
-    <strong>${escapeHTML(draft.overallScore.toFixed(2))}</strong>
-    <small>ตอบแล้ว ${escapeHTML(String(partial.answered))} / ${escapeHTML(String(state.refs.topics.length))} ข้อ</small>
+  preview.innerHTML = renderScorePreviewMarkup(draft, {
+    answered: partial.answered,
+    totalTopics: state.refs.topics.length,
+  });
+}
+
+function renderScorePreviewMarkup(draft, { answered = 0, totalTopics = 0 } = {}) {
+  const overallScore = Number(draft?.overallScore);
+  const weightedTotal = Number(draft?.weightedTotal);
+
+  return `
+    <div class="evaluation-score-main">
+      <span>คะแนนรวม</span>
+      <strong>${Number.isFinite(overallScore) ? escapeHTML(overallScore.toFixed(2)) : '-'}</strong>
+    </div>
+    <div class="evaluation-score-subtotal">
+      <span>คะแนนรวมถ่วงน้ำหนัก</span>
+      <strong>${Number.isFinite(weightedTotal) ? escapeHTML(weightedTotal.toFixed(2)) : '-'}</strong>
+    </div>
+    <small>= ผลรวม ((คะแนนที่ได้ x Weight) / 100)</small>
+    <small>ตอบแล้ว ${escapeHTML(String(answered))} / ${escapeHTML(String(totalTopics))} ข้อ</small>
   `;
+}
+
+function renderTopicWeightPreview(topic, selectedScore = 0) {
+  return escapeHTML(buildTopicWeightPreviewText(topic, selectedScore));
+}
+
+function buildTopicWeightPreviewText(topic, selectedScore = 0) {
+  const weight = Number(topic?.weight || 0);
+  const hasSelectedScore = Number(selectedScore) > 0;
+  const score = hasSelectedScore ? Number(selectedScore) : 5;
+  const weightedScore = (score * weight) / 100;
+  const prefix = hasSelectedScore ? 'คะแนนถ่วงน้ำหนัก' : 'ตัวอย่าง';
+
+  return `${prefix}: (${score} x ${weight}) / 100 = ${weightedScore.toFixed(2)}`;
+}
+
+function updateTopicWeightPreview(topicKey, selectedScore = 0) {
+  const preview = document.getElementById(`evaluation-weight-preview-${topicKey}`);
+  const topic = state.refs?.topics?.find(item => String(item.key) === String(topicKey));
+  if (!preview || !topic) return;
+
+  preview.textContent = buildTopicWeightPreviewText(topic, selectedScore);
 }
 
 function renderAiAnalysisContent(analysis) {
@@ -635,7 +720,13 @@ function renderAiAnalysisContent(analysis) {
     `;
   }
 
-  if (status === 'skipped_limit' || status === 'skipped_error' || status === 'skipped_empty') {
+  if (
+    status === 'skipped_limit'
+    || status === 'skipped_error'
+    || status === 'skipped_empty'
+    || status === 'skipped_no_key'
+    || status === 'skipped_disabled'
+  ) {
     return `
       <div class="evaluation-ai-head">
         <div>
@@ -678,6 +769,7 @@ function updateAiAnalysisPreview(analysis) {
 
 function renderAiModalBody({ employee, record, aiAnalysis }) {
   const score = Number(record?.overallScore || 0).toFixed(2);
+  const weightedTotal = Number(record?.weightedTotal || 0).toFixed(2);
   const comment = String(record?.comment || '').trim();
   const analysis = String(aiAnalysis?.analysis || '').trim();
   const status = normalizeKey(aiAnalysis?.analysisStatus);
@@ -702,6 +794,7 @@ function renderAiModalBody({ employee, record, aiAnalysis }) {
         <div class="evaluation-ai-modal-item">
           <span>คะแนนรวม</span>
           <strong>${escapeHTML(score)}</strong>
+          <small>คะแนนรวมถ่วงน้ำหนัก ${escapeHTML(weightedTotal)}</small>
         </div>
       </div>
       <div class="evaluation-ai-modal-block">
@@ -808,7 +901,7 @@ async function submitEvaluation() {
       headers: state.refs.resultHeaders,
     });
 
-    const synced = await waitForEvaluationResultSync(record.id).catch(error => {
+    const synced = await waitForEvaluationResultSync(record).catch(error => {
       console.warn('waitForEvaluationResultSync failed:', error);
       return false;
     });

@@ -323,11 +323,11 @@ function renderSummary() {
     else if (r.step === '4') cnt.closed++;
     else if (r.step === '5') cnt.cancel++;
   });
-  document.getElementById('sum-total').textContent = cnt.total;
-  document.getElementById('sum-pending').textContent = cnt.pending;
-  document.getElementById('sum-approved').textContent = cnt.approved;
-  document.getElementById('sum-closed').textContent = cnt.closed;
-  document.getElementById('sum-cancel').textContent = cnt.cancel;
+  animateCounter('sum-total', cnt.total);
+  animateCounter('sum-pending', cnt.pending);
+  animateCounter('sum-approved', cnt.approved);
+  animateCounter('sum-closed', cnt.closed);
+  animateCounter('sum-cancel', cnt.cancel);
 }
 
 function renderCharts() {
@@ -381,7 +381,24 @@ function renderCharts() {
           } 
         },
       }
-    }
+    },
+    plugins: [{
+      id: 'centerText',
+      afterDraw(chart) {
+        const { ctx, width, height } = chart;
+        const total = chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+        ctx.save();
+        ctx.font = "bold 26px 'Inter', 'Noto Sans Thai', sans-serif";
+        ctx.fillStyle = '#0f172a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(total, width / 2, height / 2 - 8);
+        ctx.font = "600 11px 'Inter', 'Noto Sans Thai', sans-serif";
+        ctx.fillStyle = '#64748b';
+        ctx.fillText('รายการ', width / 2, height / 2 + 16);
+        ctx.restore();
+      }
+    }]
   });
 
   // Chart 2: Daily Bar
@@ -605,4 +622,21 @@ function exportExcel() {
     console.error('Export error:', err);
     showToast('ไม่สามารถ Export ได้: ' + err.message, 'error');
   }
+}
+
+function animateCounter(id, target) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const num = parseInt(target, 10);
+  if (isNaN(num)) { el.textContent = target; return; }
+  const duration = 700;
+  const start = performance.now();
+  const tick = (now) => {
+    const t = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - t, 4);
+    el.textContent = Math.round(num * eased);
+    if (t < 1) requestAnimationFrame(tick);
+    else { el.textContent = num; el.classList.add('counter-pop'); }
+  };
+  requestAnimationFrame(tick);
 }

@@ -40,8 +40,8 @@ function renderHistoryRows(history) {
     <tr>
       <td class="cell-center">${index + 1}</td>
       <td>${escapeHTML(item.runAtText)}</td>
-      <td class="cell-center">${item.queued}</td>
-      <td class="cell-center">${item.closed}</td>
+      <td class="cell-center">${escapeHTML(item.queued)}</td>
+      <td class="cell-center">${escapeHTML(item.closed)}</td>
       <td>${escapeHTML(item.ids.length > 0 ? item.ids.join(', ') : '-')}</td>
     </tr>
   `).join('');
@@ -114,19 +114,20 @@ function paintState(snapshot) {
 
 export function render() {
   const intervalHours = getEngAutoCloseIntervalHours();
+  const safeIntervalHours = escapeHTML(intervalHours);
 
   return `
-    <div class="app-page">
+    <div class="app-page app-page-tight eng-auto-close-page">
       <section class="page-hero page-hero-admin fade-in">
         <div class="page-hero-copy">
           <p class="page-hero-eyebrow">Administrator Only</p>
           <h1 class="page-hero-title">Auto Close Repair Jobs</h1>
-          <p class="page-hero-subtitle">เครื่องมือนี้จะตรวจงานซ่อมที่อยู่สถานะรอประเมินความเรียบร้อย และปิดงานให้อัตโนมัติเมื่อค้างเกิน ${intervalHours} ชั่วโมง โดยใช้ผลลัพธ์เดียวกับการกดยืนยันรับงาน</p>
+          <p class="page-hero-subtitle">เครื่องมือนี้จะตรวจงานซ่อมที่อยู่สถานะรอประเมินความเรียบร้อย และปิดงานให้อัตโนมัติเมื่อค้างเกิน ${safeIntervalHours} ชั่วโมง โดยใช้ผลลัพธ์เดียวกับการกดยืนยันรับงาน</p>
         </div>
         <div class="page-hero-meta">
           <div class="page-hero-stat">
             <span>ความถี่การตรวจ</span>
-            <strong>ทุก ${intervalHours} ชั่วโมง</strong>
+            <strong>ทุก ${safeIntervalHours} ชั่วโมง</strong>
           </div>
           <div class="page-hero-stat">
             <span>สิทธิ์ที่ต้องใช้</span>

@@ -1,0 +1,207 @@
+/* Service Dock: the approved Mini Harbor palette, scoped to Home only. */
+.home-dock {
+  --dock-ink: #102e4c;
+  --dock-muted: #4c6a82;
+  --dock-line: #d8e6ef;
+  --dock-radius: 22px;
+  color: var(--dock-ink);
+  max-width: 1360px;
+  margin: 0 auto;
+  display: grid;
+  gap: 18px;
+  animation: dock-enter 450ms ease-out both;
+}
+
+/* Home content only; the sidebar and mobile drawer use the original shared styles. */
+#dashboard-layout:has(.home-dock) { background: #e3f5fc; }
+#dashboard-layout:has(.home-dock) .main-content {
+  background: linear-gradient(180deg, #e9f7fd 0%, #def3fb 65%, #bee8f1 100%);
+}
+/* Decorative layers stay viewport-sized, independently of the scroll height.
+   Edge masks blend the original artwork without a visible rectangular seam. */
+#dashboard-layout:has(.home-dock) .main-content::before {
+  content: '';
+  position: fixed;
+  top: 16px;
+  right: 0;
+  width: min(62vw, 480px);
+  aspect-ratio: 1672 / 941;
+  background: url('../img/login/mini-harbor.webp') right top / 100% auto no-repeat;
+  mask-image: linear-gradient(to right, transparent, #000 16%), linear-gradient(to bottom, #000 65%, transparent);
+  mask-composite: intersect;
+  pointer-events: none;
+  z-index: 0;
+}
+#dashboard-layout:has(.home-dock) .main-content::after {
+  content: '';
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: clamp(48px, 10vw, 110px);
+  background: url('../img/login/mini-harbor.webp') center bottom / 100% auto no-repeat;
+  mask-image: linear-gradient(to bottom, transparent, #000);
+  pointer-events: none;
+  z-index: 0;
+}
+#dashboard-layout:has(.home-dock) .content-body { position: relative; z-index: 2; padding: 20px 28px 40px; }
+#dashboard-layout:has(.home-dock) ~ .waves-container .parallax > use { fill: rgba(68, 174, 199, .09); }
+#dashboard-layout:has(.home-dock) .top-nav {
+  background: rgba(239, 249, 254, .94);
+  backdrop-filter: none;
+  box-shadow: none;
+  border-bottom-color: transparent;
+  min-height: 70px;
+  padding: 12px 28px;
+  flex-direction: row;
+  align-items: center;
+}
+#dashboard-layout:has(.home-dock) .top-nav-context,
+#dashboard-layout:has(.home-dock) .top-nav-actions { width: auto; }
+
+.dock-greeting { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; min-height: 58px; }
+.dock-greeting h1 { font-size: clamp(22px, 1.8vw, 28px); line-height: 1.4; letter-spacing: -.03em; overflow-wrap: anywhere; }
+.dock-user-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; color: var(--dock-muted); font-size: 14px; }
+.dock-user-meta > span { display: inline-flex; align-items: center; gap: 10px; }
+.dock-user-meta > span > i:not(.dock-health-dot) { font-size: 20px; }
+.dock-user-meta > span:first-child { overflow-wrap: anywhere; }
+.dock-health-dot { width: 12px; height: 12px; flex-shrink: 0; border-radius: 50%; background: #d49126; }
+.dock-health[data-state='ready'] .dock-health-dot { background: #3cc994; box-shadow: 0 0 0 5px rgba(60, 201, 148, .1); }
+.dock-health[data-state='error'] .dock-health-dot { background: #ce4a4a; }
+
+.dock-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 22px 0; background: #fff; border-radius: var(--dock-radius); box-shadow: 0 5px 16px rgba(47, 88, 117, .04); }
+.dock-kpi { display: flex; align-items: center; gap: 16px; padding: 0 22px; min-width: 0; }
+.dock-kpi + .dock-kpi { border-left: 1px solid var(--dock-line); }
+.dock-kpi-icon { display: grid; place-items: center; flex-shrink: 0; width: 60px; height: 60px; border-radius: 50%; color: #147ddd; background: #e5f3ff; font-size: 27px; }
+.dock-kpi-teal .dock-kpi-icon { color: #099f98; background: #e2f6f3; }
+.dock-kpi-green .dock-kpi-icon { color: #1cba66; background: #e4f7eb; }
+.dock-kpi p { color: var(--dock-muted); font-size: 14px; font-weight: 500; line-height: 1.5; }
+.dock-label-tail { display: inline-block; }
+.dock-kpi-value { display: block; font-size: 36px; line-height: 1.15; margin-top: 4px; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.dock-kpi-value .skeleton-value { width: 48px; height: 35px; }
+
+.dock-services { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.dock-service {
+  --service-bg: #e0f1e9;
+  --service-accent: #117f7b;
+  --service-icon-bg: #c1e6d7;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 20px 18px 18px;
+  background: var(--service-bg);
+  border: 1px solid rgba(60, 131, 154, .08);
+  border-radius: var(--dock-radius);
+}
+.dock-service-mobility { --service-bg: #e1f1fc; --service-accent: #0877c8; --service-icon-bg: #c3e2fd; }
+.dock-service-hr { --service-bg: #fbece2; --service-accent: #c45423; --service-icon-bg: #f9d5c2; }
+.dock-service-heading { display: flex; gap: 12px; align-items: center; min-height: 74px; }
+.dock-service-heading > div { min-width: 0; }
+.dock-service-icon { display: grid; place-items: center; width: 60px; height: 60px; flex-shrink: 0; border-radius: 50%; color: var(--service-accent); background: var(--service-icon-bg); font-size: 28px; }
+.dock-service-heading h2 { font-size: clamp(18px, 1.4vw, 23px); line-height: 1.3; font-weight: 700; letter-spacing: -.025em; }
+.dock-service-heading p { color: var(--dock-muted); font-size: 14px; line-height: 1.55; margin-top: 4px; }
+.dock-art { margin: 0 -17px; overflow: hidden; }
+.dock-art img {
+  display: block;
+  width: 100%;
+  height: clamp(180px, 14vw, 220px);
+  object-fit: cover;
+  /* Blend only the empty edges of the artwork, without tinting the scene. */
+  mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 90%, transparent), linear-gradient(to right, transparent, #000 5%, #000 95%, transparent);
+  mask-composite: intersect;
+  transition: transform 400ms cubic-bezier(.16, 1, .3, 1);
+}
+.dock-actions { display: grid; gap: 8px; grid-auto-rows: minmax(54px, 1fr); flex: 1; min-height: 178px; }
+.dock-action { display: flex; align-items: center; gap: 16px; width: 100%; min-height: 54px; padding: 12px 18px; border: 1px solid rgba(255, 255, 255, .9); border-radius: 15px; background: #fff; color: var(--dock-ink); text-align: left; font: 600 16px/1.5 var(--font-main); cursor: pointer; box-shadow: 0 2px 3px rgba(40, 85, 105, .025); transition: transform 180ms ease-out, box-shadow 180ms ease-out, border-color 180ms ease-out; }
+.dock-action-icon { width: 26px; flex-shrink: 0; text-align: center; font-size: 22px; color: var(--service-accent); }
+.dock-action span { flex: 1; }
+.dock-action-arrow { color: #52738e; font-size: 13px; transition: transform 180ms ease-out; }
+.dock-action:focus-visible { outline: 3px solid #157fba; outline-offset: 3px; }
+@media (hover: hover) and (pointer: fine) {
+  .dock-service:hover .dock-art img { transform: translateY(-4px); }
+  .dock-action:hover { transform: translateY(-2px); border-color: #b6d9e7; box-shadow: 0 7px 14px rgba(42, 94, 119, .09); }
+  .dock-action:hover .dock-action-arrow { transform: translateX(3px); }
+}
+.dock-action:active { transform: translateY(0); }
+.dock-empty { padding: 24px; background: #fff; border-radius: var(--dock-radius); grid-column: 1 / -1; }
+
+.dock-workload { padding: 18px 24px 22px; background: #fff; border-radius: var(--dock-radius); }
+.dock-workload-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 16px; }
+.dock-workload-heading h2 { display: flex; align-items: center; gap: 14px; font-size: 22px; line-height: 1.4; }
+.dock-workload-heading h2 i { color: #54718e; }
+.dock-workload-heading p { font-size: 12px; color: var(--dock-muted); }
+.dock-workload-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.dock-workload-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 14px; padding: 0 26px; }
+.dock-workload-item:first-child { padding-left: 0; }
+.dock-workload-item:last-child { padding-right: 0; }
+.dock-workload-item + .dock-workload-item { border-left: 1px solid var(--dock-line); }
+.dock-workload-item > span { grid-column: 1 / -1; font-size: 14px; }
+.dock-workload-item strong { grid-column: 2; grid-row: 2; font-size: 20px; line-height: 1; font-variant-numeric: tabular-nums; }
+.dock-meter { height: 12px; background: #e6edf3; border-radius: 20px; overflow: hidden; }
+.dock-meter i { display: block; height: 100%; border-radius: inherit; background: #3ac68b; }
+.dock-workload-car .dock-meter i { background: #2187f4; }
+.dock-workload-shuttle .dock-meter i { background: #1bc4cc; }
+@keyframes dock-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 1250px) {
+  .dock-kpi { gap: 10px; padding: 0 16px; }
+  .dock-kpi-icon { width: 44px; height: 44px; font-size: 22px; }
+  .dock-kpi p { font-size: 12px; }
+  .dock-service { padding: 16px 14px 14px; }
+  .dock-service-heading { gap: 9px; min-height: 94px; }
+  .dock-service-icon { width: 44px; height: 44px; font-size: 23px; }
+  .dock-service-heading p { font-size: 13px; }
+  .dock-art { margin: 0 -13px; }
+  .dock-action { gap: 10px; padding: 12px; font-size: 14px; }
+}
+@media (min-width: 769px) and (max-width: 1050px) {
+  .dock-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 22px; }
+  .dock-kpi:nth-child(3) { border-left: 0; }
+  .dock-services { grid-template-columns: 1fr; }
+  .dock-service { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+  .dock-service-heading { grid-column: 1; min-height: 76px; }
+  .dock-art { grid-column: 1; }
+  .dock-art img { height: auto; aspect-ratio: 3 / 2; }
+  .dock-actions { grid-column: 2; grid-row: 1 / 3; align-self: stretch; min-height: 0; }
+  .dock-workload-item { padding: 0 14px; }
+}
+@media (max-width: 768px) {
+  #dashboard-layout:has(.home-dock) .main-content::before { top: 72px; width: 46vw; }
+  #dashboard-layout:has(.home-dock) .top-nav { padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px; flex-wrap: nowrap; }
+  #dashboard-layout:has(.home-dock) .content-body { padding: 18px 16px calc(28px + var(--app-safe-bottom)); }
+  .home-dock { gap: 16px; }
+  .dock-greeting { gap: 10px; }
+  .dock-greeting h1 { font-size: 23px; }
+  .dock-user-meta { font-size: 12px; gap: 12px 16px; }
+  .dock-user-meta > span > i:not(.dock-health-dot) { font-size: 16px; }
+  .dock-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 18px 0; row-gap: 20px; }
+  .dock-kpi { padding: 0 14px; }
+  .dock-kpi:nth-child(3) { border-left: 0; }
+  .dock-kpi-value { font-size: 30px; }
+  .dock-services { grid-template-columns: 1fr; gap: 16px; }
+  .dock-service { padding: 18px 16px 16px; }
+  .dock-service-heading { min-height: 64px; gap: 12px; }
+  .dock-service-heading h2 { font-size: 22px; }
+  .dock-service-heading p { font-size: 14px; }
+  .dock-service-icon { width: 54px; height: 54px; font-size: 26px; }
+  .dock-art { margin: 0 -15px; }
+  .dock-art img { height: auto; aspect-ratio: 3 / 2; max-height: 310px; }
+  .dock-actions { min-height: 0; }
+  .dock-action { font-size: 16px; padding: 12px 16px; }
+  .dock-workload { padding: 18px 20px 22px; }
+  .dock-workload-heading h2 { font-size: 21px; }
+  .dock-workload-grid { grid-template-columns: 1fr; gap: 20px; }
+  .dock-workload-item { padding: 0; }
+  .dock-workload-item + .dock-workload-item { border-left: 0; }
+}
+@media (max-width: 380px) {
+  .dock-kpi { gap: 8px; padding: 0 10px; }
+  .dock-kpi-icon { width: 34px; height: 34px; font-size: 18px; }
+  .dock-service-heading h2 { font-size: 20px; }
+  #dashboard-layout:has(.home-dock) .top-nav-eyebrow { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-dock, .home-dock .counter-pop, .home-dock .skeleton-value { animation: none; }
+  .home-dock .dock-art img, .home-dock .dock-action, .home-dock .dock-action-arrow { transition: none; transform: none; }
+  #dashboard-layout:has(.home-dock) ~ .waves-container .parallax > use { animation: none; }
+}

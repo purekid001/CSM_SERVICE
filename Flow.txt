@@ -1,0 +1,1183 @@
+CSM SERVICE V3 - Project Flow Overview
+อัปเดตจากการตรวจสอบ source code ทั้งโปรเจค
+วันที่ตรวจสอบ: 2026-07-03
+
+ไฟล์ Mermaid diagram ที่จัดทำเพิ่ม:
+- FlowDiagram.md
+
+==================================================
+1. ขอบเขตที่ตรวจสอบ
+==================================================
+
+ตรวจสอบโครงสร้างและการทำงานจากไฟล์หลักต่อไปนี้
+
+- index.html
+- package.json
+- vite.config.js
+- assets/js/main.js
+- assets/js/router.js
+- assets/js/auth.js
+- assets/js/ui.js
+- assets/js/utils.js
+- assets/js/firebase.js
+- assets/js/firebase-hr.js
+- assets/js/pages/*.js
+- assets/js/services/*.js
+- reports/eng/reporteng01.html
+- reports/hr/reporthr01.html
+- reports/hr/reporthr02.html
+- docs/PROJECT_WORKFLOW.md
+- docs/WORK_LOG.md
+
+เอกสารนี้สรุป "โครงสร้างการทำงาน", "หน้าที่ของแต่ละส่วน", และ "flow ของข้อมูล/ผู้ใช้งาน"
+จากสิ่งที่พบใน source code ปัจจุบัน
+
+==================================================
+2. ภาพรวมระบบ
+==================================================
+
+ระบบนี้เป็น Single Page Application (SPA) สำหรับงานภายในบริษัท CSM SERVICE
+สร้างด้วย Vanilla JavaScript แบบ ES Modules และใช้ Vite เป็น build tool
+
+ระบบหลักแบ่งเป็น 6 กลุ่มงาน
+
+1. Authentication / Account
+2. Dashboard / Home
+3. Engineering
+4. HR Booking / Shuttle
+5. HR Evaluation / Shift
+6. Admin Tools
+
+แหล่งข้อมูลหลักที่ระบบใช้งาน
+
+- Firebase Realtime Database ฝั่ง Engineering
+- Firebase Realtime Database ฝั่ง HR
+- Firebase Storage สำหรับรูปแจ้งซ่อม
+- Google Sheets สำหรับข้อมูลผู้ใช้, ประเมินผล, พนักงานกะ, รายงานเปลี่ยนเวร/กะ
+- Gemini API สำหรับสรุปผลประเมินพนักงาน
+- Open-Meteo API สำหรับ theme อากาศหน้า login
+
+==================================================
+3. โครงสร้างไฟล์ระดับสูง
+==================================================
+
+1. index.html
+   หน้า shell หลักของระบบ มี login screen, sidebar, main content, และ script entry
+
+2. assets/css/style.css
+   style กลางทั้งหมดของระบบ
+
+3. assets/js/main.js
+   entry point ของแอป
+
+4. assets/js/router.js
+   จัดการ route ภายในแบบ SPA
+
+5. assets/js/auth.js
+   login, auto-login, session, register, logout
+
+6. assets/js/ui.js
+   modal, toast, dropdown, background controls
+
+7. assets/js/utils.js
+   helper กลาง เช่น badge, date parser, permission, pagination, escape HTML
+
+8. assets/js/pages/
+   page module ของแต่ละหน้าจอ
+
+9. assets/js/services/
+   service layer สำหรับ logic ที่ใช้ซ้ำหรือเชื่อม external systems
+
+10. reports/
+   หน้า print / printable reports ที่เปิดในแท็บใหม่
+
+==================================================
+4. Startup Flow ของระบบ
+==================================================
+
+ลำดับการเริ่มทำงานของระบบ
+
+1. ผู้ใช้เปิด index.html
+2. Browser โหลด CSS, CDN libraries, และ assets/js/main.js
+3. main.js import
+   - firebase.js
+   - firebase-hr.js
+   - router.js
+   - auth.js
+   - ui.js
+4. main.js ตั้งค่า CSS variable --app-height ตาม viewport
+5. auth.js ฟัง DOMContentLoaded
+6. auth.js ทำงาน 3 ส่วนพร้อมกัน
+   - ตั้ง auth mode เป็น login
+   - โหลด weather theme หน้า login
+   - โหลดรายชื่อแผนกสำหรับหน้า register จาก Google Sheets
+7. auth.js ตรวจ localStorage
+   - rememberedUser
+   - autoLogin
+8. ถ้าเปิด auto-login และ user active
+   - อ่าน DHR/User/{empId} จาก Firebase EN
+   - สร้าง sessionStorage
+   - toggleView(true)
+   - router แสดงหน้าตาม hash
+9. ถ้าไม่มี auto-login
+   - อยู่หน้า login จนผู้ใช้ submit form
+
+Flow แบบย่อ
+
+เปิดเว็บ
+-> main.js
+-> init Firebase + Router + Auth + UI
+-> ตรวจ auto-login
+-> ถ้าผ่าน: เปิด dashboard
+-> router render page ตาม hash
+
+==================================================
+5. Routing และ Page Loading Flow
+==================================================
+
+router.js เป็นตัวกลางสำหรับ route ภายในระบบ
+
+Route สำคัญที่พบ
+
+- home
+- employee
+- eng-request
+- eng-list
+- eng-auto-close
+- eng-doc
+- eng-report
+- hr-car
+- hr-shuttle
+- hr-list
+- hr-shift-swap
+- hr-shift-change
+- hr-doc
+- hr-report
+- hr-shuttle-group
+- hr-evaluation
+- hr-evaluation-report
+- admin-access
+- admin-backup
+
+Flow ของ router
+
+1. เมนู sidebar หรือ code เรียก window.showPage('route')
+2. router ตรวจว่ามี route นี้หรือไม่
+3. router เรียก canAccessPage(route)
+4. ถ้าไม่มีสิทธิ์
+   - showToast แจ้งเตือน
+   - redirect ไป home
+5. ถ้ามีสิทธิ์
+   - set active menu
+   - sync location.hash
+   - เรียก page.render()
+   - inject HTML ลง #app-container
+   - เรียก page.init() ถ้ามี
+
+==================================================
+6. Authentication / Session / Permission Flow
+==================================================
+
+ไฟล์หลัก: assets/js/auth.js
+
+6.1 Login Flow
+
+1. ผู้ใช้กรอก username/password
+2. auth.js อ่าน Firebase EN path DHR/User/{username}
+3. ตรวจว่ามี user หรือไม่
+4. ตรวจ password จากข้อมูลใน DB
+5. ตรวจ active ว่าเป็น true หรือไม่
+6. ถ้าผ่าน
+   - เขียน sessionStorage
+   - เขียน rememberedUser/autoLogin ลง localStorage ถ้าเลือก remember
+   - toggleView(true)
+   - เรียก showPage(getPageFromHash())
+
+Session ที่ถูกเก็บ
+
+- isLoggedIn
+- empId
+- empName
+- empLastname
+- empDepartment
+- empActive
+- empEmail
+- empLevel_en
+- empLevel_hr
+- empLevel_it
+
+6.2 Auto-login Flow
+
+1. อ่าน localStorage
+2. ถ้ามี rememberedUser + autoLogin=true
+3. โหลด user จาก DHR/User/{empId}
+4. ถ้า active
+   - set session
+   - เปิด dashboard
+
+6.3 Register Flow
+
+1. หน้า register โหลดรายชื่อแผนกจาก Google Sheets
+2. ผู้ใช้กรอก employeeId, password, name, department, email
+3. validate input
+4. เรียก service registerUserAccount()
+5. service จะสร้าง user พร้อมกัน 3 จุด
+   - Firebase EN: DHR/User/{employeeId}
+   - Firebase HR: DHR/User/{employeeId}
+   - Google Sheet User Directory
+6. ถ้าบางจุด fail มี rollback
+7. ถ้าสำเร็จ redirect กลับหน้า login
+
+6.4 Logout Flow
+
+1. ผู้ใช้กด logout
+2. showConfirmModal
+3. ลบ localStorage rememberedUser/autoLogin
+4. ล้าง sessionStorage
+5. reload หน้าเว็บ
+
+6.5 Permission Flow
+
+Permission helper อยู่ใน utils.js
+
+โปรไฟล์สิทธิ์หลัก
+
+- isEngineeringAdmin
+- isEngineeringDocAdmin
+- isHrDocAdmin
+- isHrDispatchAdmin
+- isItAdmin
+- isSystemAdmin
+
+Page guard สำคัญ
+
+- eng-auto-close -> admin system
+- eng-doc -> engineering doc admin
+- hr-doc -> hr doc admin
+- hr-shuttle-group -> hr dispatch admin
+- admin-access -> system admin
+- admin-backup -> system admin
+
+==================================================
+7. Data Source Map
+==================================================
+
+7.1 Firebase EN
+
+- DHR/User
+  ข้อมูลผู้ใช้, สิทธิ์, สถานะ active
+
+- DEN/Machine
+  master พื้นที่และเครื่องจักร
+
+- DEN/FIX/{year}/{id}
+  ใบแจ้งซ่อมทั้งหมด
+
+- Document/EN
+  ลิงก์เอกสาร Engineering
+
+7.2 Firebase HR
+
+- DHR/User
+  ข้อมูล user ฝั่ง HR และ approver
+
+- Booking/Type
+  ประเภทคำขอ B1/B2
+
+- Booking/Location/Location1
+  สถานที่รับของ B1
+
+- Booking/Location/Location2
+  สถานที่ส่งของ B1
+
+- Booking/Location/Location3
+  สถานที่ของ B2 shuttle
+
+- Booking/Booking1/{year}/{id}
+  ข้อมูลจองรถ
+
+- Booking/Booking2/{year}/{id}
+  ข้อมูล shuttle
+
+- Booking/Car
+  master รถ
+
+- Booking/Driver
+  master คนขับ
+
+- Document/HR
+  ลิงก์เอกสาร HR
+
+7.3 Firebase Storage
+
+- DEN/FIX/{year}/{fixId}/{filename}
+  เก็บรูปภาพแนบใบแจ้งซ่อม
+
+7.4 Google Sheets
+
+จาก service google-sheets.js
+
+- evaluatorCodes
+  รหัสผู้ประเมิน
+
+- employees
+  รายชื่อผู้ถูกประเมิน
+
+- topics
+  หัวข้อการประเมิน
+
+- weights
+  น้ำหนักแต่ละหัวข้อ
+
+- results
+  ผลการประเมิน
+
+- userDirectory
+  ทะเบียนผู้ใช้งานกลาง
+
+- shiftEmployees
+  รายชื่อพนักงานสำหรับฟอร์มเปลี่ยนเวร/เปลี่ยนกะ
+
+- shiftSwapReport
+  รายงานเปลี่ยนเวร
+
+- shiftChangeReport
+  รายงานเปลี่ยนกะ
+
+==================================================
+8. Section: Dashboard / Home
+==================================================
+
+ไฟล์หลัก: assets/js/pages/home.js
+
+หน้าที่
+
+- แสดงสรุป KPI งานที่ผู้ใช้มีสิทธิ์เห็น
+- แสดงเมนูลัด
+- สรุปจำนวนงาน Engineering, Car Booking, Shuttle
+
+Flow
+
+1. page.init() อ่านข้อมูลผู้ใช้จาก sessionStorage
+2. loadDashboardData() โหลดข้อมูลพร้อมกัน
+   - Booking/Booking1
+   - Booking/Booking2
+   - DEN/FIX
+3. ระบบคัดข้อมูลตามสิทธิ์
+   - admin เห็นทั้งหมด
+   - user ทั่วไปเห็นตามแผนกหรือรายการที่เกี่ยวข้อง
+4. คำนวณ KPI
+   - fixPending
+   - carPending
+   - shuttlePending
+   - doneThisMonth
+5. render dashboard cards และ quick actions
+
+==================================================
+9. Section: Employee / Account Profile
+==================================================
+
+ไฟล์หลัก: assets/js/pages/employee.js
+
+หน้าที่
+
+- แสดงข้อมูล user ปัจจุบัน
+- แสดง level EN / HR / IT
+- เปิดให้เปลี่ยนรหัสผ่าน
+
+Flow เปลี่ยนรหัสผ่าน
+
+1. ผู้ใช้กรอกรหัสเดิม + รหัสใหม่ + ยืนยันรหัสใหม่
+2. validate ฝั่งหน้าเว็บ
+3. showConfirmModal
+4. เรียก changeUserPassword()
+5. service เปลี่ยนรหัสผ่าน 3 จุด
+   - Google Sheet User Directory
+   - Firebase EN DHR/User
+   - Firebase HR DHR/User
+6. ถ้าจุดใด fail มี rollback
+7. showToast สำเร็จหรือ error
+
+==================================================
+10. Section: Engineering
+==================================================
+
+------------------------------------------
+10.1 Engineering Request (แจ้งซ่อม)
+------------------------------------------
+
+ไฟล์หลัก: assets/js/pages/eng-request.js
+
+หน้าที่
+
+- ฟอร์มสร้างใบแจ้งซ่อม
+- โหลดพื้นที่/เครื่องจักร
+- โหลด approver ตามแผนก
+- แนบรูปภาพ
+- บันทึกลง Firebase EN และ Storage
+
+Flow
+
+1. init หน้า
+2. โหลด DEN/Machine -> สร้าง dropdown พื้นที่
+3. เมื่อเลือกพื้นที่ -> โหลดรายการเครื่องจักรของพื้นที่นั้น
+4. โหลด DHR/User -> คัด approver ตาม department และ level engineering
+5. ผู้ใช้แนบรูปได้สูงสุด 5 รูป
+6. เมื่อ submit
+   - validate ฟอร์ม
+   - confirm
+   - สร้าง id จาก timestamp
+   - upload รูปไป Firebase Storage
+   - รับ download URLs
+   - สร้าง objectDetail
+   - set ไปที่ DEN/FIX/{year}/{id}
+7. ระบบ reset form หลังบันทึกสำเร็จ
+
+ข้อมูลสำคัญที่ถูกบันทึก
+
+- date, dateUpdate
+- name
+- plant
+- mac
+- status
+- type
+- detail
+- complete
+- approve
+- id
+- image
+- step = 1
+- dep
+
+------------------------------------------
+10.2 Engineering List / Approval / Work Tracking
+------------------------------------------
+
+ไฟล์หลัก: assets/js/pages/eng-list.js
+
+หน้าที่
+
+- แสดงรายการแจ้งซ่อม
+- ตารางคิวอนุมัติ
+- ตารางค้นหาย้อนหลัง
+- modal รายละเอียด
+- approve / edit / cancel / open work report
+
+ข้อมูลถูกโหลดจาก
+
+- DEN/FIX ทั้งหมด
+- DHR/User สำหรับรายชื่อหัวหน้าช่าง/ช่าง
+
+สถานะงานซ่อม
+
+- 1 = รอหัวหน้าอนุมัติ
+- 2 = รอช่างอนุมัติ
+- 3 = กำลังซ่อม
+- 4 = ซ่อมเสร็จแล้ว
+- 5 = รอการประเมินความเรียบร้อย
+- 6 = ยกเลิก
+
+Flow โหลดข้อมูล
+
+1. โหลด DEN/FIX ทั้งหมด
+2. flatten จาก object -> array
+3. split machine code / machine name
+4. split reporter / approver name
+5. เก็บ masterRecords
+6. สร้างตาราง queue และตารางค้นหา
+7. filter ตามสิทธิ์
+   - admin เห็นทั้งหมด
+   - approver เห็นงานที่ตนเกี่ยวข้อง
+
+Flow approve หลัก
+
+Step 1:
+หัวหน้าอนุมัติ -> set step 2
+บันทึก den_start, den_end, leaderApprove
+
+Step 2:
+admin_en/admin -> set step 3
+กำหนดหัวหน้าช่าง/ช่าง
+บันทึก adminApprove, den_start_real
+สามารถเปิด report ใบงานได้
+
+Step 3:
+admin_en/admin -> set step 5
+บันทึกวิธีซ่อม, อะไหล่, หมายเหตุ, den_end_real, closeApprove
+
+Step 5:
+หัวหน้าเดิมหรือ admin ยืนยันผล
+- ถ้ารับงาน -> step 4
+- ถ้าไม่รับงาน -> กลับ step 2 พร้อม remark
+
+Flow edit
+
+admin_en/admin แก้
+- den_name
+- den_fix
+- den_parts
+- den_remack
+- den_start
+- den_end
+
+Flow cancel
+
+approver/admin ยกเลิก -> step 6
+
+Flow report
+
+- ปุ่ม work เปิด reports/eng/reporteng01.html?id={recordId}
+
+------------------------------------------
+10.3 Engineering Report
+------------------------------------------
+
+ไฟล์หลัก: assets/js/pages/eng-report.js
+
+หน้าที่
+
+- รายงานเชิงสรุปของงานซ่อม
+- chart และ timeline
+- export excel
+
+Flow
+
+1. โหลด DHR/User สำหรับรายชื่อ/ตัวกรอง
+2. โหลด DEN/FIX ตามปีที่เลือก
+3. แปลงข้อมูลเป็น records
+4. render report type ต่าง ๆ
+   - chart summary
+   - ตารางสรุป
+   - timeline
+   - export excel
+
+------------------------------------------
+10.4 Engineering Document
+------------------------------------------
+
+ไฟล์หลัก: assets/js/pages/eng-doc.js
+ใช้ factory จาก doc-links.js
+
+Flow
+
+1. โหลด Firebase path Document/EN
+2. normalize โครงสร้างลิงก์
+3. render cards
+4. search/filter ได้
+5. เปิดลิงก์ภายนอกโดยตรง
+
+------------------------------------------
+10.5 Engineering Auto Close
+------------------------------------------
+
+ไฟล์หลัก
+
+- assets/js/pages/eng-auto-close.js
+- assets/js/services/eng-auto-close.js
+
+หน้าที่
+
+- ปิดงานซ่อมอัตโนมัติเมื่อค้างใน step 5 เกิน 10 ชั่วโมง
+
+Logic หลัก
+
+1. ใช้เฉพาะผู้มีสิทธิ์หน้า eng-auto-close
+2. scheduler ทำงานเมื่อ admin login และเปิดแอปค้างไว้
+3. เมื่อ run
+   - อ่าน DEN/FIX ทั้งหมด
+   - คัดเฉพาะ step = 5
+   - คำนวณเวลาฐานจาก den_end_real หรือ dateUpdate หรือ date
+   - ถ้าเกิน 10 ชั่วโมง
+     -> update step = 4
+     -> set clean = รับงานซ่อม
+     -> set den_end_real/dateUpdate ใหม่
+4. เก็บประวัติรอบล่าสุดไว้ใน memory/session state
+5. มีปุ่ม Run now และ toggle เปิด/หยุด scheduler
+
+==================================================
+11. Section: HR Booking / Shuttle
+==================================================
+
+------------------------------------------
+11.1 HR Car Booking (Booking1)
+------------------------------------------
+
+ไฟล์หลัก: assets/js/pages/hr-car.js
+
+หน้าที่
+
+- ฟอร์มจองรถ
+- โหลด type B1
+- โหลด pickup/dropoff locations
+- โหลด approver ตามแผนก
+- รองรับสถานที่อื่น ๆ
+
+Flow
+
+1. init หน้า
+2. โหลด Booking/Type แล้วคัด menu=B1
+3. โหลด Location1 และ Location2
+4. โหลด approver จาก DHR/User ฝั่ง HR
+5. ถ้าเลือก "***สถานที่อื่นๆ***"
+   - แสดงช่องกรอกสถานที่
+   - แสดงจังหวัด
+6. submit
+   - validate
+   - confirm
+   - สร้าง id แบบ B1-YYYYMMDDHHmmss
+   - รวมสถานที่จริง
+   - set objectDetail ไป Booking/Booking1/{year}/{id}
+7. step เริ่มต้น = 1
+
+สถานะหลักของ booking
+
+- 1 = รอหัวหน้าอนุมัติ
+- 2 = รอทีมจัดรถอนุมัติ
+- 3 = ทีมจัดรถอนุมัติแล้ว
+- 4 = ปิดงานแล้ว
+- 5 = ยกเลิก
+
+------------------------------------------
+11.2 HR Shuttle Booking (Booking2)
+------------------------------------------
+
+ไฟล์หลัก: assets/js/pages/hr-shuttle.js
+
+หน้าที่
+
+- ฟอร์มขอรถรับ-ส่ง
+- โหลด type B2
+- โหลด Location3
+- โหลด approver
+
+Flow
+
+1. โหลด Booking/Type แล้วคัด menu=B2
+2. โหลด pickup/dropoff จาก Location3
+3. โหลด approver
+4. รองรับสถานที่อื่น ๆ
+5. submit
+   - validate
+   - confirm
+   - สร้าง id แบบ B2-YYYYMMDDHHmmss
+   - set ไป Booking/Booking2/{year}/{id}
+6. step เริ่มต้น = 1
+
+------------------------------------------
+11.3 HR Booking List / Approval
+------------------------------------------
+
+ไฟล์หลัก: assets/js/pages/hr-booking-list.js
+
+หน้าที่
+
+- รวมรายการ B1 และ B2 มาอยู่หน้าเดียว
+- มีตารางคิวงานและตารางค้นหา
+- เปิด modal รายละเอียด
+- approve / assign car / close / edit / cancel
+
+Flow โหลดข้อมูล
+
+1. โหลดพร้อมกัน
+   - Booking/Booking1
+   - Booking/Booking2
+2. flatten เป็น allBookings
+3. แยก module เป็น Car หรือ Shuttle
+4. สร้าง map สำหรับ lookup ตาม id
+5. filter ตามสิทธิ์
+   - admin_hr/admin เห็นทั้งหมด
+   - user ทั่วไปเห็นตามแผนก
+
+Flow approval
+
+Step 1:
+หัวหน้าอนุมัติ -> step 2
+บันทึก leaderApprove, leaderApproveTime
+
+Step 2:
+ทีมจัดรถ/admin_hr จัดรถ -> step 3
+บังคับเลือกรถและคนขับหลัก
+บันทึก car, driverName, detail_remark, adminApprove
+หลังสำเร็จถามว่าจะเปิด report ไหม
+
+Step 3:
+ทีมจัดรถ/admin_hr ปิดงาน -> step 4
+บันทึก adminClose และเวลา
+
+Flow edit
+
+แก้รถ, คนขับ, detail_remark
+
+Flow cancel
+
+เปลี่ยน step เป็น 5
+บันทึก adminCancal และเวลา
+
+Flow report
+
+- เปิด reports/hr/reporthr01.html?id={id}
+
+------------------------------------------
+11.4 HR Shuttle Group
+------------------------------------------
+
+ไฟล์หลัก: assets/js/pages/hr-shuttle-group.js
+
+หน้าที่
+
+- จัดกลุ่ม shuttle หลายรายการเข้าด้วยกัน
+- assign รถ/คนขับให้ทั้งกลุ่ม
+- ปิดงานแบบกลุ่ม
+- ยกเลิกกลุ่ม
+
+สิทธิ์
+
+- ต้องผ่าน canAccessPage('hr-shuttle-group')
+
+Flow จัดกลุ่ม
+
+1. โหลดรายการจาก Booking/Booking2 ทั้งหมด
+2. filter ตามวัน, เวลา, แผนก, keyword, status
+3. ผู้ใช้เลือกหลายรายการด้วย checkbox
+4. ระบบคำนวณ total headcount
+5. ผู้ใช้เลือกรถ + คนขับ + remark
+6. กด approve group
+7. ระบบสร้าง group id แบบ G-YYYYMMDDHHmmss
+8. update ทุกรายการที่เลือก
+   - step = 3
+   - group = groupId
+   - car
+   - driverName
+   - detail_remark
+   - adminApprove
+
+Flow โหลดกลุ่มที่จัดแล้ว
+
+1. โหลด Booking/Booking2 ทั้งหมด
+2. รวมข้อมูลตาม field group
+3. สร้าง groupData
+4. render ตารางกลุ่ม
+
+Flow ปิดงานกลุ่ม
+
+1. เปิด modal รายละเอียดกลุ่ม
+2. ถ้า step = 3 สามารถกดปิดงาน
+3. update ทุกรายการในกลุ่ม -> step = 4
+
+Flow ยกเลิกกลุ่ม
+
+1. update ทุกรายการในกลุ่ม -> step = 2
+2. clear group, car, driverName, detail_remack
+
+Flow report กลุ่ม
+
+- เปิด reports/hr/reporthr02.html?id={groupId}
+
+------------------------------------------
+11.5 HR Report
+------------------------------------------
+
+ไฟล์หลัก: assets/js/pages/hr-report.js
+
+หน้าที่
+
+- สรุปรายงาน Booking1 + Booking2
+- chart, summary tables, driver table, timeline
+- export excel
+
+Flow
+
+1. โหลด Booking/Booking1 และ Booking/Booking2
+2. รวมเป็น allRecords
+3. คำนวณสรุปตามประเภท/สถานะ/รถ/คนขับ
+4. render chart และ table
+5. export ออก Excel ได้
+
+------------------------------------------
+11.6 HR Document
+------------------------------------------
+
+ไฟล์หลัก: assets/js/pages/hr-doc.js
+ใช้ factory จาก doc-links.js
+
+Flow
+
+1. โหลด Firebase path Document/HR
+2. normalize ลิงก์
+3. render cards
+4. search/filter ได้
+5. เปิดลิงก์ภายนอก
+
+==================================================
+12. Section: HR Evaluation
+==================================================
+
+ไฟล์หลัก
+
+- assets/js/pages/hr-evaluation.js
+- assets/js/pages/hr-evaluation-report.js
+- assets/js/services/google-sheets.js
+- assets/js/services/gemini-analysis.js
+
+ระบบนี้พึ่งพา Google Sheets เป็นหลัก
+
+------------------------------------------
+12.1 Evaluation Input Flow
+------------------------------------------
+
+Flow โหลดข้อมูลอ้างอิง
+
+1. loadEvaluationReferenceData()
+2. โหลดข้อมูลจากหลายชีต
+   - evaluatorCodes
+   - employees
+   - topics
+   - weights
+   - results
+3. รวมเป็น state.refs
+
+Flow ยืนยันรหัสผู้ประเมิน
+
+1. ผู้ใช้กรอกรหัสเข้าประเมิน
+2. ระบบตรวจว่าชีต settings เปิด evaluation หรือไม่
+3. หา evaluator จากชีต evaluatorCodes
+4. ตรวจ employeeId ในชีตว่าตรงกับ user ที่ login หรือไม่
+5. ถ้าตรง -> set state.evaluator
+6. refreshAssignments()
+
+Flow ดึงผู้ถูกประเมิน
+
+1. ใช้ evaluatorTitle ของ evaluator
+2. คัด employee ที่ evaluatorTitle ตรงกัน
+3. จับคู่กับผลประเมินเดิมในชีต results ถ้ามี
+4. render รายชื่อ employee ให้เลือก
+
+Flow บันทึกผลประเมิน
+
+1. ผู้ประเมินเลือกรายชื่อพนักงาน
+2. ระบบ render หัวข้อประเมินจาก topics + weights
+3. ผู้ใช้ให้คะแนน 1-5 ทุกข้อ
+4. ระบบคำนวณ weighted score แบบ realtime
+5. ผู้ใช้กรอก comment เพิ่มได้
+6. ถ้ามี Gemini API key
+   - ส่งข้อมูลไป Gemini
+   - รับผลวิเคราะห์ 3 บรรทัด
+   - ถ้า rate limit หรือ error ระบบ fallback ได้
+7. show confirm modal พร้อม preview คะแนนและ AI summary
+8. upsertEvaluationResult() เขียนลง Google Sheet results
+9. waitForEvaluationResultSync() รอให้ sheet sync
+10. reload reference data และ refreshAssignments()
+
+------------------------------------------
+12.2 Evaluation Report Flow
+------------------------------------------
+
+ไฟล์หลัก: hr-evaluation-report.js
+
+หน้าที่
+
+- ดูผลประเมินของ evaluator ที่ login อยู่
+- filter ตามแผนกและพนักงาน
+- เปรียบเทียบภาพรวม
+- ดู chart และ history table
+
+Flow
+
+1. โหลด reference data จาก Google Sheets
+2. filter results ให้เห็นเฉพาะ evaluatorEmployeeId ที่เกี่ยวข้อง
+   ยกเว้นสิทธิ์พิเศษบางระดับ
+3. สร้าง options แผนกและ employee
+4. คำนวณ metrics
+   - จำนวนแบบประเมิน
+   - average score
+   - summary รายปี
+   - comparison rows
+5. render charts และ tables
+
+==================================================
+13. Section: HR Shift Swap / Shift Change
+==================================================
+
+ไฟล์หลัก
+
+- assets/js/pages/hr-shift-common.js
+- assets/js/pages/hr-shift-swap.js
+- assets/js/pages/hr-shift-change.js
+
+ระบบนี้ใช้ Google Sheets เป็นปลายทางหลัก
+
+หน้าที่
+
+- กรอกข้อมูลเปลี่ยนเวร
+- กรอกข้อมูลเปลี่ยนกะ
+- โหลดรายชื่อพนักงานจากชีต
+- ตรวจเวลาที่เปิดรับฟอร์มจาก Settings sheet
+- แนบลายเซ็น approver เป็น SVG data URL
+
+Flow ร่วม
+
+1. initShiftFormPage(kind)
+2. โหลดพร้อมกัน
+   - รายชื่อพนักงานจาก shiftEmployees
+   - settings จาก Settings sheet
+3. สร้าง datalist ค้นหาพนักงาน
+4. ผูก date pickers
+5. ผูก signature canvas
+6. ตรวจว่าช่วงเวลาปัจจุบันอนุญาตให้ส่งฟอร์มหรือไม่
+7. เมื่อ submit
+   - reload settings อีกรอบ
+   - validate ฟอร์ม
+   - สร้าง payload
+   - confirm
+   - appendHrShiftReport(kind, record) ลง Google Sheets
+8. reset form และ clear selection
+
+ความต่าง
+
+- shift swap อาจสร้างหลาย record ในครั้งเดียว
+- shift change ปกติสร้าง record เดียว
+
+==================================================
+14. Section: Admin Tools
+==================================================
+
+------------------------------------------
+14.1 Admin Access Management
+------------------------------------------
+
+ไฟล์หลัก
+
+- assets/js/pages/admin-access.js
+- assets/js/services/account-access.js
+
+หน้าที่
+
+- แสดง user directory รวมจาก 3 แหล่งข้อมูล
+- แก้สิทธิ์ EN / HR / IT / Active
+- sync กลับไปทั้ง Firebase EN, Firebase HR, Google Sheet
+
+Flow โหลด user directory
+
+1. โหลด DHR/User จาก Firebase EN
+2. โหลด DHR/User จาก Firebase HR
+3. โหลด User Directory จาก Google Sheets
+4. merge ตาม employeeId
+5. render table, filter, pagination
+
+Flow บันทึกสิทธิ์
+
+1. ผู้ดูแลแก้ draft ต่อ row
+2. กด save
+3. updateUserAccessProfile()
+4. service update 3 จุด
+   - Firebase EN
+   - Firebase HR
+   - Google Sheet User Directory
+5. ถ้า fail มี rollback
+6. dispatch event csm:session-profile-updated เพื่อ refresh สิทธิ์หน้า UI
+
+------------------------------------------
+14.2 Admin Backup / Delete
+------------------------------------------
+
+ไฟล์หลัก: assets/js/pages/backup.js
+
+หน้าที่
+
+- ลบข้อมูลเก่าตามช่วงวันที่
+- ใช้แทน backup/delete tool เชิง admin
+
+Flow ลบ DEN/FIX
+
+1. ผู้ใช้เลือก start/end date
+2. ระบบวนปีตามช่วงวัน
+3. โหลด DEN/FIX/{year}
+4. ลบเฉพาะรายการ step 4 หรือ 6
+5. ตรวจวันที่จาก item.date
+6. remove แต่ละรายการ
+
+Flow ลบ Booking
+
+1. ผู้ใช้เลือกช่วงวันที่
+2. วนปี
+3. ลบจาก Booking1 และ Booking2
+4. ลบเฉพาะ step 4 หรือ 5
+5. อิงวันที่ bookingDate
+
+==================================================
+15. Section: Shared Document Flow
+==================================================
+
+ไฟล์หลัก: assets/js/pages/doc-links.js
+
+หน้าที่
+
+- ใช้เป็น factory สำหรับ eng-doc และ hr-doc
+- รองรับข้อมูลลิงก์ที่อาจมีโครงสร้าง nested
+
+Flow
+
+1. createDocumentPage(config)
+2. init() เรียก loadDocuments()
+3. get(ref(database, path))
+4. normalizeDocumentLinks()
+5. render เป็น card list
+6. ผู้ใช้ค้นหา/filter
+7. กดเปิดลิงก์ภายนอกได้ทันที
+
+==================================================
+16. Section: Printable Reports
+==================================================
+
+ไฟล์อยู่ใน reports/
+
+16.1 reports/eng/reporteng01.html
+
+- รับ query string id
+- แยกปีจาก id
+- โหลด DEN/FIX/{year}/{id}
+- render ใบรายงานการดำเนินการซ่อมบำรุง
+- auto print หลังโหลดเสร็จ
+
+16.2 reports/hr/reporthr01.html
+
+- รับ id ของ B1 หรือ B2
+- แยก prefix และปี
+- ถ้า B1 -> โหลด Booking/Booking1/{year}/{id}
+- ถ้า B2 -> โหลด Booking/Booking2/{year}/{id}
+- render ใบขอจัดรถ
+- auto print หลังโหลด
+
+16.3 reports/hr/reporthr02.html
+
+- รับ group id
+- โหลด Booking/Booking2/{year}
+- filter เฉพาะรายการที่ field group ตรงกับ id
+- รวมสมาชิกทั้งกลุ่ม
+- render ใบขอรถแบบกลุ่ม
+- auto print หลังโหลด
+
+==================================================
+17. Flow รวมของระบบตามมุมผู้ใช้
+==================================================
+
+17.1 ผู้ใช้ทั่วไป
+
+เปิดเว็บ
+-> login
+-> dashboard
+-> เข้าเมนูตามสิทธิ์
+-> สร้างคำขอ / ดูรายการ / เปิดรายงาน / ดูเอกสาร
+
+17.2 สาย Engineering
+
+แจ้งซ่อม
+-> step 1 รอหัวหน้า
+-> step 2 รอช่าง/แอดมิน EN
+-> step 3 กำลังซ่อม
+-> step 5 รอผู้ใช้/หัวหน้าประเมิน
+-> step 4 ปิดงาน
+หรือ
+-> step 6 ยกเลิก
+
+17.3 สาย HR Booking
+
+สร้างคำขอ B1/B2
+-> step 1 รอหัวหน้า
+-> step 2 รอทีมจัดรถ
+-> step 3 จัดรถแล้ว
+-> step 4 ปิดงาน
+หรือ
+-> step 5 ยกเลิก
+
+17.4 สาย HR Shuttle Group
+
+เลือกรายการ shuttle หลายใบ
+-> assign รถ/คนขับ
+-> สร้าง group id
+-> ทุกใบถูกอัปเดตเป็น step 3
+-> ปิดงานกลุ่มเป็น step 4
+หรือ
+-> ยกเลิกกลุ่มกลับ step 2
+
+17.5 สาย Evaluation
+
+โหลด reference data
+-> ยืนยันรหัสผู้ประเมิน
+-> เลือก employee
+-> ให้คะแนนครบทุกข้อ
+-> Gemini ช่วยสรุปถ้ามี key
+-> confirm
+-> เขียนลง Google Sheets results
+-> refresh report
+
+17.6 สาย Account / Admin
+
+register user
+-> สร้าง user 3 จุด
+
+change password
+-> อัปเดต password 3 จุด
+
+admin access
+-> merge directory 3 แหล่ง
+-> update level/active 3 จุด
+
+==================================================
+18. Cross-cutting Logic ที่ใช้หลายหน้า
+==================================================
+
+1. escapeHTML / escapeAttr / sanitizeUrl
+   ป้องกันการ render ข้อมูลจาก DB แบบไม่ปลอดภัย
+
+2. buildPaginationHTML / bindPaginationEvents
+   ใช้สร้าง pagination ในหลายหน้า
+
+3. getApproversByDepartment
+   คัด approver ตามแผนกและ scope engineering/hr
+
+4. canAccessPage
+   ใช้ทั้ง router และ UI บางส่วน
+
+5. showConfirmModal / showAlert / showToast
+   ใช้เป็น interaction pattern มาตรฐานของทั้งระบบ
+
+==================================================
+19. ประเด็นสำคัญที่ควรรู้จาก flow ปัจจุบัน
+==================================================
+
+1. ระบบ auth ปัจจุบันตรวจ password ฝั่ง client โดยอ่านจาก Firebase
+2. sessionStorage ถูกใช้เป็น source สำหรับ UI และ permission ฝั่ง client
+3. ระบบมีข้อมูล 2 Firebase projects แยก EN กับ HR
+4. ฟีเจอร์ประเมินผลและเปลี่ยนเวร/กะไม่ได้พึ่ง Firebase เป็นหลัก แต่พึ่ง Google Sheets
+5. รายงาน print แยกเป็น HTML คนละไฟล์ และดึงข้อมูลจาก query string id
+6. Auto Close ของงานซ่อมทำงานเฉพาะตอนมี admin เปิดหน้าเว็บอยู่
+
+==================================================
+20. สรุปภาพรวมสุดท้าย
+==================================================
+
+โปรเจคนี้เป็นศูนย์รวม workflow ภายในองค์กรหลายชุดในหน้าเดียว
+โดยมีแกนกลางคือ
+
+- SPA Router
+- Session-based UI access
+- Firebase EN/HR
+- Google Sheets services
+- รายงาน print แยกแท็บ
+
+ภาพรวมการไหลของข้อมูลหลักคือ
+
+UI Form / UI Action
+-> Page Module
+-> Service หรือ Firebase/Sheet API
+-> บันทึกข้อมูล
+-> กลับมา render ตาราง/รายงาน/สถานะใหม่
+
+ถ้าจะต่อยอดโปรเจคนี้ในรอบถัดไป
+จุดที่ควรมองเป็นลำดับแรกคือ
+
+1. auth และ permission model
+2. data contract ของ EN/HR/Firebase/Sheets ให้ชัดขึ้น
+3. ลด logic ซ้ำระหว่าง hr-car / hr-shuttle / booking-list
+4. แยก report/data transform utilities ออกจาก page file ขนาดใหญ่

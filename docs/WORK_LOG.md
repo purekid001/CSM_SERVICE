@@ -1,6 +1,6 @@
 # CSM SERVICE Work Log
 
-อัปเดตล่าสุด: 2026-05-22
+อัปเดตล่าสุด: 2026-07-30
 
 ไฟล์นี้ใช้เป็นบันทึกงานต่อเนื่องของโปรเจค
 
@@ -61,6 +61,14 @@
 - sync `driverName`, `driverName1`, `driverName2`, `detail_remark` กลับเข้า local state
 - ใช้ `canAccessPage('hr-shuttle-group')` กับปุ่มทางเข้า shuttle group
 - escape ค่า DB ก่อน render ตารางรายการ
+
+## 2026-07-30
+
+### XSS Hardening จุด Dynamic HTML เพิ่มเติม
+
+- escape ข้อความและ attribute ในตัวสลับหน้า Login/Register และสถานะโหลดแผนก
+- escape fallback label ของ Engineering/HR status badge ก่อนคืนค่าเป็น HTML
+- escape ค่าจากสถานะ Auto Close ก่อน render ประวัติและช่วงเวลาลง HTML
 
 ## Template
 

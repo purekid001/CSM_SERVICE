@@ -33,6 +33,74 @@ window.toggleDropdown = (btn) => {
   }
 };
 
+const mobileMenuMedia = window.matchMedia('(max-width: 768px)');
+const dashboardLayout = document.getElementById('dashboard-layout');
+const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+const mobileSidebarBackdrop = document.getElementById('mobile-sidebar-backdrop');
+const appSidebar = document.getElementById('app-sidebar');
+const sidebarMenu = document.querySelector('.sidebar-menu');
+
+function setMobileMenuOpen(isOpen, { restoreFocus = false } = {}) {
+  if (!dashboardLayout || !mobileMenuToggle || !appSidebar) return;
+
+  const shouldOpen = mobileMenuMedia.matches && Boolean(isOpen);
+  dashboardLayout.classList.toggle('mobile-menu-open', shouldOpen);
+  mobileMenuToggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+  mobileMenuToggle.setAttribute('aria-label', shouldOpen ? 'ปิดเมนูหลัก' : 'เปิดเมนูหลัก');
+
+  if (mobileMenuMedia.matches) {
+    appSidebar.setAttribute('aria-hidden', shouldOpen ? 'false' : 'true');
+  } else {
+    appSidebar.removeAttribute('aria-hidden');
+  }
+
+  if (!shouldOpen && restoreFocus && mobileMenuMedia.matches) {
+    mobileMenuToggle.focus();
+  }
+}
+
+window.toggleMobileMenu = () => {
+  const isOpen = dashboardLayout?.classList.contains('mobile-menu-open');
+  setMobileMenuOpen(!isOpen);
+};
+
+window.closeMobileMenu = (restoreFocus = false) => {
+  setMobileMenuOpen(false, { restoreFocus });
+};
+
+mobileMenuToggle?.addEventListener('click', window.toggleMobileMenu);
+mobileSidebarBackdrop?.addEventListener('click', () => window.closeMobileMenu(true));
+
+sidebarMenu?.addEventListener('click', (event) => {
+  const menuItem = event.target.closest('.menu-item');
+  if (!menuItem || menuItem.classList.contains('dropdown-btn')) return;
+  window.closeMobileMenu(false);
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && dashboardLayout?.classList.contains('mobile-menu-open')) {
+    window.closeMobileMenu(true);
+  }
+});
+
+const syncMobileMenuState = () => {
+  if (!mobileMenuMedia.matches) {
+    setMobileMenuOpen(false);
+    return;
+  }
+
+  const isOpen = dashboardLayout?.classList.contains('mobile-menu-open');
+  setMobileMenuOpen(isOpen);
+};
+
+if (typeof mobileMenuMedia.addEventListener === 'function') {
+  mobileMenuMedia.addEventListener('change', syncMobileMenuState);
+} else {
+  mobileMenuMedia.addListener(syncMobileMenuState);
+}
+
+syncMobileMenuState();
+
 
 /**
  * Global Confirm Modal (Standardized Ocean Design)
@@ -67,6 +135,40 @@ export function showConfirmModal(title, message, icon = 'fa-paper-plane', confir
 
     overlay.querySelector('#global-modal-confirm').addEventListener('click', () => closeOverlay(true));
     overlay.querySelector('#global-modal-cancel').addEventListener('click', () => closeOverlay(false));
+    overlay.addEventListener('click', (ev) => { if (ev.target === overlay) closeOverlay(false); });
+  });
+}
+
+export function showRichConfirmModal(title, html, icon = 'fa-paper-plane', confirmText = 'ยืนยัน', cancelText = 'ยกเลิก') {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    const safeIcon = sanitizeIcon(icon, 'fa-paper-plane');
+
+    overlay.innerHTML = `
+      <div class="modal-card modal-card-rich">
+        <div class="modal-icon" style="background: linear-gradient(135deg, var(--ocean-start), var(--ocean-end)); color: white; border: none;">
+          <i class="fa-solid ${safeIcon}"></i>
+        </div>
+        <h3 class="modal-title">${escapeHTML(title)}</h3>
+        <div class="modal-rich-content">${html}</div>
+        <div class="modal-actions">
+          <button class="modal-btn modal-btn-cancel" id="global-rich-modal-cancel">${escapeHTML(cancelText)}</button>
+          <button class="modal-btn modal-btn-primary" id="global-rich-modal-confirm">${escapeHTML(confirmText)}</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('show'));
+
+    const closeOverlay = (result) => {
+      overlay.classList.remove('show');
+      overlay.addEventListener('transitionend', () => overlay.remove());
+      resolve(result);
+    };
+
+    overlay.querySelector('#global-rich-modal-confirm').addEventListener('click', () => closeOverlay(true));
+    overlay.querySelector('#global-rich-modal-cancel').addEventListener('click', () => closeOverlay(false));
     overlay.addEventListener('click', (ev) => { if (ev.target === overlay) closeOverlay(false); });
   });
 }
@@ -137,6 +239,7 @@ export function showToast(message, type = 'success') {
 
 // Attach to window for global access (Compatibility for older code)
 window.showConfirmModal = showConfirmModal;
+window.showRichConfirmModal = showRichConfirmModal;
 window.showAlert = showAlert;
 window.showToast = showToast;
 

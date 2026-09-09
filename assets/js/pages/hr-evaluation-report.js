@@ -18,11 +18,45 @@ const CHART_COLORS = [
   '#e11d48',
   '#4338ca',
 ];
+const EVALUATION_SCOPE_RULES = [
+  {
+    titles: ['กรรมการผู้จัดการ'],
+    type: 'all',
+    label: 'ทุกส่วนงาน',
+  },
+  {
+    titles: ['รองกรรมการผู้จัดการS', 'รองกรรมการผู้จัดการ S'],
+    type: 'sections',
+    label: 'สายงาน Support',
+    sections: [
+      'ควบคุมคุณภาพ',
+      'การตลาด',
+      'พัฒนาผลิตภัณฑ์',
+      'พัฒนาระบบ',
+      'ห้องปฏิบัติการและพัฒนาสิ่งแวดล้อม',
+      'ทรัพยากรบุคคลและธุรการ',
+      'เทคโนโลยีสารสนเทศ',
+      'อาชีวอนามัยและความปลอดภัย',
+    ],
+  },
+  {
+    titles: ['รองกรรมการผู้จัดการP', 'รองกรรมการผู้จัดการ P'],
+    type: 'sections',
+    label: 'สายงาน Production',
+    sections: [
+      'ผลิต1',
+      'ผลิต2',
+      'วิศวกรรม',
+      'คลังสินค้า',
+    ],
+  },
+];
 
 const state = {
   refs: null,
   currentEmployeeId: '',
   currentEvaluatorName: '',
+  accessScope: null,
   visibleResults: [],
   comparisonResults: [],
   comparisonRows: [],
@@ -38,7 +72,7 @@ export function render() {
         <div class="page-hero-copy">
           <p class="page-hero-eyebrow">Evaluator Insights</p>
           <h1 class="page-hero-title">Evaluation Score Report</h1>
-          <p class="page-hero-subtitle">ดูคะแนนรายรอบ / ปีของพนักงานที่คุณเป็นผู้ประเมิน พร้อมภาพรวมเปรียบเทียบทั้งกลุ่ม ตารางวิเคราะห์ และกราฟแนวโน้มแบบลื่นไหลในหน้าเดียว</p>
+          <p class="page-hero-subtitle">ดูคะแนนรายรอบ / ปีของพนักงานในขอบเขตที่คุณมีสิทธิ์เข้าถึง พร้อมภาพรวมเปรียบเทียบทั้งกลุ่ม ตารางวิเคราะห์ และกราฟแนวโน้มในหน้าเดียว</p>
         </div>
         <div class="page-hero-meta">
           <div class="page-hero-stat">
@@ -56,7 +90,7 @@ export function render() {
         <i class="fa-solid fa-user-lock"></i>
         <div>
           <strong id="eval-rep-note-title">รายงานนี้ล็อกตามรหัสผู้ประเมินที่ล็อกอิน</strong>
-          <span id="eval-rep-note-body">ระบบจะแสดงเฉพาะข้อมูลที่คอลัมน์ evaluatorEmployeeId ตรงกับรหัสพนักงานที่กำลังใช้งานอยู่เท่านั้น</span>
+          <span id="eval-rep-note-body">ระบบจะแสดงข้อมูลตามสิทธิ์ของผู้ประเมินที่ล็อกอิน และอาจขยายขอบเขตตามตำแหน่งผู้ประเมินที่กำหนดไว้</span>
         </div>
       </div>
 
@@ -68,7 +102,7 @@ export function render() {
             </div>
             <div class="form-header-text">
               <h2>Evaluation Scope</h2>
-              <p>เลือกดูภาพรวมทั้งหมดที่คุณประเมิน หรือโฟกัสรายพนักงานคนเดียวได้ทันที</p>
+              <p>เลือกดูภาพรวมทั้งหมดในขอบเขตสิทธิ์ หรือโฟกัสรายพนักงานคนเดียวได้ทันที</p>
             </div>
           </div>
         </div>
@@ -87,7 +121,7 @@ export function render() {
             <div class="filter-item report-type-filter">
               <label><i class="fa-solid fa-users"></i> พนักงานที่ถูกประเมิน</label>
               <select class="form-control" id="eval-rep-employee">
-                <option value="${escapeAttr(ALL_EMPLOYEES_VALUE)}">ภาพรวมทั้งหมดที่คุณประเมิน</option>
+                <option value="${escapeAttr(ALL_EMPLOYEES_VALUE)}">ภาพรวมทั้งหมดในขอบเขตสิทธิ์</option>
               </select>
             </div>
           </div>
@@ -142,7 +176,7 @@ export function render() {
 
       <section class="report-section">
         <div class="report-chart-grid evaluation-report-chart-grid">
-          <div class="form-card report-panel report-chart-card report-chart-wide">
+          <div class="form-card report-panel report-chart-card">
             <div class="report-card-header compact">
               <div>
                 <h3><i class="fa-solid fa-chart-area"></i> คะแนนต่อรอบ / ปี</h3>
@@ -151,7 +185,7 @@ export function render() {
             </div>
             <div class="report-chart-box report-chart-box-large"><canvas id="eval-rep-focus-chart"></canvas></div>
           </div>
-          <div class="form-card report-panel report-chart-card report-chart-wide">
+          <div class="form-card report-panel report-chart-card">
             <div class="report-card-header compact">
               <div>
                 <h3><i class="fa-solid fa-chart-line"></i> เปรียบเทียบคะแนนพนักงานทุกปี</h3>
@@ -167,13 +201,35 @@ export function render() {
         <div class="report-card-header compact">
           <div>
             <h3><i class="fa-solid fa-table"></i> ตารางเปรียบเทียบคะแนนรายพนักงานทุกปี</h3>
-            <p id="eval-rep-table-summary">แสดงข้อมูลเปรียบเทียบทุกคนในขอบเขตที่คุณประเมิน</p>
+            <p id="eval-rep-table-summary">แสดงข้อมูลเปรียบเทียบทุกคนในขอบเขตสิทธิ์ปัจจุบัน</p>
           </div>
         </div>
         <div class="table-wrapper report-table-wrapper">
           <table class="data-table table-width-lock" id="eval-rep-table" style="--report-table-min-width: 1260px; --table-lock-width: 1260px; --table-cell-min: 120px;">
             <thead id="eval-rep-head"></thead>
             <tbody id="eval-rep-body">
+              <tr>
+                <td colspan="7" class="table-loading">
+                  <i class="fa-solid fa-spinner fa-spin"></i>
+                  กำลังโหลดข้อมูล...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="form-card report-panel fade-in">
+        <div class="report-card-header compact">
+          <div>
+            <h3><i class="fa-solid fa-clock-rotate-left"></i> ตารางประวัติการประเมิน</h3>
+            <p id="eval-rep-history-summary">แสดงรายการประเมินตามขอบเขตที่เลือก</p>
+          </div>
+        </div>
+        <div class="table-wrapper report-table-wrapper">
+          <table class="data-table table-width-lock" id="eval-rep-history-table" style="--report-table-min-width: 1480px; --table-lock-width: 1480px; --table-cell-min: 120px; --table-detail-min: 300px;">
+            <thead id="eval-rep-history-head"></thead>
+            <tbody id="eval-rep-history-body">
               <tr>
                 <td colspan="7" class="table-loading">
                   <i class="fa-solid fa-spinner fa-spin"></i>
@@ -228,6 +284,7 @@ function bindEvents() {
 async function loadReportData() {
   try {
     state.refs = await loadEvaluationReferenceData();
+    state.accessScope = resolveEvaluationAccessScope();
     state.visibleResults = getVisibleResults();
     state.currentEvaluatorName = resolveCurrentEvaluatorName();
 
@@ -239,6 +296,7 @@ async function loadReportData() {
     showToast(`โหลดรายงานผลประเมินไม่สำเร็จ: ${error.message}`, 'error');
     destroyCharts();
     renderEmptyTable('ไม่สามารถโหลดข้อมูลรายงานได้');
+    renderEmptyHistoryTable('ไม่สามารถโหลดประวัติการประเมินได้');
   }
 }
 
@@ -264,6 +322,7 @@ function applyFilters() {
   renderMetrics();
   renderCharts();
   renderComparisonTable();
+  renderHistoryTable();
 }
 
 function populateDepartmentOptions() {
@@ -288,7 +347,7 @@ function syncEmployeeOptions(results, requestedEmployeeId) {
 
   const employees = buildEmployeeOptions(results);
   select.innerHTML = `
-    <option value="${escapeAttr(ALL_EMPLOYEES_VALUE)}">ภาพรวมทั้งหมดที่คุณประเมิน</option>
+    <option value="${escapeAttr(ALL_EMPLOYEES_VALUE)}">ภาพรวมทั้งหมดในขอบเขตสิทธิ์</option>
     ${employees.map(employee => `
       <option value="${escapeAttr(employee.employeeId)}">${escapeHTML(employee.label)}</option>
     `).join('')}
@@ -512,13 +571,71 @@ function renderComparisonTable() {
 }
 
 function renderEmptyTable(message) {
-  const thead = document.getElementById('eval-rep-head');
-  const tbody = document.getElementById('eval-rep-body');
+  renderEmptyTableState({
+    theadId: 'eval-rep-head',
+    tbodyId: 'eval-rep-body',
+    colspan: 7,
+    message,
+  });
+}
+
+function renderHistoryTable() {
+  const historyRows = buildHistoryRows(state.focusResults);
+  if (historyRows.length === 0) {
+    renderEmptyHistoryTable('ยังไม่พบประวัติการประเมินที่ตรงกับขอบเขตที่เลือก');
+    return;
+  }
+
+  const thead = document.getElementById('eval-rep-history-head');
+  const tbody = document.getElementById('eval-rep-history-body');
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr>
+      <th>รอบ / ปี</th>
+      <th>วันที่ประเมิน</th>
+      <th>รหัสพนักงาน</th>
+      <th>ชื่อพนักงาน</th>
+      <th>หน่วยงาน</th>
+      <th class="cell-center">คะแนนรวม</th>
+      <th>ความคิดเห็นผู้ประเมิน</th>
+    </tr>
+  `;
+
+  tbody.innerHTML = historyRows.map(row => {
+    const isSelected = row.employeeId === state.selectedEmployeeId && state.selectedEmployeeId !== ALL_EMPLOYEES_VALUE;
+
+    return `
+      <tr class="${isSelected ? 'eval-report-row-highlight' : ''}">
+        <td>${escapeHTML(row.year)}</td>
+        <td>${escapeHTML(formatDateTimeDisplay(row.submittedAt))}</td>
+        <td>${escapeHTML(row.employeeId)}</td>
+        <td>${escapeHTML(row.employeeName)}</td>
+        <td>${escapeHTML(row.employeeDepartment || '-')}</td>
+        <td class="cell-center">${formatTableScore(row.overallScore)}</td>
+        <td class="cell-detail eval-report-comment-cell">${escapeHTML(row.comment || '-')}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderEmptyHistoryTable(message) {
+  renderEmptyTableState({
+    theadId: 'eval-rep-history-head',
+    tbodyId: 'eval-rep-history-body',
+    colspan: 7,
+    message,
+  });
+}
+
+function renderEmptyTableState({ theadId, tbodyId, colspan, message }) {
+  const thead = document.getElementById(theadId);
+  const tbody = document.getElementById(tbodyId);
   if (thead) thead.innerHTML = '';
   if (tbody) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" class="table-loading">
+        <td colspan="${colspan}" class="table-loading">
           <i class="fa-solid fa-inbox"></i>
           ${escapeHTML(message)}
         </td>
@@ -528,26 +645,22 @@ function renderEmptyTable(message) {
 }
 
 function syncAccessUi() {
+  const accessScope = state.accessScope || resolveEvaluationAccessScope();
   const evaluatorLabel = state.currentEvaluatorName
     ? `${state.currentEvaluatorName} (${state.currentEmployeeId || '-'})`
     : (state.currentEmployeeId || 'ไม่พบรหัสผู้ใช้');
 
-  setText('eval-rep-access-label', state.currentEmployeeId ? `evaluatorEmployeeId = ${state.currentEmployeeId}` : 'ไม่พบรหัส Login');
+  setText('eval-rep-access-label', buildAccessScopeLabel(accessScope));
   setText('eval-rep-evaluator-pill', evaluatorLabel);
 
   if (state.refs && state.visibleResults.length === 0) {
-    setText('eval-rep-note-title', 'ยังไม่พบข้อมูลผลประเมินของผู้ใช้ที่ล็อกอิน');
-    setText('eval-rep-note-body', 'ระบบค้นหาเฉพาะรายการที่ evaluatorEmployeeId ตรงกับรหัส Login ปัจจุบัน และตอนนี้ยังไม่พบข้อมูลในผลประเมิน');
+    setText('eval-rep-note-title', buildEmptyAccessScopeTitle(accessScope));
+    setText('eval-rep-note-body', buildEmptyAccessScopeMessage(accessScope));
     return;
   }
 
-  setText('eval-rep-note-title', 'รายงานนี้ล็อกตามรหัสผู้ประเมินที่ล็อกอิน');
-  setText(
-    'eval-rep-note-body',
-    state.currentEmployeeId
-      ? `ระบบจะแสดงเฉพาะข้อมูลที่ evaluatorEmployeeId = ${state.currentEmployeeId} และยังสามารถสลับดูภาพรวมทั้งหมดหรือโฟกัสรายพนักงานแต่ละคนได้`
-      : 'ระบบต้องใช้รหัสพนักงานจาก session เพื่อกรองข้อมูลผู้ประเมิน'
-  );
+  setText('eval-rep-note-title', buildAccessScopeTitle(accessScope));
+  setText('eval-rep-note-body', buildAccessScopeMessage(accessScope));
 }
 
 function syncScopeUi() {
@@ -566,11 +679,17 @@ function syncScopeUi() {
     'eval-rep-comparison-summary',
     selectedEmployee
       ? `เส้นที่ถูกไฮไลต์คือ ${selectedEmployee.label} และยังเห็นเส้นของพนักงานคนอื่นเพื่อใช้เทียบวิเคราะห์`
-      : `เปรียบเทียบแนวโน้มคะแนนของพนักงานทุกคนที่คุณประเมิน ครอบคลุม ${years.length} รอบ / ปี`
+      : `เปรียบเทียบแนวโน้มคะแนนของพนักงานทุกคนในขอบเขตสิทธิ์ ครอบคลุม ${years.length} รอบ / ปี`
   );
   setText(
     'eval-rep-table-summary',
     `ตารางนี้รวม ${state.comparisonRows.length} พนักงาน และ ${years.length} รอบ / ปี${selectedEmployee ? ` โดยไฮไลต์ ${selectedEmployee.label}` : ''}`
+  );
+  setText(
+    'eval-rep-history-summary',
+    selectedEmployee
+      ? `ประวัติการประเมินของ ${selectedEmployee.label} ตามตัวกรองปัจจุบัน จำนวน ${state.focusResults.length} รายการ`
+      : `ประวัติการประเมินทั้งหมดใน ${departmentLabel} จำนวน ${state.focusResults.length} รายการ`
   );
 }
 
@@ -679,6 +798,19 @@ function buildEmployeeOptions(results) {
   return [...grouped.values()].sort((left, right) => left.employeeName.localeCompare(right.employeeName, 'th'));
 }
 
+function buildHistoryRows(results) {
+  return [...results].sort((left, right) => {
+    const rightTime = parseDateTimeForSort(right.submittedAt);
+    const leftTime = parseDateTimeForSort(left.submittedAt);
+    if (rightTime !== leftTime) return rightTime - leftTime;
+
+    const cycleCompare = compareEvaluationCycle(right.year, left.year);
+    if (cycleCompare !== 0) return cycleCompare;
+
+    return String(left.employeeName || '').localeCompare(String(right.employeeName || ''), 'th');
+  });
+}
+
 function resolveCurrentEvaluatorName() {
   const normalizedCurrentId = normalizeId(state.currentEmployeeId);
   const evaluatorMatch = state.refs?.evaluators?.find(item => normalizeId(item.employeeId) === normalizedCurrentId);
@@ -694,8 +826,124 @@ function resolveCurrentEvaluatorName() {
 function getVisibleResults() {
   if (!state.refs) return [];
   const normalizedCurrentId = normalizeId(state.currentEmployeeId);
+  const accessScope = state.accessScope || resolveEvaluationAccessScope();
+
+  if (accessScope.type === 'all') {
+    return state.refs.results;
+  }
+
+  if (accessScope.type === 'sections') {
+    return state.refs.results.filter(item => matchesSectionScope(item.employeeSection, accessScope.sections));
+  }
 
   return state.refs.results.filter(item => normalizeId(item.evaluatorEmployeeId) === normalizedCurrentId);
+}
+
+function resolveEvaluationAccessScope() {
+  const evaluatorProfile = getCurrentEvaluatorProfile();
+  const evaluatorTitle = String(evaluatorProfile?.position || evaluatorProfile?.evaluatorTitle || '').trim();
+  const matchedRule = EVALUATION_SCOPE_RULES.find(rule => matchesEvaluatorTitle(evaluatorTitle, rule.titles));
+
+  if (!matchedRule) {
+    return {
+      type: 'self',
+      evaluatorTitle,
+    };
+  }
+
+  return {
+    ...matchedRule,
+    evaluatorTitle,
+  };
+}
+
+function getCurrentEvaluatorProfile() {
+  if (!state.refs) return null;
+  const normalizedCurrentId = normalizeId(state.currentEmployeeId);
+
+  return state.refs.evaluators?.find(item => normalizeId(item.employeeId) === normalizedCurrentId)
+    || state.refs.employees?.find(item => normalizeId(item.employeeId) === normalizedCurrentId)
+    || null;
+}
+
+function matchesEvaluatorTitle(currentTitle, expectedTitles = []) {
+  const currentKey = normalizeScopeKey(currentTitle);
+  if (!currentKey) return false;
+
+  return expectedTitles.some(title => {
+    const titleKey = normalizeScopeKey(title);
+    return titleKey && currentKey === titleKey;
+  });
+}
+
+function matchesSectionScope(sectionName, allowedSections = []) {
+  const sectionKey = normalizeScopeKey(sectionName);
+  if (!sectionKey) return false;
+
+  return allowedSections.some(name => {
+    const allowedKey = normalizeScopeKey(name);
+    return allowedKey && sectionKey === allowedKey;
+  });
+}
+
+function buildAccessScopeLabel(accessScope) {
+  if (!accessScope || accessScope.type === 'self') {
+    return state.currentEmployeeId ? `evaluatorEmployeeId = ${state.currentEmployeeId}` : 'ไม่พบรหัส Login';
+  }
+
+  if (accessScope.type === 'all') {
+    return `${accessScope.evaluatorTitle || 'ผู้ประเมิน'} : ทุกส่วนงาน`;
+  }
+
+  return `${accessScope.evaluatorTitle || accessScope.label} : ${accessScope.sections.length} ส่วนงาน`;
+}
+
+function buildAccessScopeTitle(accessScope) {
+  if (!accessScope || accessScope.type === 'self') {
+    return 'รายงานนี้ล็อกตามรหัสผู้ประเมินที่ล็อกอิน';
+  }
+
+  return 'รายงานนี้ขยายสิทธิ์ตามตำแหน่งผู้ประเมิน';
+}
+
+function buildAccessScopeMessage(accessScope) {
+  if (!state.currentEmployeeId) {
+    return 'ระบบต้องใช้รหัสพนักงานจาก session เพื่อกำหนดขอบเขตรายงานผลประเมิน';
+  }
+
+  if (!accessScope || accessScope.type === 'self') {
+    return `ระบบจะแสดงเฉพาะข้อมูลที่ evaluatorEmployeeId = ${state.currentEmployeeId} และยังสามารถสลับดูภาพรวมทั้งหมดหรือโฟกัสรายพนักงานแต่ละคนได้`;
+  }
+
+  if (accessScope.type === 'all') {
+    return `ตำแหน่ง ${accessScope.evaluatorTitle || 'ผู้ประเมิน'} สามารถเห็นรายงานที่ประเมินแล้วทั้งหมด ทุกส่วนงาน`;
+  }
+
+  return `ตำแหน่ง ${accessScope.evaluatorTitle || 'ผู้ประเมิน'} สามารถเห็นรายงานที่ประเมินแล้วของ ${accessScope.sections.join(', ')}`;
+}
+
+function buildEmptyAccessScopeMessage(accessScope) {
+  if (!state.currentEmployeeId) {
+    return 'ระบบยังไม่พบรหัสพนักงานใน session จึงไม่สามารถกำหนดขอบเขตรายงานได้';
+  }
+
+  if (!accessScope || accessScope.type === 'self') {
+    return 'ระบบค้นหาเฉพาะรายการที่ evaluatorEmployeeId ตรงกับรหัส Login ปัจจุบัน และตอนนี้ยังไม่พบข้อมูลในผลประเมิน';
+  }
+
+  if (accessScope.type === 'all') {
+    return `ตำแหน่ง ${accessScope.evaluatorTitle || 'ผู้ประเมิน'} มีสิทธิ์เห็นทุกส่วนงาน แต่ตอนนี้ยังไม่พบข้อมูลผลประเมินในระบบ`;
+  }
+
+  return `ตำแหน่ง ${accessScope.evaluatorTitle || 'ผู้ประเมิน'} มีสิทธิ์เห็น ${accessScope.sections.join(', ')} แต่ตอนนี้ยังไม่พบข้อมูลผลประเมินในขอบเขตนี้`;
+}
+
+function buildEmptyAccessScopeTitle(accessScope) {
+  if (!accessScope || accessScope.type === 'self') {
+    return 'ยังไม่พบข้อมูลผลประเมินของผู้ใช้ที่ล็อกอิน';
+  }
+
+  return 'ยังไม่พบข้อมูลผลประเมินในขอบเขตสิทธิ์นี้';
 }
 
 function getSelectedEmployeeOption() {
@@ -847,6 +1095,14 @@ function normalizeId(value) {
   return String(value ?? '').trim().toLowerCase();
 }
 
+function normalizeScopeKey(value) {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '')
+    .replace(/[()\-_/\\.,]/g, '');
+}
+
 function toScore(value) {
   const normalized = Number(String(value ?? '').replace(/,/g, '').trim());
   return Number.isFinite(normalized) ? normalized : 0;
@@ -864,6 +1120,62 @@ function roundTo(value, digits = 2) {
 
 function uniqueSorted(values) {
   return [...new Set(values.filter(Boolean))].sort((left, right) => left.localeCompare(right, 'th'));
+}
+
+function compareEvaluationCycle(left, right) {
+  const leftParts = parseCycleParts(left);
+  const rightParts = parseCycleParts(right);
+
+  if (leftParts.year !== rightParts.year) return leftParts.year - rightParts.year;
+  if (leftParts.round !== rightParts.round) return leftParts.round - rightParts.round;
+  return String(left || '').localeCompare(String(right || ''), 'th');
+}
+
+function parseCycleParts(value) {
+  const normalized = String(value || '').trim();
+  const match = normalized.match(/(\d{4}).*?(\d+)/);
+  if (!match) {
+    return {
+      year: 0,
+      round: 0,
+    };
+  }
+
+  return {
+    year: Number(match[1]) || 0,
+    round: Number(match[2]) || 0,
+  };
+}
+
+function parseDateTimeForSort(value) {
+  const normalized = String(value || '').trim();
+  if (!normalized) return 0;
+
+  const thaiMatch = normalized.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (thaiMatch) {
+    const [, day, month, year, hour = '00', minute = '00', second = '00'] = thaiMatch;
+    return new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour),
+      Number(minute),
+      Number(second)
+    ).getTime();
+  }
+
+  const parsed = new Date(normalized).getTime();
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatDateTimeDisplay(value) {
+  const timestamp = parseDateTimeForSort(value);
+  if (!timestamp) return '-';
+
+  const date = new Date(timestamp);
+  const pad = number => String(number).padStart(2, '0');
+
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 function setText(id, value) {

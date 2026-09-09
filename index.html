@@ -34,108 +34,144 @@
 
   <!-- Stylesheet -->
   <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/login-harbor.css">
+  <link rel="stylesheet" href="assets/css/brand-loader.css">
+  <link rel="stylesheet" href="assets/css/home-dock.css">
 </head>
 
 <body>
 
-  <div id="login-screen">
-    <div class="login-wrapper">
-      <section class="login-brand-panel" aria-hidden="true">
-        <p class="login-eyebrow">CSM SERVICE WORKSPACE</p>
-        <p class="login-brand-copy">
-          รวมงานซ่อม เอกสารบุคคล การจองรถ และข้อมูลพนักงานไว้ใน workflow เดียว
-          เพื่อให้ทีมทำงานต่อเนื่องได้เร็วขึ้น
-        </p>
-        <div class="login-quick-links login-quick-links-panel">
-          <div class="login-quick-links-head">
-            <span class="login-quick-links-eyebrow">Quick Access</span>
-            <p>เปิดเว็บภายนอกที่ใช้บ่อยได้เลยโดยไม่ต้องเข้าสู่ระบบ</p>
-          </div>
-          <div class="login-quick-links-grid">
-            <a class="login-quick-link" href="https://www.google.com" target="_blank" rel="noreferrer">
-              <span class="login-quick-link-icon"><i class="fa-brands fa-google"></i></span>
-              <span class="login-quick-link-copy">
-                <strong>Google</strong>
-                <small>ค้นหาข้อมูลทั่วไป</small>
-              </span>
-            </a>
-            <a class="login-quick-link" href="https://chocksamut.co.th/" target="_blank" rel="noreferrer">
-              <span class="login-quick-link-icon"><i class="fa-solid fa-globe"></i></span>
-              <span class="login-quick-link-copy">
-                <strong>Chocksamut</strong>
-                <small>เปิดเว็บไซต์บริษัท</small>
-              </span>
-            </a>
-            <a class="login-quick-link" href="http://csmth.fortiddns.com:8081/ESS-CSM/default1m.aspx/" target="_blank" rel="noreferrer">
-              <span class="login-quick-link-icon"><i class="fa-solid fa-calendar-check"></i></span>
-              <span class="login-quick-link-copy">
-                <strong>ลาออนไลน์</strong>
-                <small>ส่งคำขอลาได้ทันที</small>
-              </span>
-            </a>
-            <a class="login-quick-link" href="http://192.168.2.218/apps/home/" target="_blank" rel="noreferrer">
-              <span class="login-quick-link-icon"><i class="fa-solid fa-laptop-medical"></i></span>
-              <span class="login-quick-link-copy">
-                <strong>แจ้งซ่อม IT</strong>
-                <small>เปิดระบบซ่อมภายใน</small>
-              </span>
-            </a>
-          </div>
-        </div>
-        <div class="login-feature-list">
-          <div class="login-feature-pill">
-            <i class="fa-solid fa-screwdriver-wrench"></i>
-            <span>ติดตามงานซ่อมและคำขออนุมัติ</span>
-          </div>
-          <div class="login-feature-pill">
-            <i class="fa-solid fa-people-group"></i>
-            <span>จัดการคำขอ HR, ลาออนไลน์, แจ้งซ่อม IT และการเดินทางภายใน</span>
-          </div>
-          <div class="login-feature-pill">
-            <i class="fa-solid fa-database"></i>
-            <span>เข้าถึงข้อมูลกลางอย่างเป็นระบบ</span>
-          </div>
-        </div>
-      </section>
-      <div class="login-card">
-        <div class="login-header">
-          <div class="login-logo">
-            <img src="assets/img/CSM_New_logo1.png" alt="CSM SERVICE Logo">
-          </div>
-          <h2>เข้าสู่ระบบ</h2>
-          <p>CSM SERVICE DATABASE SYSTEM</p>
-        </div>
+  <div id="brand-loader" class="brand-loader" role="status" aria-live="polite"
+    aria-atomic="true" tabindex="-1" hidden>
+    <div class="brand-loader-card">
+      <div class="brand-loader-emblem" aria-hidden="true">
+        <img class="brand-loader-mark" src="assets/img/CSM_New_logo1.png" alt="" width="104" height="88">
+      </div>
+      <p id="brand-loader-message" class="brand-loader-message">กำลังเตรียมระบบ...</p>
+      <p class="brand-loader-caption">กรุณารอสักครู่</p>
+      <div class="brand-loader-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+    </div>
+  </div>
 
-        <form id="login-form">
-          <div class="input-group">
-            <label for="username">Username</label>
-            <input type="text" id="username" required placeholder="รหัสพนักงาน" autocomplete="username">
+  <div id="login-screen" class="mini-harbor">
+    <div class="harbor-scene" aria-hidden="true">
+      <img class="harbor-backdrop" src="assets/img/login/mini-harbor.webp" alt=""
+        width="1672" height="941" fetchpriority="high" decoding="async">
+      <span class="harbor-cloud harbor-cloud-left"></span>
+      <span class="harbor-cloud harbor-cloud-right"></span>
+      <span class="harbor-cloud harbor-cloud-distant"></span>
+      <div class="harbor-vessel harbor-vessel-left">
+        <span class="harbor-ripple"></span>
+        <span class="harbor-ripple harbor-ripple-delayed"></span>
+        <span class="harbor-vessel-shadow"></span>
+        <img class="harbor-tug" src="assets/img/login/mini-harbor-tug.webp" alt=""
+          width="640" height="640" decoding="async" draggable="false">
+      </div>
+      <div class="harbor-vessel harbor-vessel-right">
+        <span class="harbor-ripple"></span>
+        <span class="harbor-ripple harbor-ripple-delayed"></span>
+        <span class="harbor-vessel-shadow"></span>
+        <img class="harbor-tug" src="assets/img/login/mini-harbor-tug.webp" alt=""
+          width="640" height="640" decoding="async" draggable="false">
+      </div>
+    </div>
+    <div class="login-wrapper">
+      <div class="login-stage">
+        <div class="login-card">
+          <div class="login-header">
+            <div class="login-logo">
+              <div class="login-logo-frame">
+                <img src="assets/img/CSM_New_logo1.png" alt="CSM SERVICE Logo">
+              </div>
+            </div>
+            <div class="auth-mode-switch" role="tablist" aria-label="Authentication mode">
+              <button type="button" class="auth-mode-btn is-active" data-auth-mode="login" aria-pressed="true">เข้าสู่ระบบ</button>
+              <button type="button" class="auth-mode-btn" data-auth-mode="register" aria-pressed="false">สมัครสมาชิก</button>
+            </div>
+            <h2 id="auth-title">เข้าสู่ระบบ</h2>
+            <p id="auth-subtitle">CSM SERVICE DATABASE SYSTEM</p>
           </div>
-          <div class="input-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" required placeholder="••••••••" autocomplete="current-password">
+
+          <form id="login-form">
+            <div class="input-group">
+              <label for="username">Username</label>
+              <input type="text" id="username" required placeholder="รหัสพนักงาน" autocomplete="username">
+            </div>
+            <div class="input-group">
+              <label for="password">Password</label>
+              <input type="password" id="password" required placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <div class="auth-options">
+              <label class="checkbox-container">
+                <input type="checkbox" id="remember">
+                <span class="checkmark"></span> จดจำการเข้าสู่ระบบในเครื่องนี้
+              </label>
+            </div>
+            <div id="error-message" class="error-msg"></div>
+            <button type="submit" class="btn-submit">เข้าสู่ระบบ</button>
+          </form>
+          <form id="register-form" class="auth-form-hidden" hidden novalidate>
+            <div class="register-grid">
+              <div class="input-group">
+                <label for="register-employee-id">User / รหัสพนักงาน</label>
+                <input type="text" id="register-employee-id" required placeholder="ตัวเลข 6-8 หลัก" inputmode="numeric"
+                  autocomplete="username" minlength="6" maxlength="8" pattern="[0-9]{6,8}">
+                <small>กรอกเฉพาะตัวเลข 6-8 หลัก</small>
+              </div>
+              <div class="input-group">
+                <label for="register-password">Password</label>
+                <input type="password" id="register-password" required placeholder="อย่างน้อย 6 ตัวอักษร"
+                  autocomplete="new-password">
+              </div>
+              <div class="input-group">
+                <label for="register-confirm-password">Check Password</label>
+                <input type="password" id="register-confirm-password" required placeholder="กรอกรหัสผ่านอีกครั้ง"
+                  autocomplete="new-password">
+              </div>
+              <div class="input-group">
+                <label for="register-firstname">ชื่อ</label>
+                <input type="text" id="register-firstname" required placeholder="กรอกชื่อ">
+              </div>
+              <div class="input-group">
+                <label for="register-lastname">นามสกุล</label>
+                <input type="text" id="register-lastname" required placeholder="กรอกนามสกุล">
+              </div>
+              <div class="input-group">
+                <label for="register-department">แผนก</label>
+                <select id="register-department" required disabled>
+                  <option value="">กำลังโหลดข้อมูลแผนก...</option>
+                </select>
+              </div>
+              <div class="input-group register-grid-full">
+                <label for="register-email">Email</label>
+                <input type="email" id="register-email" required placeholder="name@company.com" autocomplete="email">
+              </div>
+            </div>
+            <div class="register-note">
+              ระบบจะสร้างบัญชีผู้ใช้ใหม่ด้วยสิทธิ์เริ่มต้น และบันทึกข้อมูลไปยังฐานผู้ใช้งานของระบบ
+            </div>
+            <div id="register-error-message" class="error-msg"></div>
+            <button type="submit" class="btn-submit" id="register-submit-btn">สมัครสมาชิก</button>
+          </form>
+          <div class="login-footer">
+            <p class="auth-inline-switch" id="auth-inline-switch">
+              ยังไม่มีบัญชีผู้ใช้?
+              <button type="button" class="auth-inline-btn" data-auth-mode-link="register">สมัครสมาชิก</button>
+            </p>
+            <p>© 2026 CSM SERVICE | All Rights Reserved</p>
           </div>
-          <div class="auth-options">
-            <label class="checkbox-container">
-              <input type="checkbox" id="remember">
-              <span class="checkmark"></span> จดจำการเข้าสู่ระบบในเครื่องนี้
-            </label>
-          </div>
-          <div id="error-message" class="error-msg"></div>
-          <button type="submit" class="btn-submit">เข้าสู่ระบบ</button>
-        </form>
-        <div class="login-footer">
-          <p>© 2026 CSM SERVICE | All Rights Reserved</p>
         </div>
       </div>
     </div>
   </div>
 
   <div id="dashboard-layout" style="display: none;">
-    <aside class="sidebar">
+    <aside id="app-sidebar" class="sidebar" aria-label="เมนูหลัก">
       <div class="sidebar-header">
         <div class="sidebar-brand">
-          <img src="assets/img/CSM_New_logo1.png" class="sidebar-logo" alt="Logo">
+          <div class="sidebar-logo-frame">
+            <img src="assets/img/CSM_New_logo1.png" class="sidebar-logo" alt="Logo">
+          </div>
           <div class="sidebar-brand-copy">
             <span class="sidebar-brand-eyebrow">CSM SERVICE</span>
             <h2>Operations Workspace</h2>
@@ -162,14 +198,12 @@
             <i class="fa-solid fa-chevron-down arrow-icon"></i>
           </button>
           <div class="dropdown-container">
-            <button class="menu-item sub-item" onclick="showPage('eng-request')"><span class="menu-text">Request For
-                Repair</span></button>
-            <button class="menu-item sub-item" onclick="showPage('eng-list')"><span class="menu-text">Repair Request
-                List</span></button>
+            <button class="menu-item sub-item" onclick="showPage('eng-request')"><span class="menu-text">ระบบแจ้งซ่อม ( EN )</span></button>
+            <button class="menu-item sub-item" onclick="showPage('eng-list')"><span class="menu-text">รายการแจ้งซ่อม</span></button>
             <button class="menu-item sub-item" onclick="showPage('eng-doc')" data-perm="en-doc"><span
-                class="menu-text">Document</span></button>
+                class="menu-text">เอกสาร</span></button>
             <button class="menu-item sub-item" onclick="showPage('eng-report')"><span
-                class="menu-text">Report</span></button>
+                class="menu-text">รายงาน</span></button>
           </div>
         </div>
 
@@ -182,17 +216,20 @@
           <div class="dropdown-container">
             <button class="menu-item sub-item"
               onclick="window.open('http://csmth.fortiddns.com:8081/ESS-CSM/default1m.aspx/', '_blank')"><span
-                class="menu-text">Leave Request</span></button>
-            <button class="menu-item sub-item" onclick="showPage('hr-car')"><span class="menu-text">Car
-                Booking</span></button>
-            <button class="menu-item sub-item" onclick="showPage('hr-shuttle')"><span class="menu-text">Shuttle Service
-                (รับ-ส่ง)</span></button>
-            <button class="menu-item sub-item" onclick="showPage('hr-list')"><span class="menu-text">Booking
-                List</span></button>
+                class="menu-text">ระบบยื่นใบลาออนไลน์</span></button>
+            <button class="menu-item sub-item" onclick="showPage('hr-car')"><span class="menu-text">ระบบจองรถ</span></button>
+            <button class="menu-item sub-item" onclick="showPage('hr-shuttle')"><span class="menu-text">ระบบจองรถ
+                ( รับ-ส่ง )</span></button>
+            <button class="menu-item sub-item" onclick="showPage('hr-list')"><span class="menu-text">รายการจองรถ</span></button>
+            <button class="menu-item sub-item" onclick="showPage('hr-shift-swap')"><span
+                class="menu-text">ระบบเปลี่ยนเวร</span></button>
+            <button class="menu-item sub-item" onclick="showPage('hr-shift-change')"><span
+                class="menu-text">ระบบเปลี่ยนกะงาน</span></button>
+            <button class="menu-item sub-item" onclick="showPage('hr-evaluation')"><span class="menu-text">ระบบประเมินพนักงาน</span></button>
             <button class="menu-item sub-item" onclick="showPage('hr-doc')" data-perm="hr-doc"><span
-                class="menu-text">Document</span></button>
+                class="menu-text">เอกสาร</span></button>
             <button class="menu-item sub-item" onclick="showPage('hr-report')"><span
-                class="menu-text">Report</span></button>
+                class="menu-text">รายงาน</span></button>
           </div>
         </div>
 
@@ -204,7 +241,7 @@
           </button>
           <div class="dropdown-container">
             <button class="menu-item sub-item" onclick="window.open('http://192.168.2.218/apps/home/', '_blank')"><span
-                class="menu-text">Request Repair ( IT )</span></button>
+                class="menu-text">ระบบแจ้งซ่อม ( IT )</span></button>
           </div>
         </div>
 
@@ -228,8 +265,10 @@
             <i class="fa-solid fa-chevron-down arrow-icon"></i>
           </button>
           <div class="dropdown-container">
+            <button class="menu-item sub-item" onclick="showPage('admin-access')"><span
+                class="menu-text">ระบบจัดการสิทธิ์</span></button>
             <button class="menu-item sub-item" onclick="showPage('eng-auto-close')"><span
-                class="menu-text">Auto Close Repair</span></button>
+                class="menu-text">ระบบปิดงานอัตโนมัติ</span></button>
             <button class="menu-item sub-item" onclick="showPage('admin-backup')"><span class="menu-text">Backup /
                 Delete DB</span></button>
           </div>
@@ -241,8 +280,15 @@
       </nav>
     </aside>
 
+    <button type="button" id="mobile-sidebar-backdrop" class="mobile-sidebar-backdrop"
+      aria-label="ปิดเมนูหลัก" tabindex="-1"></button>
+
     <main class="main-content">
       <header class="top-nav">
+        <button type="button" id="mobile-menu-toggle" class="mobile-menu-toggle"
+          aria-label="เปิดเมนูหลัก" aria-controls="app-sidebar" aria-expanded="false">
+          <i class="fa-solid fa-bars" aria-hidden="true"></i>
+        </button>
         <div class="top-nav-context">
           <span class="top-nav-eyebrow">Internal Service Platform</span>
           <div class="user-display">
@@ -256,10 +302,6 @@
             <i class="fa-solid fa-water"></i>
             <span class="top-nav-btn-text">พื้นหลัง</span>
           </button>
-          <div class="status-indicator">
-            <span class="status-dot"></span>
-            <span>ระบบพร้อมใช้งาน</span>
-          </div>
         </div>
       </header>
       <div id="app-container" class="content-body"></div>
