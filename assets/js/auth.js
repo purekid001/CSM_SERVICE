@@ -13,6 +13,7 @@ import { syncEngAutoCloseForSession } from './services/eng-auto-close.js';
 import { getUserDirectoryDepartments } from './services/google-sheets.js';
 import { registerUserAccount } from './services/account-registration.js';
 import { initLoginWeatherTheme } from './services/login-weather.js';
+import { showBrandLoader } from './services/brand-loader.js';
 import { showAlert, showToast } from './ui.js';
 
 // --- อ้างอิง UI Elements ---
@@ -327,14 +328,15 @@ function getLoginErrorMessage(error) {
 window.addEventListener('DOMContentLoaded', async () => {
   setAuthMode('login');
   void initLoginWeatherTheme();
-  await loadRegistrationDepartments();
-
-  const rememberedUser = localStorage.getItem('rememberedUser') || '';
-  if (rememberedUser && loginUsernameInput) {
-    loginUsernameInput.value = rememberedUser;
-  }
+  // Department loading has its own disabled state and must not block login.
+  void loadRegistrationDepartments();
+  const finishLoading = showBrandLoader('กำลังเตรียมระบบ...');
 
   try {
+    const rememberedUser = localStorage.getItem('rememberedUser') || '';
+    if (rememberedUser && loginUsernameInput) {
+      loginUsernameInput.value = rememberedUser;
+    }
     await auth.authStateReady();
     if (auth.currentUser?.uid) {
       await loadAuthenticatedUser(auth.currentUser.uid);
@@ -342,6 +344,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   } catch (error) {
     console.error('Firebase Auth restore error:', error);
     errorMsg.textContent = getLoginErrorMessage(error);
+  } finally {
+    finishLoading();
   }
 });
 
@@ -373,11 +377,13 @@ loginForm.addEventListener('submit', async (e) => {
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
   const rememberChecked = document.getElementById('remember').checked;
-  const submitBtn = document.querySelector('.btn-submit');
+  const submitBtn = loginForm.querySelector('.btn-submit');
+  if (submitBtn.disabled) return;
 
   errorMsg.textContent = "";
   submitBtn.textContent = 'กำลังตรวจสอบ...';
   submitBtn.disabled = true;
+  const finishLoading = showBrandLoader('กำลังเข้าสู่ระบบ...');
 
   try {
     const credential = await signInEmployee(
@@ -400,6 +406,7 @@ loginForm.addEventListener('submit', async (e) => {
   } finally {
     submitBtn.textContent = 'เข้าสู่ระบบ';
     submitBtn.disabled = false;
+    finishLoading();
   }
 });
 
@@ -408,6 +415,7 @@ registerForm?.addEventListener('submit', async (event) => {
 
   const values = getRegistrationFormValues();
   const submitBtn = document.getElementById('register-submit-btn');
+  if (submitBtn?.disabled) return;
   const validationMessage = validateRegistrationForm(values);
 
   registerErrorMsg.textContent = '';
@@ -421,9 +429,12 @@ registerForm?.addEventListener('submit', async (event) => {
     submitBtn.textContent = 'กำลังสมัครสมาชิก...';
     submitBtn.disabled = true;
   }
+  const finishLoading = showBrandLoader('กำลังสมัครสมาชิก...');
 
   try {
     await registerUserAccount(values);
+    // Release the overlay before focusing login or opening the success dialog.
+    finishLoading();
 
     registerForm.reset();
     setAuthMode('login');
@@ -451,6 +462,7 @@ registerForm?.addEventListener('submit', async (event) => {
       submitBtn.textContent = 'สมัครสมาชิก';
       submitBtn.disabled = false;
     }
+    finishLoading();
   }
 });
 

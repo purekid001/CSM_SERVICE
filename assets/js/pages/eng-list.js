@@ -292,6 +292,7 @@ export function render() {
                   <div class="detail-field"><span class="detail-label">วิธีการแก้ไข</span><textarea class="modal-textarea" id="dm-fix" rows="2"></textarea></div>
                   <div class="detail-field"><span class="detail-label">รายการอะไหล่ที่ใช้</span><textarea class="modal-textarea" id="dm-parts" rows="2"></textarea></div>
                   <div class="detail-field"><span class="detail-label">หมายเหตุ</span><textarea class="modal-textarea" id="dm-remark" rows="2"></textarea></div>
+                  <div class="detail-field"><span class="detail-label">วันและเวลาเสร็จสิ้น</span><input type="text" class="modal-input" id="dm-end-real" placeholder="dd/mm/yyyy HH:mm" readonly></div>
                 </div>
               </div>
             </div>
@@ -654,8 +655,10 @@ export function init() {
     // Flatpickr
     const startInput = document.getElementById('dm-start');
     const endInput = document.getElementById('dm-end');
+    const endRealInput = document.getElementById('dm-end-real');
     if (startInput._flatpickr) startInput._flatpickr.destroy();
     if (endInput._flatpickr) endInput._flatpickr.destroy();
+    if (endRealInput._flatpickr) endRealInput._flatpickr.destroy();
 
     const initialStart = raw.den_start !== '-' ? raw.den_start : null;
     const endPicker = flatpickr(endInput, {
@@ -679,6 +682,13 @@ export function init() {
           endPicker.clear();
         }
       }
+    });
+    flatpickr(endRealInput, {
+      dateFormat: 'd/m/Y H:i',
+      enableTime: true,
+      time_24hr: true,
+      disableMobile: true,
+      defaultDate: raw.den_end_real && raw.den_end_real !== '-' ? raw.den_end_real : new Date()
     });
 
     // ส่วนที่ 3: ช่าง index 1-5
@@ -877,6 +887,8 @@ export function init() {
     const remarkText = document.getElementById('dm-remark').value.trim() || "-";
     const startVal = document.getElementById('dm-start').value || "-";
     const endVal = document.getElementById('dm-end').value || "-";
+    const endRealDate = document.getElementById('dm-end-real')._flatpickr?.selectedDates[0];
+    const endRealVal = endRealDate ? dateToString(endRealDate) : "-";
     const userRemark = document.getElementById('dm-user-remark').value.trim() || "-";
 
     if ([1, 2, 3].includes(intStep) && !validateScheduleRange(startVal, endVal)) return;
@@ -950,7 +962,7 @@ export function init() {
               den_remack: remarkText,
               den_start: startVal,
               den_end: endVal,
-              den_end_real: dateToString(new Date()),
+              den_end_real: endRealVal,
               closeApprove: `${empId} | ${empName} ${empLastname}`
             };
             successMsg = "Update Data Success ---> ตรวจสอบรับงานซ่อม";
@@ -969,7 +981,7 @@ export function init() {
               updateData = {
                 dateUpdate: dateToString(new Date()),
                 step: nextStep,
-                den_end_real: dateToString(new Date()),
+                den_end_real: endRealVal,
                 clean: strCheck
               };
               successMsg = "Update Data Success ---> ซ่อมเรียบร้อยแล้ว";
@@ -982,7 +994,7 @@ export function init() {
               updateData = {
                 dateUpdate: dateToString(new Date()),
                 step: nextStep,
-                den_end_real: dateToString(new Date()),
+                den_end_real: endRealVal,
                 remack: userRemark + ` ( ไม่รับงานซ่อม ${dateToString(new Date())} )`,
                 clean: strCheck
               };

@@ -820,6 +820,9 @@ async function updateUserDirectoryAccess(request, config, payload) {
     employeeId: headers.findIndex(
         (header) => normalizeKey(header) === "employeeid",
     ),
+    department: headers.findIndex(
+        (header) => normalizeKey(header) === "department",
+    ),
     level: headers.findIndex((header) => normalizeKey(header) === "level"),
     levelHr: headers.findIndex((header) => normalizeKey(header) === "levelhr"),
     levelIt: headers.findIndex((header) => normalizeKey(header) === "levelit"),
@@ -843,11 +846,13 @@ async function updateUserDirectoryAccess(request, config, payload) {
   );
   const previousRow = [...row];
   const previousValues = {
+    department: row[indexes.department] ?? "",
     level: row[indexes.level] ?? "",
     levelHr: row[indexes.levelHr] ?? "",
     levelIt: row[indexes.levelIt] ?? "",
     active: row[indexes.active] ?? "",
   };
+  row[indexes.department] = normalizeText(payload.department);
   row[indexes.level] = normalizeText(payload.level) || "0";
   row[indexes.levelHr] = normalizeText(payload.levelHr) || "0";
   row[indexes.levelIt] = normalizeText(payload.levelIt) || "0";
@@ -869,6 +874,8 @@ async function updateUserDirectoryAccess(request, config, payload) {
 
   try {
     const hrAccessUpdate = {
+      department: normalizeText(payload.department) ||
+        normalizeText(legacy.department),
       level: normalizeText(payload.level) || "0",
       level_Hr: normalizeText(payload.levelHr) || "0",
       level_It: normalizeText(payload.levelIt) || "0",

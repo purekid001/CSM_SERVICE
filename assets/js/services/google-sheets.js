@@ -1583,9 +1583,10 @@ function findUserDirectoryColumnIndex(headers = [], aliases = []) {
   return headers.findIndex(header => aliases.includes(normalizeCompactKey(header)));
 }
 
-export async function updateUserDirectoryAccess(employeeId, { level = '', levelHr = '', levelIt = '', active = '' } = {}) {
+export async function updateUserDirectoryAccess(employeeId, { department = '', level = '', levelHr = '', levelIt = '', active = '' } = {}) {
   return callWorkspaceFunction('updateUserDirectoryAccess', {
     employeeId,
+    department,
     level,
     levelHr,
     levelIt,

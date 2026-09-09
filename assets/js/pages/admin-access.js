@@ -53,7 +53,7 @@ export function render() {
         <div class="page-hero-meta">
           <div class="page-hero-stat">
             <span>ฟิลด์สิทธิ์</span>
-            <strong>EN / HR / IT / Active</strong>
+            <strong>Dept / EN / HR / IT / Active</strong>
           </div>
           <div class="page-hero-stat">
             <span>เป้าหมายการอัปเดต</span>
@@ -64,7 +64,7 @@ export function render() {
 
       <div class="page-note fade-in">
         <i class="fa-solid fa-shield-halved"></i>
-        <div><strong>หมายเหตุ:</strong> เมื่อกดบันทึก ระบบจะอัปเดตค่า <code>level</code>, <code>level_Hr</code>, <code>level_It</code> และ <code>active</code> พร้อมกันทั้ง Firebase EN, Firebase HR และ Google Sheet</div>
+        <div><strong>หมายเหตุ:</strong> เมื่อกดบันทึก ระบบจะอัปเดตค่า <code>department</code>, <code>level</code>, <code>level_Hr</code>, <code>level_It</code> และ <code>active</code> พร้อมกันทั้ง Firebase EN, Firebase HR และ Google Sheet</div>
       </div>
 
       <section class="form-card fade-in ops-card ops-card-primary">
@@ -149,6 +149,7 @@ export function render() {
 
 function getDraftForUser(user) {
   return state.drafts[user.employeeId] || {
+    department: user.department && user.department !== '-' ? user.department : '',
     level: user.level || '0',
     level_Hr: user.level_Hr || '0',
     level_It: user.level_It || '0',
@@ -158,7 +159,10 @@ function getDraftForUser(user) {
 
 function isUserDirty(user) {
   const draft = getDraftForUser(user);
-  return draft.level !== (user.level || '0')
+  const currentDepartment = user.department && user.department !== '-' ? user.department : '';
+
+  return draft.department !== currentDepartment
+    || draft.level !== (user.level || '0')
     || draft.level_Hr !== (user.level_Hr || '0')
     || draft.level_It !== (user.level_It || '0')
     || draft.active !== (String(user.active || 'false').toLowerCase() === 'true' ? 'true' : 'false');
@@ -203,6 +207,20 @@ function renderSelectOptions(currentValue, options, fallbackLabel = 'Current') {
   return [...map.entries()]
     .map(([value, label]) => `<option value="${escapeAttr(value)}"${value === normalizedCurrentValue ? ' selected' : ''}>${escapeHTML(label)}</option>`)
     .join('');
+}
+
+function renderDepartmentOptions(currentValue, departmentOptions) {
+  const normalizedCurrentValue = String(currentValue || '').trim();
+  const options = [...departmentOptions];
+
+  if (normalizedCurrentValue && !options.includes(normalizedCurrentValue)) {
+    options.unshift(normalizedCurrentValue);
+  }
+
+  return [
+    '<option value="">-- ไม่ระบุ --</option>',
+    ...options.map(department => `<option value="${escapeAttr(department)}"${department === normalizedCurrentValue ? ' selected' : ''}>${escapeHTML(department)}</option>`),
+  ].join('');
 }
 
 function renderSourceBadges(user) {
@@ -255,6 +273,7 @@ function renderTableRows() {
 
   const startIndex = (state.currentPage - 1) * ROWS_PER_PAGE;
   const pageUsers = users.slice(startIndex, startIndex + ROWS_PER_PAGE);
+  const departmentOptions = getDepartmentOptions();
 
   return pageUsers.map((user, index) => {
     const draft = getDraftForUser(user);
@@ -269,7 +288,11 @@ function renderTableRows() {
           <strong>${escapeHTML(user.fullName)}</strong><br>
           <small>${escapeHTML(user.email || '-')}</small>
         </td>
-        <td>${escapeHTML(user.department || '-')}</td>
+        <td>
+          <select class="form-control admin-access-select admin-access-select-department" data-employee-id="${escapeAttr(user.employeeId)}" data-field="department" ${isSaving ? 'disabled' : ''}>
+            ${renderDepartmentOptions(draft.department, departmentOptions)}
+          </select>
+        </td>
         <td>
           <select class="form-control admin-access-select" data-employee-id="${escapeAttr(user.employeeId)}" data-field="level" ${isSaving ? 'disabled' : ''}>
             ${renderSelectOptions(draft.level, EN_LEVEL_OPTIONS)}
@@ -408,7 +431,8 @@ function applyDraftChange(employeeId, field, value) {
   };
 
   if (
-    nextDraft.level === (user.level || '0')
+    nextDraft.department === (user.department && user.department !== '-' ? user.department : '')
+    && nextDraft.level === (user.level || '0')
     && nextDraft.level_Hr === (user.level_Hr || '0')
     && nextDraft.level_It === (user.level_It || '0')
     && nextDraft.active === (String(user.active || 'false').toLowerCase() === 'true' ? 'true' : 'false')
@@ -444,12 +468,14 @@ async function handleSave(employeeId) {
   try {
     await updateUserAccessProfile({
       employeeId,
+      department: draft.department,
       level: draft.level,
       level_Hr: draft.level_Hr,
       level_It: draft.level_It,
       active: draft.active,
     });
 
+    user.department = draft.department || '-';
     user.level = draft.level;
     user.level_Hr = draft.level_Hr;
     user.level_It = draft.level_It;
@@ -464,6 +490,7 @@ async function handleSave(employeeId) {
       sessionStorage.setItem('empLevel_hr', user.level_Hr);
       sessionStorage.setItem('empLevel_it', user.level_It);
       sessionStorage.setItem('empActive', user.active);
+      sessionStorage.setItem('empDepartment', user.department);
       window.dispatchEvent(new CustomEvent('csm:session-profile-updated'));
       showToast('อัปเดตสิทธิ์ของบัญชีที่กำลังใช้งานแล้ว ระบบปรับเมนูให้ทันทีโดยไม่ต้องเข้าสู่ระบบใหม่', 'success');
       return;

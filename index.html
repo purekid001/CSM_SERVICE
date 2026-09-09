@@ -34,100 +34,45 @@
 
   <!-- Stylesheet -->
   <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/login-harbor.css">
+  <link rel="stylesheet" href="assets/css/brand-loader.css">
+  <link rel="stylesheet" href="assets/css/home-dock.css">
 </head>
 
 <body>
 
-  <div id="login-screen">
-    <div class="login-weather-atmosphere" aria-hidden="true">
-      <span class="weather-orb"></span>
-      <span class="weather-cloud weather-cloud-1"></span>
-      <span class="weather-cloud weather-cloud-2"></span>
-      <span class="weather-cloud weather-cloud-3"></span>
-      <div class="weather-rain-layer">
-        <span class="rain-drop rain-drop-1"></span>
-        <span class="rain-drop rain-drop-2"></span>
-        <span class="rain-drop rain-drop-3"></span>
-        <span class="rain-drop rain-drop-4"></span>
-        <span class="rain-drop rain-drop-5"></span>
-        <span class="rain-drop rain-drop-6"></span>
-        <span class="rain-drop rain-drop-7"></span>
-        <span class="rain-drop rain-drop-8"></span>
+  <div id="brand-loader" class="brand-loader" role="status" aria-live="polite"
+    aria-atomic="true" tabindex="-1" hidden>
+    <div class="brand-loader-card">
+      <div class="brand-loader-emblem" aria-hidden="true">
+        <img class="brand-loader-mark" src="assets/img/CSM_New_logo1.png" alt="" width="104" height="88">
       </div>
+      <p id="brand-loader-message" class="brand-loader-message">กำลังเตรียมระบบ...</p>
+      <p class="brand-loader-caption">กรุณารอสักครู่</p>
+      <div class="brand-loader-dots" aria-hidden="true"><span></span><span></span><span></span></div>
     </div>
-    <div class="login-sea-scene" aria-hidden="true">
-      <div class="cartoon-boat">
-        <span class="boat-shadow"></span>
-        <span class="boat-wake boat-wake-1"></span>
-        <span class="boat-wake boat-wake-2"></span>
-        <span class="boat-foam boat-foam-1"></span>
-        <span class="boat-foam boat-foam-2"></span>
-        <span class="boat-foam boat-foam-3"></span>
-        <span class="boat-hull"></span>
-        <span class="boat-hull-top"></span>
-        <span class="boat-stripe"></span>
-        <span class="boat-cabin"></span>
-        <span class="boat-window boat-window-left"></span>
-        <span class="boat-window boat-window-right"></span>
-        <span class="boat-door"></span>
-        <span class="boat-roof"></span>
-        <span class="boat-mast"></span>
-        <span class="boat-arm"></span>
-        <span class="boat-net"></span>
-        <span class="boat-flag"></span>
+  </div>
+
+  <div id="login-screen" class="mini-harbor">
+    <div class="harbor-scene" aria-hidden="true">
+      <img class="harbor-backdrop" src="assets/img/login/mini-harbor.webp" alt=""
+        width="1672" height="941" fetchpriority="high" decoding="async">
+      <span class="harbor-cloud harbor-cloud-left"></span>
+      <span class="harbor-cloud harbor-cloud-right"></span>
+      <span class="harbor-cloud harbor-cloud-distant"></span>
+      <div class="harbor-vessel harbor-vessel-left">
+        <span class="harbor-ripple"></span>
+        <span class="harbor-ripple harbor-ripple-delayed"></span>
+        <span class="harbor-vessel-shadow"></span>
+        <img class="harbor-tug" src="assets/img/login/mini-harbor-tug.webp" alt=""
+          width="640" height="640" decoding="async" draggable="false">
       </div>
-      <div class="cartoon-boat cartoon-boat-secondary">
-        <span class="boat-shadow"></span>
-        <span class="boat-wake boat-wake-1"></span>
-        <span class="boat-wake boat-wake-2"></span>
-        <span class="boat-foam boat-foam-1"></span>
-        <span class="boat-foam boat-foam-2"></span>
-        <span class="boat-foam boat-foam-3"></span>
-        <span class="boat-hull"></span>
-        <span class="boat-hull-top"></span>
-        <span class="boat-stripe"></span>
-        <span class="boat-cabin"></span>
-        <span class="boat-window boat-window-left"></span>
-        <span class="boat-window boat-window-right"></span>
-        <span class="boat-door"></span>
-        <span class="boat-roof"></span>
-        <span class="boat-mast"></span>
-        <span class="boat-arm"></span>
-        <span class="boat-net"></span>
-        <span class="boat-flag"></span>
-      </div>
-      <div class="sea-fish sea-fish-a">
-        <span class="sea-fish-swimmer">
-          <span class="sea-fish-body"></span>
-          <span class="sea-fish-tail"></span>
-          <span class="sea-fish-fin"></span>
-          <span class="sea-fish-eye"></span>
-        </span>
-        <span class="sea-splash sea-splash-left"></span>
-        <span class="sea-splash sea-splash-mid"></span>
-        <span class="sea-splash sea-splash-right"></span>
-      </div>
-      <div class="sea-fish sea-fish-b">
-        <span class="sea-fish-swimmer">
-          <span class="sea-fish-body"></span>
-          <span class="sea-fish-tail"></span>
-          <span class="sea-fish-fin"></span>
-          <span class="sea-fish-eye"></span>
-        </span>
-        <span class="sea-splash sea-splash-left"></span>
-        <span class="sea-splash sea-splash-mid"></span>
-        <span class="sea-splash sea-splash-right"></span>
-      </div>
-      <div class="sea-fish sea-fish-c">
-        <span class="sea-fish-swimmer">
-          <span class="sea-fish-body"></span>
-          <span class="sea-fish-tail"></span>
-          <span class="sea-fish-fin"></span>
-          <span class="sea-fish-eye"></span>
-        </span>
-        <span class="sea-splash sea-splash-left"></span>
-        <span class="sea-splash sea-splash-mid"></span>
-        <span class="sea-splash sea-splash-right"></span>
+      <div class="harbor-vessel harbor-vessel-right">
+        <span class="harbor-ripple"></span>
+        <span class="harbor-ripple harbor-ripple-delayed"></span>
+        <span class="harbor-vessel-shadow"></span>
+        <img class="harbor-tug" src="assets/img/login/mini-harbor-tug.webp" alt=""
+          width="640" height="640" decoding="async" draggable="false">
       </div>
     </div>
     <div class="login-wrapper">

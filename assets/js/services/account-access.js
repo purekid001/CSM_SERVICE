@@ -104,7 +104,7 @@ function buildSheetUserRecord(baseRecord, nextProfile) {
     username: baseRecord.username || baseRecord.employeeId,
     firstname: baseRecord.firstname || '',
     lastname: baseRecord.lastname || '',
-    department: baseRecord.department || '',
+    department: nextProfile.department || baseRecord.department || '',
     password: baseRecord.password || '',
     email: baseRecord.email || '',
     level: nextProfile.level,
@@ -181,6 +181,7 @@ async function updateFirebaseAccessRecord({
 
   if (exists) {
     await updateValue(refFactory(databaseRef, path), {
+      department: nextProfile.department,
       level: nextProfile.level,
       level_Hr: nextProfile.level_Hr,
       level_It: nextProfile.level_It,
@@ -189,6 +190,7 @@ async function updateFirebaseAccessRecord({
 
     return async () => {
       await updateValue(refFactory(databaseRef, path), {
+        department: normalizeText(previousRecord?.department),
         level: normalizeText(previousRecord?.level) || '0',
         level_Hr: normalizeText(previousRecord?.level_Hr) || '0',
         level_It: normalizeText(previousRecord?.level_It) || '0',
@@ -201,7 +203,7 @@ async function updateFirebaseAccessRecord({
     username: baseRecord.username || employeeId,
     firstname: baseRecord.firstname || '',
     lastname: baseRecord.lastname || '',
-    department: baseRecord.department || '',
+    department: nextProfile.department || baseRecord.department || '',
     password: baseRecord.password || '',
     email: baseRecord.email || '',
     level: nextProfile.level,
@@ -217,18 +219,13 @@ async function updateFirebaseAccessRecord({
   };
 }
 
-export async function updateUserAccessProfile({ employeeId, level = '', level_Hr = '', level_It = '', active = '' }) {
+export async function updateUserAccessProfile({ employeeId, department = '', level = '', level_Hr = '', level_It = '', active = '' }) {
   const normalizedEmployeeId = normalizeText(employeeId);
   if (!normalizedEmployeeId) {
     throw new Error('ไม่พบรหัสพนักงานที่ต้องการอัปเดต');
   }
 
-  const nextProfile = {
-    level: normalizeText(level) || '0',
-    level_Hr: normalizeText(level_Hr) || '0',
-    level_It: normalizeText(level_It) || '0',
-    active: normalizeBoolean(active) ? 'true' : 'false',
-  };
+  const requestedDepartment = normalizeText(department);
   const userPath = `DHR/User/${normalizedEmployeeId}`;
 
   const [engineeringSnapshot, hrSnapshot, directoryResult] = await Promise.all([
@@ -246,6 +243,13 @@ export async function updateUserAccessProfile({ employeeId, level = '', level_Hr
   }
 
   const baseRecord = buildMergedUserRecord(normalizedEmployeeId, engineeringRecord, hrRecord, sheetRecord);
+  const nextProfile = {
+    department: requestedDepartment || baseRecord.department || '',
+    level: normalizeText(level) || '0',
+    level_Hr: normalizeText(level_Hr) || '0',
+    level_It: normalizeText(level_It) || '0',
+    active: normalizeBoolean(active) ? 'true' : 'false',
+  };
   const rollbacks = [];
 
   try {
@@ -264,6 +268,7 @@ export async function updateUserAccessProfile({ employeeId, level = '', level_Hr
 
     if (sheetRecord) {
       await updateUserDirectoryAccess(normalizedEmployeeId, {
+        department: nextProfile.department,
         level: nextProfile.level,
         levelHr: nextProfile.level_Hr,
         levelIt: nextProfile.level_It,

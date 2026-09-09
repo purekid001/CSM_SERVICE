@@ -6,109 +6,78 @@ import {
 } from '../firebase-hr.js';
 import { parseDateTime, canAccessPage } from '../utils.js';
 
+const serviceDocks = [
+  {
+    id: 'engineering', title: 'Engineering', icon: 'fa-gear',
+    description: 'ดูแลและซ่อมบำรุง เพื่อการทำงานที่ต่อเนื่อง',
+    image: new URL('../../img/home/service-dock-maintenance.webp', import.meta.url).href,
+    actions: [
+      { page: 'eng-request', icon: 'fa-wrench', label: 'แจ้งซ่อม' },
+      { page: 'eng-list', icon: 'fa-list-check', label: 'ติดตามงานซ่อม' },
+      { page: 'eng-doc', icon: 'fa-folder-open', label: 'เอกสาร EN' },
+    ],
+  },
+  {
+    id: 'mobility', title: 'Mobility', icon: 'fa-car',
+    description: 'บริการยานพาหนะ สะดวก ปลอดภัย พร้อมเดินทาง',
+    image: new URL('../../img/home/service-dock-mobility.webp', import.meta.url).href,
+    actions: [
+      { page: 'hr-car', icon: 'fa-car', label: 'จองรถ' },
+      { page: 'hr-shuttle', icon: 'fa-bus', label: 'รถรับ-ส่ง' },
+      { page: 'hr-list', icon: 'fa-clipboard-check', label: 'ติดตามงานรถ' },
+    ],
+  },
+  {
+    id: 'hr', title: 'Human Resources', icon: 'fa-user-group',
+    description: 'ดูแลบุคลากร สร้างองค์กรที่แข็งแรง',
+    image: new URL('../../img/home/service-dock-hr.webp', import.meta.url).href,
+    actions: [
+      { page: 'hr-evaluation', icon: 'fa-chart-simple', label: 'Evaluation' },
+      { page: 'hr-doc', icon: 'fa-file-signature', label: 'เอกสาร HR' },
+    ],
+  },
+];
+
 export function render() {
-  const actionButtons = [
-    { page: 'eng-request', icon: 'fa-wrench', label: 'แจ้งซ่อม', caption: 'สร้างใบแจ้งซ่อม', color: '#d97706', bg: '#fef3c7', group: 'Engineering' },
-    { page: 'eng-list', icon: 'fa-list-check', label: 'ติดตามงานซ่อม', caption: 'ตรวจสถานะ EN', color: '#059669', bg: '#d1fae5', group: 'Engineering' },
-    { page: 'eng-doc', icon: 'fa-folder-open', label: 'เอกสาร EN', caption: 'มาตรฐานวิศวกรรม', color: '#2563eb', bg: '#dbeafe', group: 'Engineering' },
-    { page: 'hr-car', icon: 'fa-car', label: 'จองรถ', caption: 'สร้างคำขอใช้รถ', color: '#1d4ed8', bg: '#dbeafe', group: 'Mobility' },
-    { page: 'hr-shuttle', icon: 'fa-bus', label: 'รถรับ-ส่ง', caption: 'สร้างคำขอ shuttle', color: '#7c3aed', bg: '#ede9fe', group: 'Mobility' },
-    { page: 'hr-list', icon: 'fa-clipboard-check', label: 'ติดตามงานรถ', caption: 'อนุมัติและปิดงาน', color: '#0f766e', bg: '#ccfbf1', group: 'Mobility' },
-    { page: 'hr-evaluation', icon: 'fa-key', label: 'Evaluation', caption: 'ตรวจรหัสเข้าประเมิน', color: '#b45309', bg: '#fef3c7', group: 'HR' },
-    { page: 'hr-doc', icon: 'fa-file-signature', label: 'เอกสาร HR', caption: 'แบบฟอร์มและระเบียบ', color: '#be123c', bg: '#ffe4e6', group: 'Document' },
-  ]
-    .filter(({ page }) => canAccessPage(page))
-    .map((config, index) => renderActionButton({ ...config, featured: index === 0 }));
+  const docks = serviceDocks
+    .map(dock => ({ ...dock, actions: dock.actions.filter(({ page }) => canAccessPage(page)) }))
+    .filter(dock => dock.actions.length > 0);
 
   return `
-    <div class="home-wrap fade-in">
-      <section class="home-command">
-        <div class="home-command-main">
-          <div class="home-command-icon">
-            <i class="fa-solid fa-chart-line"></i>
-          </div>
-          <div>
-            <p class="home-eyebrow">CSM SERVICE DASHBOARD</p>
-            <h1>สวัสดี, <span id="home-user-name">กำลังโหลด...</span></h1>
-            <p class="home-command-sub">
-              <i class="fa-solid fa-building-user"></i>
-              <span id="home-user-dept">-</span>
-            </p>
-          </div>
-        </div>
-        <div class="home-command-meta">
-          <div>
-            <span>วันนี้</span>
-            <strong id="home-current-date">--/--/----</strong>
-          </div>
-          <div>
-            <span>สถานะข้อมูล</span>
-            <strong id="home-health-text">กำลังโหลด</strong>
-          </div>
+    <div class="home-dock">
+      <section class="dock-greeting" aria-label="ข้อมูลผู้ใช้งาน">
+        <h1>สวัสดี, <span id="home-user-name">กำลังโหลด...</span></h1>
+        <div class="dock-user-meta">
+          <span><i class="fa-regular fa-building" aria-hidden="true"></i><span id="home-user-dept">-</span></span>
+          <span><i class="fa-regular fa-calendar-days" aria-hidden="true"></i><span id="home-current-date">--/--/----</span></span>
+          <span class="dock-health" data-state="loading" role="status">
+            <i class="dock-health-dot" aria-hidden="true"></i><span id="home-health-text">กำลังโหลด</span>
+          </span>
         </div>
       </section>
 
-      <section class="home-kpi-row" aria-label="ภาพรวมงาน">
-        ${renderKpiCard('kpi-fix', 'fa-screwdriver-wrench', 'งานซ่อมรอดำเนินการ', 'Engineering', 'kpi-amber')}
-        ${renderKpiCard('kpi-car', 'fa-car-side', 'จองรถรออนุมัติ', 'Car booking', 'kpi-blue')}
-        ${renderKpiCard('kpi-shuttle', 'fa-van-shuttle', 'รถรับ-ส่งรอดำเนินการ', 'Shuttle service', 'kpi-purple')}
-        ${renderKpiCard('kpi-done', 'fa-check-double', 'ปิดสำเร็จเดือนนี้', 'Completed', 'kpi-green')}
+      <section class="dock-kpis" aria-label="ภาพรวมงาน">
+        ${renderKpiCard('kpi-fix', 'fa-file-lines', 'งานซ่อมรอดำเนินการ', 'blue')}
+        ${renderKpiCard('kpi-car', 'fa-car-side', 'จองรถรออนุมัติ', 'teal')}
+        ${renderKpiCard('kpi-shuttle', 'fa-van-shuttle', 'รถรับ-ส่งรอดำเนินการ', 'blue')}
+        ${renderKpiCard('kpi-done', 'fa-check', 'ปิดสำเร็จเดือนนี้', 'green')}
       </section>
 
-      <section class="home-main-grid">
-        <div class="form-card home-panel home-actions-panel">
-          <div class="home-panel-header">
-            <div>
-              <h3><i class="fa-solid fa-bolt"></i> เมนูลัด</h3>
-              <p>เริ่มงานที่ใช้บ่อยได้จากพื้นที่เดียว</p>
-            </div>
-            <div class="home-action-summary">
-              <strong>${actionButtons.length}</strong>
-              <span>เมนูพร้อมใช้</span>
-            </div>
-          </div>
-          <p class="home-action-note">รายการสำคัญถูกจัดให้เห็นเร็วขึ้น พร้อมลัดเข้าสู่หน้าหลักของแต่ละ workflow</p>
-          <div class="home-action-grid">
-            ${actionButtons.join('')}
-          </div>
-        </div>
-
-        <div class="form-card home-panel">
-          <div class="home-panel-header">
-            <div>
-              <h3><i class="fa-solid fa-wave-square"></i> ภาพรวมคิวงาน</h3>
-              <p>จำนวนรายการที่มองเห็นตามสิทธิ์ผู้ใช้งาน</p>
-            </div>
-          </div>
-          <div class="home-workload">
-            <div class="home-workload-item home-workload-eng">
-              <span class="home-workload-name">
-                <i class="fa-solid fa-screwdriver-wrench"></i>
-                Engineering
-              </span>
-              <strong id="home-eng-total">0</strong>
-              <div class="home-meter"><i id="home-eng-meter" style="width:0%;"></i></div>
-            </div>
-            <div class="home-workload-item home-workload-car">
-              <span class="home-workload-name">
-                <i class="fa-solid fa-car-side"></i>
-                Car booking
-              </span>
-              <strong id="home-car-total">0</strong>
-              <div class="home-meter"><i id="home-car-meter" style="width:0%;"></i></div>
-            </div>
-            <div class="home-workload-item home-workload-shuttle">
-              <span class="home-workload-name">
-                <i class="fa-solid fa-van-shuttle"></i>
-                Shuttle
-              </span>
-              <strong id="home-shuttle-total">0</strong>
-              <div class="home-meter"><i id="home-shuttle-meter" style="width:0%;"></i></div>
-            </div>
-          </div>
-        </div>
+      <section class="dock-services" aria-label="Service Dock บริการภายใน">
+        ${docks.map(renderServiceDock).join('') || '<p class="dock-empty">ไม่มีเมนูที่เปิดใช้งานสำหรับบัญชีนี้</p>'}
       </section>
 
+      <section class="dock-workload" aria-labelledby="dock-workload-title">
+        <div class="dock-workload-heading">
+          <h2 id="dock-workload-title"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i>ภาพรวมคิวงาน</h2>
+          <p>จำนวนรายการที่มองเห็นตามสิทธิ์ผู้ใช้งาน</p>
+        </div>
+        <div class="dock-workload-grid">
+          ${renderWorkload('eng', 'Engineering')}
+          ${renderWorkload('car', 'Car booking')}
+          ${renderWorkload('shuttle', 'Shuttle')}
+        </div>
+      </section>
     </div>
   `;
 }
@@ -160,7 +129,7 @@ async function loadDashboardData() {
     updateDashboard(dashboard);
   } catch (error) {
     console.error('Dashboard Load Error:', error);
-    setText('home-health-text', 'โหลดไม่สำเร็จ');
+    setHealth('error', 'โหลดไม่สำเร็จ');
     setKpiError();
   }
 }
@@ -229,7 +198,7 @@ function updateDashboard(dashboard) {
   setText('home-eng-total', dashboard.engTotal);
   setText('home-car-total', dashboard.carTotal);
   setText('home-shuttle-total', dashboard.shuttleTotal);
-  setText('home-health-text', 'พร้อมใช้งาน');
+  setHealth('ready', 'พร้อมใช้งาน');
 
   const maxTotal = Math.max(dashboard.engTotal, dashboard.carTotal, dashboard.shuttleTotal, 1);
   setMeter('home-eng-meter', dashboard.engTotal, maxTotal);
@@ -238,37 +207,58 @@ function updateDashboard(dashboard) {
 }
 
 function setKpiError() {
-  ['kpi-fix', 'kpi-car', 'kpi-shuttle', 'kpi-done'].forEach(id => setText(id, '-'));
+  ['kpi-fix', 'kpi-car', 'kpi-shuttle', 'kpi-done', 'home-eng-total', 'home-car-total', 'home-shuttle-total']
+    .forEach(id => setText(id, '-'));
 }
 
-function renderKpiCard(id, icon, label, caption, cssClass) {
+function setHealth(state, message) {
+  setText('home-health-text', message);
+  const status = document.getElementById('home-health-text')?.closest('.dock-health');
+  if (status) status.dataset.state = state;
+}
+
+function renderKpiCard(id, icon, label, color) {
+  const readableLabel = escapeHTML(label).replace('รอดำเนินการ', '<span class="dock-label-tail">รอดำเนินการ</span>');
   return `
-    <div class="form-card kpi-card ${cssClass}">
-      <div class="kpi-icon"><i class="fa-solid ${icon}"></i></div>
+    <div class="dock-kpi dock-kpi-${color}">
+      <span class="dock-kpi-icon"><i class="fa-solid ${icon}" aria-hidden="true"></i></span>
       <div>
-        <p class="kpi-caption">${escapeHTML(caption)}</p>
-        <p class="kpi-label">${escapeHTML(label)}</p>
-        <h2 class="kpi-value" id="${id}"><span class="skeleton-value"></span></h2>
+        <p>${readableLabel}</p>
+        <strong class="dock-kpi-value" id="${id}"><span class="skeleton-value" aria-label="กำลังโหลด"></span></strong>
       </div>
     </div>`;
 }
 
-function renderActionButton({ page, icon, label, caption, color, bg, group, featured = false }) {
-  if (!canAccessPage(page)) return '';
-
+function renderServiceDock({ id, title, icon, description, image, actions }) {
   return `
-    <button class="quick-action-btn${featured ? ' is-featured' : ''}" onclick="showPage('${page}')" style="--qa-color:${color}; --qa-bg:${bg};">
-      <span class="qa-icon"><i class="fa-solid ${icon}"></i></span>
-      <span class="qa-copy">
-        <span class="qa-kicker">${escapeHTML(group || 'Workflow')}</span>
-        <strong>${escapeHTML(label)}</strong>
-        <small>${escapeHTML(caption)}</small>
-      </span>
-      <span class="qa-trail">
-        <span class="qa-hint">${featured ? 'Primary' : 'Open'}</span>
-        <i class="fa-solid fa-arrow-right qa-arrow"></i>
-      </span>
+    <article class="dock-service dock-service-${id}" aria-labelledby="dock-title-${id}">
+      <header class="dock-service-heading">
+        <span class="dock-service-icon"><i class="fa-solid ${icon}" aria-hidden="true"></i></span>
+        <div><h2 id="dock-title-${id}">${escapeHTML(title)}</h2><p>${escapeHTML(description)}</p></div>
+      </header>
+      <div class="dock-art" aria-hidden="true">
+        <img src="${escapeHTML(image)}" alt="" width="840" height="560" decoding="async" draggable="false">
+      </div>
+      <div class="dock-actions">${actions.map(renderActionButton).join('')}</div>
+    </article>`;
+}
+
+function renderActionButton({ page, icon, label }) {
+  return `
+    <button type="button" class="dock-action" onclick="showPage('${page}')">
+      <i class="fa-solid ${icon} dock-action-icon" aria-hidden="true"></i>
+      <span>${escapeHTML(label)}</span>
+      <i class="fa-solid fa-chevron-right dock-action-arrow" aria-hidden="true"></i>
     </button>`;
+}
+
+function renderWorkload(id, label) {
+  return `
+    <div class="dock-workload-item dock-workload-${id}">
+      <span>${escapeHTML(label)}</span>
+      <strong id="home-${id}-total">-</strong>
+      <div class="dock-meter" aria-hidden="true"><i id="home-${id}-meter" style="width:0%"></i></div>
+    </div>`;
 }
 
 function isDoneThisMonth(date, step, doneSteps) {
@@ -286,7 +276,7 @@ function getPairId(value) {
 
 function setMeter(id, value, max) {
   const el = document.getElementById(id);
-  if (el) el.style.width = `${Math.max(4, Math.round((value / max) * 100))}%`;
+  if (el) el.style.width = `${Math.max(0, Math.min(100, Math.round((value / max) * 100)))}%`;
 }
 
 function setText(id, value) {
@@ -299,6 +289,10 @@ function animateCounter(id, target) {
   if (!el) return;
   const num = parseInt(target, 10);
   if (isNaN(num)) { el.textContent = target; return; }
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    el.textContent = num;
+    return;
+  }
   const duration = 700;
   const start = performance.now();
   const tick = (now) => {
